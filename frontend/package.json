@@ -3,10 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "node setup-trace.js",
     "dev": "next dev",
+    "dev:fresh": "kill-node.bat && npm run dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "kill": "kill-node.bat"
   },
   "dependencies": {
     "next": "^15.0.3",

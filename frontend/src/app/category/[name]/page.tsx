@@ -1,5 +1,6 @@
 import CategoryPage from '@/features/shop/CategoryPage';
 
-export default function CategoryRoute({ params }: { params: { name: string } }) {
-  return <CategoryPage category={params.name} />;
+export default async function CategoryRoute({ params }: { params: Promise<{ name: string }> }) {
+  const { name } = await params;
+  return <CategoryPage category={name} />;
 }

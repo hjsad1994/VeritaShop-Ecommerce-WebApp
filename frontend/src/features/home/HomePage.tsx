@@ -278,7 +278,7 @@ export default function HomePage() {
               return (
                 <div
                   key={index}
-                  className="group relative bg-gradient-to-br from-zinc-900/95 to-zinc-950 border border-zinc-800 rounded-3xl overflow-hidden hover:border-white hover:shadow-[0_0_30px_rgba(255,255,255,0.3)] transition-all duration-500 cursor-pointer"
+                  className="group relative bg-gradient-to-br from-zinc-900/95 to-zinc-950 border border-zinc-800 rounded-3xl overflow-hidden hover:border-white hover:shadow-[0_0_30px_rgba(255,255,255,0.3)] transition-all duration-500 cursor-pointer flex flex-col"
                 >
                   <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-zinc-800 to-zinc-900">
                     <img
@@ -305,8 +305,8 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  <div className="p-6">
-                    <h3 className="text-lg font-bold text-white mb-3 line-clamp-2">
+                  <div className="p-6 flex flex-col flex-grow">
+                    <h3 className="text-lg font-bold text-white mb-3 line-clamp-2 min-h-[3.5rem]">
                       {product.name}
                     </h3>
 
@@ -326,7 +326,7 @@ export default function HomePage() {
                       )}
                     </div>
 
-                    <button className="w-full bg-white text-black py-3.5 rounded-full text-sm font-bold hover:bg-gray-100 hover:scale-[1.02] transition-all duration-300 shadow-lg">
+                    <button className="w-full bg-white text-black py-3.5 rounded-full text-sm font-bold hover:bg-gray-100 hover:scale-[1.02] transition-all duration-300 shadow-lg mt-auto">
                       Add to Cart
                     </button>
                   </div>

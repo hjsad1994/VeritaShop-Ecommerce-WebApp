@@ -7,6 +7,10 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // Disable experimental trace to fix EPERM error on Windows
+  experimental: {
+    disableOptimizedLoading: true,
+  },
 };
 
 module.exports = nextConfig;

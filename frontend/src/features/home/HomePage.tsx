@@ -122,8 +122,16 @@ export default function HomePage() {
             <div className="inline-block mb-4">
               <span className="text-sm uppercase tracking-widest text-blue-400 font-semibold">Explore Brands</span>
             </div>
-            <h2 className="text-5xl md:text-6xl font-bold text-white mb-6 tracking-tight">
-              Shop by <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">Brand</span>
+            <h2 
+              className="text-5xl md:text-6xl font-bold mb-6 tracking-tight"
+              style={{
+                background: 'linear-gradient(257deg, #e2e6ea 14.04%, #909fb0 30.93%, #fff 90.58%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text'
+              }}
+            >
+              Shop by Brand
             </h2>
             <p className="text-xl text-gray-400 max-w-2xl mx-auto">
               Premium smartphones from the world's leading manufacturers
@@ -141,7 +149,6 @@ export default function HomePage() {
                 {[
                   {
                     name: 'iPhone',
-                    logo: '🍎',
                     tagline: 'Think Different',
                     gradient: 'from-slate-800 to-slate-900',
                     img: '/images/iphone17.png',
@@ -149,7 +156,6 @@ export default function HomePage() {
                   },
                   {
                     name: 'Samsung',
-                    logo: '📱',
                     tagline: 'Next is Now',
                     gradient: 'from-blue-900 to-slate-900',
                     img: '/images/samsungs24.jpg',
@@ -157,7 +163,6 @@ export default function HomePage() {
                   },
                   {
                     name: 'ASUS ROG',
-                    logo: '🎮',
                     tagline: 'For Those Who Dare',
                     gradient: 'from-red-900 to-slate-900',
                     img: '/images/rogphone8.png',
@@ -165,7 +170,6 @@ export default function HomePage() {
                   },
                   {
                     name: 'Huawei',
-                    logo: '🔷',
                     tagline: 'Make it Possible',
                     gradient: 'from-purple-900 to-slate-900',
                     img: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800',
@@ -173,7 +177,6 @@ export default function HomePage() {
                   },
                   {
                     name: 'Xiaomi',
-                    logo: '📲',
                     tagline: 'Innovation For Everyone',
                     gradient: 'from-orange-900 to-slate-900',
                     img: '/images/Xiaomi14.png',
@@ -181,7 +184,6 @@ export default function HomePage() {
                   },
                   {
                     name: 'OnePlus',
-                    logo: '⚡',
                     tagline: 'Never Settle',
                     gradient: 'from-red-800 to-slate-900',
                     img: '/images/oneplus12.png',
@@ -197,7 +199,6 @@ export default function HomePage() {
                       <img src={brand.img} alt={brand.name} className="w-full h-full object-cover" />
                     </div>
                     <div className="relative z-10 text-center">
-                      <div className="text-6xl mb-4 group-hover:scale-125 transition-transform duration-500 drop-shadow-lg">{brand.logo}</div>
                       <h3 className="text-2xl font-bold text-white mb-2 tracking-wide drop-shadow-md">{brand.name}</h3>
                       <p className="text-gray-300 text-sm uppercase tracking-wider font-medium drop-shadow">{brand.tagline}</p>
                       <div className="mt-6 inline-block px-6 py-2 bg-white rounded-full text-black text-sm font-bold border border-white group-hover:scale-105 transition-all shadow-lg">
@@ -235,7 +236,15 @@ export default function HomePage() {
                   Limited Time
                 </span>
               </div>
-              <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-3 tracking-tight">
+              <h2 
+                className="text-4xl md:text-5xl lg:text-6xl font-bold mb-3 tracking-tight"
+                style={{
+                  background: 'linear-gradient(257deg, #e2e6ea 14.04%, #909fb0 30.93%, #fff 90.58%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text'
+                }}
+              >
                 Hot Deals This Week
               </h2>
               <p className="text-gray-400 text-lg">Limited time offers on premium devices</p>
@@ -269,7 +278,7 @@ export default function HomePage() {
               return (
                 <div
                   key={index}
-                  className="group relative bg-gradient-to-br from-zinc-900 to-black border border-zinc-800 rounded-3xl overflow-hidden hover:border-blue-500/50 hover:shadow-[0_0_50px_rgba(59,130,246,0.3)] transition-all duration-500 cursor-pointer"
+                  className="group relative bg-gradient-to-br from-zinc-900/95 to-zinc-950 border border-zinc-800 rounded-3xl overflow-hidden hover:border-white hover:shadow-[0_0_30px_rgba(255,255,255,0.3)] transition-all duration-500 cursor-pointer flex flex-col"
                 >
                   <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-zinc-800 to-zinc-900">
                     <img
@@ -296,8 +305,8 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  <div className="p-6">
-                    <h3 className="text-lg font-bold text-white mb-3 line-clamp-2">
+                  <div className="p-6 flex flex-col flex-grow">
+                    <h3 className="text-lg font-bold text-white mb-3 line-clamp-2 min-h-[3.5rem]">
                       {product.name}
                     </h3>
 
@@ -317,7 +326,7 @@ export default function HomePage() {
                       )}
                     </div>
 
-                    <button className="w-full bg-white text-black py-3.5 rounded-full text-sm font-bold hover:bg-gray-100 hover:scale-[1.02] transition-all duration-300 shadow-lg">
+                    <button className="w-full bg-white text-black py-3.5 rounded-full text-sm font-bold hover:bg-gray-100 hover:scale-[1.02] transition-all duration-300 shadow-lg mt-auto">
                       Add to Cart
                     </button>
                   </div>
@@ -331,7 +340,15 @@ export default function HomePage() {
       {/* Categories Section */}
       <section className="py-32 bg-black">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-          <h2 className="text-5xl md:text-6xl font-bold text-center mb-8 text-white tracking-tight">
+          <h2 
+            className="text-5xl md:text-6xl font-bold text-center mb-8 tracking-tight"
+            style={{
+              background: 'linear-gradient(257deg, #e2e6ea 14.04%, #909fb0 30.93%, #fff 90.58%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
+            }}
+          >
             Shop by category
           </h2>
           <p className="text-center text-lg text-gray-400 mb-20 max-w-2xl mx-auto">
@@ -401,21 +418,18 @@ export default function HomePage() {
               </p>
               <div className="space-y-6 mb-10">
                 <div className="flex items-start gap-4 p-4 rounded-xl hover:bg-gray-900 transition-all duration-300 cursor-pointer group border border-transparent hover:border-gray-800">
-                  <div className="text-3xl group-hover:scale-125 transition-transform duration-300">⚡</div>
                   <div>
                     <h4 className="font-bold text-white text-xl mb-1 group-hover:text-blue-400 transition-colors">A17 Pro Chip</h4>
                     <p className="text-gray-400 group-hover:text-gray-300 transition-colors">Console-level gaming and pro workflows</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-4 p-4 rounded-xl hover:bg-gray-900 transition-all duration-300 cursor-pointer group border border-transparent hover:border-gray-800">
-                  <div className="text-3xl group-hover:scale-125 transition-transform duration-300">📸</div>
                   <div>
                     <h4 className="font-bold text-white text-xl mb-1 group-hover:text-blue-400 transition-colors">Pro Camera System</h4>
                     <p className="text-gray-400 group-hover:text-gray-300 transition-colors">48MP main camera with 5x optical zoom</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-4 p-4 rounded-xl hover:bg-gray-900 transition-all duration-300 cursor-pointer group border border-transparent hover:border-gray-800">
-                  <div className="text-3xl group-hover:scale-125 transition-transform duration-300">🔋</div>
                   <div>
                     <h4 className="font-bold text-white text-xl mb-1 group-hover:text-blue-400 transition-colors">All-day Battery</h4>
                     <p className="text-gray-400 group-hover:text-gray-300 transition-colors">Up to 29 hours video playback</p>
@@ -427,7 +441,7 @@ export default function HomePage() {
               </Link>
             </div>
             <div className="relative">
-              <div className="aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-gray-900 to-black border border-gray-800 hover:border-blue-500 hover:shadow-[0_0_50px_rgba(59,130,246,0.3)] transition-all duration-500 cursor-pointer group">
+              <div className="aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-gray-900 to-black border border-gray-800 hover:border-white hover:shadow-[0_0_40px_rgba(255,255,255,0.4)] transition-all duration-500 cursor-pointer group">
                 <img
                   src="https://images.unsplash.com/photo-1678652197831-2d180705cd2c?q=80&w=800&h=800&fit=crop"
                   alt="iPhone 15 Pro"
@@ -444,7 +458,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-16 items-center">
             <div className="order-2 md:order-1 relative">
-              <div className="aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-purple-900 to-black border border-gray-800 hover:border-purple-500 hover:shadow-[0_0_50px_rgba(168,85,247,0.3)] transition-all duration-500 cursor-pointer group">
+              <div className="aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-purple-900 to-black border border-gray-800 hover:border-white hover:shadow-[0_0_40px_rgba(255,255,255,0.4)] transition-all duration-500 cursor-pointer group">
                 <img
                   src="https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=800&h=800&fit=crop"
                   alt="Samsung Galaxy"
@@ -462,23 +476,20 @@ export default function HomePage() {
               </p>
               <div className="space-y-6 mb-10">
                 <div className="flex items-start gap-4 p-4 rounded-xl hover:bg-gray-900 transition-all duration-300 cursor-pointer group border border-transparent hover:border-gray-800">
-                  <div className="text-3xl group-hover:scale-125 transition-transform duration-300">🤖</div>
                   <div>
-                    <h4 className="font-bold text-white text-xl mb-1 group-hover:text-purple-400 transition-colors">Galaxy AI</h4>
+                    <h4 className="font-bold text-white text-xl mb-1 group-hover:text-blue-400 transition-colors">Galaxy AI</h4>
                     <p className="text-gray-400 group-hover:text-gray-300 transition-colors">AI-powered features for everything you do</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-4 p-4 rounded-xl hover:bg-gray-900 transition-all duration-300 cursor-pointer group border border-transparent hover:border-gray-800">
-                  <div className="text-3xl group-hover:scale-125 transition-transform duration-300">✍️</div>
                   <div>
-                    <h4 className="font-bold text-white text-xl mb-1 group-hover:text-purple-400 transition-colors">S Pen Included</h4>
+                    <h4 className="font-bold text-white text-xl mb-1 group-hover:text-blue-400 transition-colors">S Pen Included</h4>
                     <p className="text-gray-400 group-hover:text-gray-300 transition-colors">Note-taking and creativity redefined</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-4 p-4 rounded-xl hover:bg-gray-900 transition-all duration-300 cursor-pointer group border border-transparent hover:border-gray-800">
-                  <div className="text-3xl group-hover:scale-125 transition-transform duration-300">📱</div>
                   <div>
-                    <h4 className="font-bold text-white text-xl mb-1 group-hover:text-purple-400 transition-colors">Dynamic AMOLED 2X</h4>
+                    <h4 className="font-bold text-white text-xl mb-1 group-hover:text-blue-400 transition-colors">Dynamic AMOLED 2X</h4>
                     <p className="text-gray-400 group-hover:text-gray-300 transition-colors">6.8" QHD+ 120Hz display</p>
                   </div>
                 </div>
@@ -505,7 +516,15 @@ export default function HomePage() {
                 Gaming
               </span>
             </div>
-            <h2 className="text-5xl md:text-6xl font-bold text-white mb-6">
+            <h2 
+              className="text-5xl md:text-6xl font-bold mb-6"
+              style={{
+                background: 'linear-gradient(257deg, #e2e6ea 14.04%, #909fb0 30.93%, #fff 90.58%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text'
+              }}
+            >
               Built for gamers
             </h2>
             <p className="text-xl text-gray-300 max-w-3xl mx-auto">
@@ -517,7 +536,7 @@ export default function HomePage() {
             {[products[2], products[3], products[4]].map((phone, index) => (
               <div
                 key={index}
-                className="group bg-gray-900 border border-gray-800 rounded-xl overflow-hidden hover:scale-105 transition-all duration-500 cursor-pointer hover:border-cyan-400 hover:shadow-[0_0_50px_rgba(34,211,238,0.3)]"
+                className="group bg-gray-900 border border-gray-800 rounded-xl overflow-hidden hover:scale-105 transition-all duration-500 cursor-pointer hover:border-white hover:shadow-[0_0_35px_rgba(255,255,255,0.35)]"
               >
                 <div className="h-96 overflow-hidden bg-gradient-to-br from-gray-900 to-black relative">
                   <img
@@ -548,28 +567,32 @@ export default function HomePage() {
       {/* Why Choose Us */}
       <section className="py-24 bg-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-white">
+          <h2 
+            className="text-4xl md:text-5xl font-bold text-center mb-16"
+            style={{
+              background: 'linear-gradient(257deg, #e2e6ea 14.04%, #909fb0 30.93%, #fff 90.58%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
+            }}
+          >
             Why shop with VeritaShop?
           </h2>
 
           <div className="grid md:grid-cols-4 gap-8">
             <div className="text-center p-8 bg-gray-900 rounded-xl border border-gray-800">
-              <div className="text-6xl mb-6">🚚</div>
               <h3 className="text-xl font-bold text-white mb-3">Free Shipping</h3>
               <p className="text-gray-400">Free delivery on orders over $500</p>
             </div>
             <div className="text-center p-8 bg-gray-900 rounded-xl border border-gray-800">
-              <div className="text-6xl mb-6">✅</div>
               <h3 className="text-xl font-bold text-white mb-3">100% Authentic</h3>
               <p className="text-gray-400">All products are genuine and sealed</p>
             </div>
             <div className="text-center p-8 bg-gray-900 rounded-xl border border-gray-800">
-              <div className="text-6xl mb-6">🔄</div>
               <h3 className="text-xl font-bold text-white mb-3">Easy Returns</h3>
               <p className="text-gray-400">30-day return policy, no questions</p>
             </div>
             <div className="text-center p-8 bg-gray-900 rounded-xl border border-gray-800">
-              <div className="text-6xl mb-6">🛡️</div>
               <h3 className="text-xl font-bold text-white mb-3">Warranty</h3>
               <p className="text-gray-400">Official manufacturer warranty</p>
             </div>

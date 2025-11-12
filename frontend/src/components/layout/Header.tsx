@@ -20,11 +20,11 @@ export default function Header({ isScrolled = false, theme = 'dark' }: HeaderPro
   const buttonClass = isLight ? 'bg-black text-white hover:bg-gray-800' : 'bg-white text-black hover:bg-gray-200';
   
   return (
-    <header className={`fixed top-0 w-full z-50 transition-all duration-300 ${
+    <header className={`fixed top-0 w-full z-50 transition-all duration-300 ease-in-out ${
       isLight 
         ? 'bg-white border-b border-gray-200' 
         : isScrolled 
-          ? 'bg-black border-b border-gray-800' 
+          ? 'bg-black' 
           : 'bg-transparent'
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

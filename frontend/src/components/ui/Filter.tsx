@@ -26,7 +26,7 @@ export default function ShopFilter({
   onClearFilters,
 }: ShopFilterProps) {
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-5">
+    <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
       {/* Filter Header */}
       <div className="flex items-center justify-between mb-5">
         <h2 className="text-lg font-bold text-black">Filters</h2>
@@ -83,7 +83,7 @@ export default function ShopFilter({
         <select 
           value={sortBy}
           onChange={(e) => onSortChange(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-700 text-xs focus:ring-2 focus:ring-black focus:border-black"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 text-xs focus:ring-2 focus:ring-black focus:border-black"
         >
           <option value="featured">Featured</option>
           <option value="price-low">Price: Low to High</option>

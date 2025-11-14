@@ -140,7 +140,7 @@ export default function CategoryPage({ category }: CategoryPageProps) {
         </div>
 
         <div className="flex gap-8">
-          <aside className="hidden lg:block w-60 flex-shrink-0">
+          <aside className="hidden lg:block w-48 flex-shrink-0">
             <div className="sticky top-20">
               <ShopFilter
                 brands={brands}
@@ -163,10 +163,10 @@ export default function CategoryPage({ category }: CategoryPageProps) {
           </aside>
 
           <div className="flex-1">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
               {currentProducts.map(product => (
                 <Link key={product.id} href={"/shop/" + product.id} className="group cursor-pointer">
-                  <div className="relative aspect-square mb-4 bg-gray-100 rounded-lg overflow-hidden">
+                  <div className="relative aspect-square mb-4 bg-gray-100 rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300">
                     <img 
                       src={product.image}
                       alt={product.name}
@@ -180,14 +180,14 @@ export default function CategoryPage({ category }: CategoryPageProps) {
                   </div>
                   
                   <div>
-                    <h3 className="font-semibold text-black mb-1 group-hover:text-gray-600 transition-colors">
+                    <h3 className="font-semibold text-black text-sm mb-2 group-hover:text-gray-600 transition-colors line-clamp-2">
                       {product.name}
                     </h3>
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-2 mb-1">
                       {product.oldPrice && (
-                        <span className="text-gray-400 line-through text-sm">${product.oldPrice}</span>
+                        <span className="text-gray-400 line-through text-xs">${product.oldPrice}</span>
                       )}
-                      <span className="text-black font-bold">${product.price}</span>
+                      <span className="text-black font-bold text-base">${product.price}</span>
                     </div>
                   </div>
                 </Link>

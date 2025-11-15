@@ -15,6 +15,7 @@ interface OrderDetails {
   shipping: number;
   tax: number;
   total: number;
+  status: 'pending' | 'confirmed' | 'rejected';
 }
 
 function OrderConfirmationContent() {
@@ -68,33 +69,98 @@ function OrderConfirmationContent() {
   const estimatedDelivery = new Date(orderDate);
   estimatedDelivery.setDate(estimatedDelivery.getDate() + 5);
 
+  const getStatusInfo = () => {
+    switch (order.status) {
+      case 'confirmed':
+        return {
+          bgColor: 'bg-gradient-to-r from-green-600 to-green-700',
+          icon: (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          ),
+          title: 'ĐƠN HÀNG ĐÃ ĐƯỢC XÁC NHẬN - CẢM ƠN BẠN ĐÃ MUA HÀNG!',
+          message: 'Đơn hàng của bạn đã được xác nhận và đang được xử lý.',
+          headerColor: 'text-green-600'
+        };
+      case 'rejected':
+        return {
+          bgColor: 'bg-gradient-to-r from-red-600 to-red-700',
+          icon: (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          ),
+          title: 'ĐƠN HÀNG ĐÃ BỊ TỪ CHỐI',
+          message: 'Đơn hàng của bạn không được chấp nhận. Vui lòng liên hệ với chúng tôi để biết thêm chi tiết.',
+          headerColor: 'text-red-600'
+        };
+      case 'pending':
+      default:
+        return {
+          bgColor: 'bg-gradient-to-r from-yellow-600 to-orange-600',
+          icon: (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          ),
+          title: 'ĐƠN HÀNG ĐANG CHỜ XÁC NHẬN',
+          message: 'Đơn hàng của bạn đang chờ admin xác nhận. Vui lòng kiểm tra lại sau.',
+          headerColor: 'text-yellow-600'
+        };
+    }
+  };
+
+  const statusInfo = getStatusInfo();
+
   return (
     <div className="min-h-screen bg-white">
       <Header theme="light" />
 
-      <div className="bg-gradient-to-r from-green-600 to-green-700 text-white py-4 text-center font-medium mt-16">
+      <div className={`${statusInfo.bgColor} text-white py-4 text-center font-medium mt-16`}>
         <div className="flex items-center justify-center gap-2">
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span>ORDER CONFIRMED - THANK YOU FOR YOUR PURCHASE!</span>
+          {statusInfo.icon}
+          <span>{statusInfo.title}</span>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Success Message */}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pb-24">
+        {/* Status Message */}
         <div className="text-center mb-12">
-          <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 bounce-in">
-            <svg className="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-            </svg>
+          <div className={`w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 ${
+            order.status === 'confirmed' ? 'bg-green-100' : 
+            order.status === 'rejected' ? 'bg-red-100' : 'bg-yellow-100'
+          }`}>
+            {order.status === 'confirmed' ? (
+              <svg className="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+              </svg>
+            ) : order.status === 'rejected' ? (
+              <svg className="w-12 h-12 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg className="w-12 h-12 text-yellow-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            )}
           </div>
-          <h1 className="text-4xl font-bold text-black mb-4">Order Confirmed!</h1>
+          <h1 className={`text-4xl font-bold mb-4 ${
+            order.status === 'confirmed' ? 'text-green-600' : 
+            order.status === 'rejected' ? 'text-red-600' : 'text-yellow-600'
+          }`}>
+            {order.status === 'confirmed' ? 'Đơn hàng đã được xác nhận!' : 
+             order.status === 'rejected' ? 'Đơn hàng đã bị từ chối!' : 
+             'Đơn hàng đang chờ xác nhận!'}
+          </h1>
           <p className="text-lg text-gray-600 mb-2">
-            Thank you for your order, <span className="font-bold text-black">{order.customerInfo.firstName}</span>!
+            {statusInfo.message}
           </p>
           <p className="text-gray-600">
-            A confirmation email has been sent to <span className="font-bold">{order.customerInfo.email}</span>
+            {order.status === 'confirmed' 
+              ? `Một email xác nhận đã được gửi đến ${order.customerInfo.email}`
+              : `Thông tin đơn hàng đã được gửi đến ${order.customerInfo.email}`
+            }
           </p>
         </div>
 
@@ -143,33 +209,51 @@ function OrderConfirmationContent() {
           </div>
         </div>
 
-        {/* Delivery Timeline */}
-        <div className="bg-blue-50 rounded-2xl p-6 mb-8">
+        {/* Order Status Timeline */}
+        <div className={`${order.status === 'confirmed' ? 'bg-green-50' : order.status === 'rejected' ? 'bg-red-50' : 'bg-blue-50'} rounded-2xl p-6 mb-8`}>
           <h3 className="text-lg font-bold text-black mb-4 flex items-center gap-2">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
             </svg>
-            Estimated Delivery
+            {order.status === 'confirmed' ? 'Trạng thái đơn hàng' : 
+             order.status === 'rejected' ? 'Thông tin đơn hàng' : 
+             'Trạng thái đơn hàng'}
           </h3>
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <div className="flex items-center mb-2">
-                <div className="w-3 h-3 bg-green-600 rounded-full"></div>
-                <div className="flex-1 h-1 bg-gray-300 mx-2"></div>
-                <div className="w-3 h-3 bg-gray-300 rounded-full"></div>
-                <div className="flex-1 h-1 bg-gray-300 mx-2"></div>
-                <div className="w-3 h-3 bg-gray-300 rounded-full"></div>
+                <div className={`w-3 h-3 rounded-full ${
+                  order.status === 'pending' ? 'bg-yellow-600' : 
+                  order.status === 'rejected' ? 'bg-red-600' : 'bg-green-600'
+                }`}></div>
+                <div className={`flex-1 h-1 mx-2 ${
+                  order.status === 'pending' ? 'bg-yellow-600' : 
+                  order.status === 'rejected' ? 'bg-red-600' : 'bg-green-600'
+                }`}></div>
+                <div className={`w-3 h-3 rounded-full ${
+                  order.status === 'confirmed' ? 'bg-green-600' : 'bg-gray-300'
+                }`}></div>
+                <div className={`flex-1 h-1 mx-2 ${
+                  order.status === 'confirmed' ? 'bg-green-600' : 'bg-gray-300'
+                }`}></div>
+                <div className={`w-3 h-3 rounded-full ${
+                  order.status === 'confirmed' ? 'bg-green-600' : 'bg-gray-300'
+                }`}></div>
               </div>
               <div className="flex justify-between text-xs text-gray-600">
-                <span>Order Placed</span>
-                <span>Processing</span>
-                <span>Delivered</span>
+                <span>Đã đặt hàng</span>
+                <span>Đã xác nhận</span>
+                <span>Đã giao hàng</span>
               </div>
             </div>
           </div>
           <p className="text-sm text-gray-700 mt-4">
-            Your order is being processed and will be delivered by{' '}
-            <span className="font-bold text-black">{estimatedDelivery.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</span>
+            {order.status === 'confirmed' 
+              ? `Đơn hàng của bạn đã được xác nhận và sẽ được giao trước ngày ${estimatedDelivery.toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}`
+              : order.status === 'rejected'
+              ? 'Đơn hàng của bạn đã bị từ chối. Vui lòng liên hệ với bộ phận hỗ trợ khách hàng để biết thêm chi tiết.'
+              : 'Đơn hàng của bạn đang chờ admin xác nhận. Chúng tôi sẽ xử lý trong thời gian sớm nhất.'
+            }
           </p>
         </div>
 

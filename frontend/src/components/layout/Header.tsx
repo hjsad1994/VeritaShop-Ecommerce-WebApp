@@ -12,21 +12,20 @@ interface HeaderProps {
 export default function Header({ isScrolled = false, theme = 'dark' }: HeaderProps) {
   const { getTotalItems, openCart } = useCart();
   const isLight = theme === 'light';
-  
+
   const textClass = isLight ? 'text-black hover:text-gray-600' : 'text-white hover:text-gray-300';
   const logoClass = isLight ? 'text-black hover:text-gray-700' : 'text-white hover:text-gray-300';
   const dropdownBgClass = isLight ? 'bg-white border-gray-200' : 'bg-gray-900 border-gray-800';
   const dropdownItemClass = isLight ? 'text-black hover:bg-gray-100' : 'text-white hover:bg-gray-800';
   const buttonClass = isLight ? 'bg-black text-white hover:bg-gray-800' : 'bg-white text-black hover:bg-gray-200';
-  
+
   return (
-    <header className={`fixed top-0 w-full z-50 transition-all duration-300 ease-in-out ${
-      isLight 
-        ? 'bg-white border-b border-gray-200' 
-        : isScrolled 
-          ? 'bg-black' 
+    <header className={`fixed top-0 w-full z-50 transition-all duration-300 ease-in-out ${isLight
+        ? 'bg-white border-b border-gray-200'
+        : isScrolled
+          ? 'bg-black'
           : 'bg-transparent'
-    }`}>
+      }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
@@ -38,16 +37,17 @@ export default function Header({ isScrolled = false, theme = 'dark' }: HeaderPro
             <Link href="/shop" className={`transition-all font-medium tracking-wide ${textClass}`}>
               Shop
             </Link>
-            
+
             {/* Category Dropdown */}
             <div className="relative group">
-              <a href="#" className={`transition-all font-medium tracking-wide flex items-center gap-1 ${textClass}`}>
+              <button type="button" className={`transition-all font-medium tracking-wide flex items-center gap-1 ${textClass}`}>
                 Category
-                <svg className="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 transition-transform group-hover:rotate-180"
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
-              </a>
-              
+              </button>
+
               {/* Dropdown Menu */}
               <div className={`absolute top-full left-0 mt-2 w-56 ${dropdownBgClass} border rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform group-hover:translate-y-0 -translate-y-2`}>
                 <div className="py-2">
@@ -72,13 +72,14 @@ export default function Header({ isScrolled = false, theme = 'dark' }: HeaderPro
                 </div>
               </div>
             </div>
-            
-            <a href="#" className={`transition-all font-medium tracking-wide ${textClass}`}>About</a>
-            <a href="#" className={`transition-all font-medium tracking-wide ${textClass}`}>Blog</a>
+
+            <Link href="/about" className={`transition-all font-medium tracking-wide ${textClass}`}>About</Link>
+            <Link href="/blog" className={`transition-all font-medium tracking-wide ${textClass}`}>Blog</Link>
           </nav>
           <div className="flex items-center space-x-4">
+            <Link href="/orders" className={`transition-all font-medium tracking-wide ${textClass}`}>Đơn hàng</Link>
             <Link href="/login" className={`transition-all font-medium tracking-wide ${textClass}`}>Login</Link>
-            <button 
+            <button
               onClick={openCart}
               className={`px-6 py-2 rounded-md font-semibold transition-all flex items-center gap-2 relative ${buttonClass}`}
             >

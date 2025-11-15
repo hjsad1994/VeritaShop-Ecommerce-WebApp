@@ -14,7 +14,6 @@ interface FormData {
   phone: string;
   address: string;
   city: string;
-  zipCode: string;
   country: string;
   paymentMethod: 'card' | 'paypal' | 'cod';
   cardNumber?: string;
@@ -33,7 +32,6 @@ export default function CheckoutPage() {
     phone: '',
     address: '',
     city: '',
-    zipCode: '',
     country: 'Vietnam',
     paymentMethod: 'cod',
   });
@@ -66,7 +64,6 @@ export default function CheckoutPage() {
     if (!formData.phone.trim()) newErrors.phone = 'Phone is required';
     if (!formData.address.trim()) newErrors.address = 'Address is required';
     if (!formData.city.trim()) newErrors.city = 'City is required';
-    if (!formData.zipCode.trim()) newErrors.zipCode = 'Zip code is required';
 
     if (formData.paymentMethod === 'card') {
       if (!formData.cardNumber?.trim()) newErrors.cardNumber = 'Card number is required';
@@ -93,11 +90,15 @@ export default function CheckoutPage() {
       id: Date.now(),
       date: new Date().toISOString(),
       items: items,
-      customerInfo: formData,
+      customerInfo: {
+        ...formData,
+        zipCode: formData.city // Use city as zipCode for now
+      },
       subtotal,
       shipping,
       tax,
       total,
+      status: 'pending',
     };
 
     const orders = JSON.parse(localStorage.getItem('veritas-orders') || '[]');
@@ -142,10 +143,10 @@ export default function CheckoutPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
-        <div className="mb-4">
-          <div className="flex items-center gap-2 text-xs text-gray-600">
+        <div className="mb-6">
+          <div className="flex items-center gap-2 text-sm text-gray-600">
             <Link href="/" className="hover:text-black transition">Home</Link>
             <span>/</span>
             <Link href="/shop" className="hover:text-black transition">Shop</Link>
@@ -154,153 +155,177 @@ export default function CheckoutPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3 mb-6">
-          <div className="bg-gradient-to-br from-black to-gray-800 p-3 rounded-xl shadow-lg">
-            <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-          </div>
+        <div className="flex items-center gap-3 mb-8">
           <div>
             <h1 className="text-3xl font-bold text-black">Checkout</h1>
             <p className="text-sm text-gray-600">Complete your secure order</p>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="grid lg:grid-cols-3 gap-6">
+        <form onSubmit={handleSubmit} className="grid lg:grid-cols-3 gap-8">
           {/* Left Side - Forms */}
-          <div className="lg:col-span-2 space-y-4">
+          <div className="lg:col-span-2 space-y-6">
             {/* Contact Information */}
-            <div className="bg-white border-2 border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="bg-blue-100 p-2 rounded-lg">
-                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-white border border-gray-300 rounded-2xl p-6 shadow-md">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="bg-black p-3 rounded-xl shadow-sm">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                 </div>
-                <h2 className="text-lg font-bold text-black">Contact Information</h2>
-              </div>
-              <div className="grid md:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-black mb-1">First Name *</label>
+                  <h2 className="text-xl font-bold text-gray-900">Contact Information</h2>
+                  <p className="text-sm text-gray-600">Your personal details for order processing</p>
+                </div>
+              </div>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="group">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                    <span>First Name</span>
+                    <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="text"
                     name="firstName"
                     value={formData.firstName}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 text-sm border-2 rounded-lg focus:outline-none transition ${
-                      errors.firstName ? 'border-red-500' : 'border-gray-300 focus:border-black'
-                    }`}
+                    className={`w-full px-4 py-3 text-sm border-2 rounded-xl focus:outline-none transition-all text-black placeholder:text-gray-400 ${errors.firstName
+                      ? 'border-gray-800 bg-gray-100'
+                      : 'border-gray-200 focus:border-black focus:ring-2 focus:ring-gray-200 bg-white'
+                      }`}
                     placeholder="John"
                   />
-                  {errors.firstName && <p className="text-red-500 text-xs mt-0.5">{errors.firstName}</p>}
+                  {errors.firstName && (
+                    <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>
+                  )}
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-black mb-1">Last Name *</label>
+                <div className="group">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                    <span>Last Name</span>
+                    <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="text"
                     name="lastName"
                     value={formData.lastName}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 text-sm border-2 rounded-lg focus:outline-none transition ${
-                      errors.lastName ? 'border-red-500' : 'border-gray-300 focus:border-black'
-                    }`}
+                    className={`w-full px-4 py-3 text-sm border-2 rounded-xl focus:outline-none transition-all text-black placeholder:text-gray-400 ${errors.lastName
+                      ? 'border-gray-800 bg-gray-100'
+                      : 'border-gray-200 focus:border-black focus:ring-2 focus:ring-gray-200 bg-white'
+                      }`}
                     placeholder="Doe"
                   />
-                  {errors.lastName && <p className="text-red-500 text-xs mt-0.5">{errors.lastName}</p>}
+                  {errors.lastName && (
+                    <p className="text-red-500 text-xs mt-1">{errors.lastName}</p>
+                  )}
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-black mb-1">Email Address *</label>
+                <div className="group md:col-span-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                    <span>Email Address</span>
+                    <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="email"
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 text-sm border-2 rounded-lg focus:outline-none transition ${
-                      errors.email ? 'border-red-500' : 'border-gray-300 focus:border-black'
-                    }`}
+                    className={`w-full px-4 py-3 text-sm border-2 rounded-xl focus:outline-none transition-all text-black placeholder:text-gray-400 ${errors.email
+                      ? 'border-gray-800 bg-gray-100'
+                      : 'border-gray-200 focus:border-black focus:ring-2 focus:ring-gray-200 bg-white'
+                      }`}
                     placeholder="john.doe@example.com"
                   />
-                  {errors.email && <p className="text-red-500 text-xs mt-0.5">{errors.email}</p>}
+                  {errors.email && (
+                    <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+                  )}
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-black mb-1">Phone Number *</label>
+                <div className="group md:col-span-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                    <span>Phone Number</span>
+                    <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="tel"
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 text-sm border-2 rounded-lg focus:outline-none transition ${
-                      errors.phone ? 'border-red-500' : 'border-gray-300 focus:border-black'
-                    }`}
+                    className={`w-full px-4 py-3 text-sm border-2 rounded-xl focus:outline-none transition-all text-black placeholder:text-gray-400 ${errors.phone
+                      ? 'border-gray-800 bg-gray-100'
+                      : 'border-gray-200 focus:border-black focus:ring-2 focus:ring-gray-200 bg-white'
+                      }`}
                     placeholder="+84 123 456 789"
                   />
-                  {errors.phone && <p className="text-red-500 text-xs mt-0.5">{errors.phone}</p>}
+                  {errors.phone && (
+                    <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
+                  )}
                 </div>
               </div>
             </div>
 
             {/* Shipping Address */}
-            <div className="bg-white border-2 border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="bg-purple-100 p-2 rounded-lg">
-                  <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            <div className="bg-white border border-gray-300 rounded-2xl p-6 shadow-md">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="bg-black p-3 rounded-xl shadow-sm">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                 </div>
-                <h2 className="text-lg font-bold text-black">Shipping Address</h2>
-              </div>
-              <div className="space-y-3">
                 <div>
-                  <label className="block text-xs font-bold text-black mb-1">Street Address *</label>
+                  <h2 className="text-xl font-bold text-gray-900">Shipping Address</h2>
+                  <p className="text-sm text-gray-600">Where should we deliver your order?</p>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className="group">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                    <span>Street Address</span>
+                    <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="text"
                     name="address"
                     value={formData.address}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 text-sm border-2 rounded-lg focus:outline-none transition ${
-                      errors.address ? 'border-red-500' : 'border-gray-300 focus:border-black'
-                    }`}
+                    className={`w-full px-4 py-3 text-sm border-2 rounded-xl focus:outline-none transition-all text-black placeholder:text-gray-400 ${errors.address ? 'border-gray-800 bg-gray-100' : 'border-gray-200 focus:border-black focus:ring-2 focus:ring-gray-200 bg-white'
+                      }`}
                     placeholder="123 Main Street"
                   />
-                  {errors.address && <p className="text-red-500 text-xs mt-0.5">{errors.address}</p>}
+                  {errors.address && (
+                    <p className="text-red-500 text-xs mt-1">{errors.address}</p>
+                  )}
                 </div>
-                <div className="grid md:grid-cols-3 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-black mb-1">City *</label>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="group">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                      <span>City</span>
+                      <span className="text-red-500">*</span>
+                    </label>
                     <input
                       type="text"
                       name="city"
                       value={formData.city}
                       onChange={handleChange}
-                      className={`w-full px-3 py-2 text-sm border-2 rounded-lg focus:outline-none transition ${
-                        errors.city ? 'border-red-500' : 'border-gray-300 focus:border-black'
-                      }`}
+                      className={`w-full px-4 py-3 text-sm border-2 rounded-xl focus:outline-none transition-all text-black placeholder:text-gray-400 ${errors.city
+                        ? 'border-gray-800 bg-gray-100'
+                        : 'border-gray-200 focus:border-black focus:ring-2 focus:ring-gray-200 bg-white'
+                        }`}
                       placeholder="Ho Chi Minh"
                     />
-                    {errors.city && <p className="text-red-500 text-xs mt-0.5">{errors.city}</p>}
+                    {errors.city && (
+                      <p className="text-red-500 text-xs mt-1">{errors.city}</p>
+                    )}
                   </div>
-                  <div>
-                    <label className="block text-xs font-bold text-black mb-1">Zip Code *</label>
-                    <input
-                      type="text"
-                      name="zipCode"
-                      value={formData.zipCode}
-                      onChange={handleChange}
-                      className={`w-full px-3 py-2 text-sm border-2 rounded-lg focus:outline-none transition ${
-                        errors.zipCode ? 'border-red-500' : 'border-gray-300 focus:border-black'
-                      }`}
-                      placeholder="700000"
-                    />
-                    {errors.zipCode && <p className="text-red-500 text-xs mt-0.5">{errors.zipCode}</p>}
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-black mb-1">Country *</label>
+                  <div className="group">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                      <span>Country</span>
+                      <span className="text-red-500">*</span>
+                    </label>
                     <select
                       name="country"
                       value={formData.country}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 text-sm border-2 border-gray-300 rounded-lg focus:border-black focus:outline-none transition"
+                      className="w-full px-4 py-3 text-sm border-2 border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-2 focus:ring-gray-200 text-black"
                     >
                       <option value="Vietnam">Vietnam</option>
                       <option value="USA">United States</option>
@@ -314,19 +339,22 @@ export default function CheckoutPage() {
             </div>
 
             {/* Payment Method */}
-            <div className="bg-white border-2 border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="bg-green-100 p-2 rounded-lg">
-                  <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-white border-2 border-gray-200 rounded-xl p-6 shadow-sm">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="bg-black p-3 rounded-xl shadow-sm">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                   </svg>
                 </div>
-                <h2 className="text-lg font-bold text-black">Payment Method</h2>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">Payment Method</h2>
+                  <p className="text-sm text-gray-600">Choose your preferred payment option</p>
+                </div>
               </div>
-              <div className="space-y-2">
-                <label className="flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md hover:scale-[1.01] bg-gradient-to-r hover:from-gray-50 hover:to-white"
+              <div className="space-y-3">
+                <label className="flex items-center gap-4 p-4 border-2 rounded-xl cursor-pointer transition-all hover:shadow-md"
                   style={{
-                    borderColor: formData.paymentMethod === 'cod' ? '#22c55e' : '#d1d5db',
+                    borderColor: formData.paymentMethod === 'cod' ? '#10b981' : '#d1d5db',
                     backgroundColor: formData.paymentMethod === 'cod' ? '#f0fdf4' : 'white'
                   }}
                 >
@@ -339,22 +367,15 @@ export default function CheckoutPage() {
                     className="w-4 h-4 text-green-600"
                   />
                   <div className="flex-1">
-                    <div className="font-bold text-sm text-black flex items-center gap-2">
-                      Cash on Delivery
-                      {formData.paymentMethod === 'cod' && (
-                        <span className="bg-green-600 text-white text-xs px-2 py-0.5 rounded-full">Selected</span>
-                      )}
-                    </div>
-                    <div className="text-xs text-gray-600">Pay when you receive your order</div>
+                    <div className="font-semibold text-black">Cash on Delivery</div>
+                    <div className="text-sm text-gray-600">Pay when you receive your order</div>
                   </div>
-                  <div className={`p-2 rounded-lg ${formData.paymentMethod === 'cod' ? 'bg-green-600' : 'bg-gray-200'}`}>
-                    <svg className={`w-5 h-5 ${formData.paymentMethod === 'cod' ? 'text-white' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                  </div>
+                  {formData.paymentMethod === 'cod' && (
+                    <span className="bg-green-600 text-white text-xs px-3 py-1 rounded-full">Selected</span>
+                  )}
                 </label>
 
-                <label className="flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md hover:scale-[1.01] bg-gradient-to-r hover:from-gray-50 hover:to-white"
+                <label className="flex items-center gap-4 p-4 border-2 rounded-xl cursor-pointer transition-all hover:shadow-md"
                   style={{
                     borderColor: formData.paymentMethod === 'card' ? '#3b82f6' : '#d1d5db',
                     backgroundColor: formData.paymentMethod === 'card' ? '#eff6ff' : 'white'
@@ -369,130 +390,87 @@ export default function CheckoutPage() {
                     className="w-4 h-4 text-blue-600"
                   />
                   <div className="flex-1">
-                    <div className="font-bold text-sm text-black flex items-center gap-2">
-                      Credit / Debit Card
-                      {formData.paymentMethod === 'card' && (
-                        <span className="bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full">Selected</span>
-                      )}
-                    </div>
-                    <div className="text-xs text-gray-600">Pay securely with your card</div>
+                    <div className="font-semibold text-black">Credit / Debit Card</div>
+                    <div className="text-sm text-gray-600">Pay securely with your card</div>
                   </div>
-                  <div className={`p-2 rounded-lg ${formData.paymentMethod === 'card' ? 'bg-blue-600' : 'bg-gray-200'}`}>
-                    <svg className={`w-5 h-5 ${formData.paymentMethod === 'card' ? 'text-white' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                    </svg>
-                  </div>
+                  {formData.paymentMethod === 'card' && (
+                    <span className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full">Selected</span>
+                  )}
                 </label>
 
                 {formData.paymentMethod === 'card' && (
-                  <div className="ml-6 space-y-2 pt-3 mt-2 border-t-2 border-blue-100 bg-blue-50 -mx-3 px-3 pb-3 rounded-b-lg">
+                  <div className="ml-8 space-y-4 pt-4 border-t-2 border-gray-300 bg-gray-50 -mx-4 px-4 pb-4">
                     <div>
-                      <label className="block text-xs font-bold text-black mb-1">Card Number *</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Card Number *</label>
                       <input
                         type="text"
                         name="cardNumber"
                         value={formData.cardNumber || ''}
                         onChange={handleChange}
-                        className={`w-full px-3 py-2 text-sm border-2 rounded-lg focus:outline-none transition ${
-                          errors.cardNumber ? 'border-red-500' : 'border-gray-300 focus:border-black'
-                        }`}
+                        className={`w-full px-4 py-3 text-sm border-2 rounded-xl focus:outline-none transition text-black placeholder:text-gray-400 ${errors.cardNumber ? 'border-gray-800 bg-gray-100' : 'border-gray-300 focus:border-black'
+                          }`}
                         placeholder="1234 5678 9012 3456"
-                        maxLength={19}
                       />
-                      {errors.cardNumber && <p className="text-red-500 text-xs mt-0.5">{errors.cardNumber}</p>}
+                      {errors.cardNumber && <p className="text-red-500 text-xs mt-1">{errors.cardNumber}</p>}
                     </div>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-bold text-black mb-1">Expiry Date *</label>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Expiry Date *</label>
                         <input
                           type="text"
                           name="cardExpiry"
                           value={formData.cardExpiry || ''}
                           onChange={handleChange}
-                          className={`w-full px-3 py-2 text-sm border-2 rounded-lg focus:outline-none transition ${
-                            errors.cardExpiry ? 'border-red-500' : 'border-gray-300 focus:border-black'
-                          }`}
+                          className={`w-full px-4 py-3 text-sm border-2 rounded-xl focus:outline-none transition text-black placeholder:text-gray-400 ${errors.cardExpiry ? 'border-gray-800 bg-gray-100' : 'border-gray-300 focus:border-black'
+                            }`}
                           placeholder="MM/YY"
-                          maxLength={5}
                         />
-                        {errors.cardExpiry && <p className="text-red-500 text-xs mt-0.5">{errors.cardExpiry}</p>}
+                        {errors.cardExpiry && <p className="text-red-500 text-xs mt-1">{errors.cardExpiry}</p>}
                       </div>
                       <div>
-                        <label className="block text-xs font-bold text-black mb-1">CVV *</label>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">CVV *</label>
                         <input
                           type="text"
                           name="cardCVV"
                           value={formData.cardCVV || ''}
                           onChange={handleChange}
-                          className={`w-full px-3 py-2 text-sm border-2 rounded-lg focus:outline-none transition ${
-                            errors.cardCVV ? 'border-red-500' : 'border-gray-300 focus:border-black'
-                          }`}
+                          className={`w-full px-4 py-3 text-sm border-2 rounded-xl focus:outline-none transition text-black placeholder:text-gray-400 ${errors.cardCVV ? 'border-gray-800 bg-gray-100' : 'border-gray-300 focus:border-black'
+                            }`}
                           placeholder="123"
-                          maxLength={4}
                         />
-                        {errors.cardCVV && <p className="text-red-500 text-xs mt-0.5">{errors.cardCVV}</p>}
+                        {errors.cardCVV && <p className="text-red-500 text-xs mt-1">{errors.cardCVV}</p>}
                       </div>
                     </div>
                   </div>
                 )}
-
-                <label className="flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md hover:scale-[1.01] bg-gradient-to-r hover:from-gray-50 hover:to-white"
-                  style={{
-                    borderColor: formData.paymentMethod === 'paypal' ? '#0070ba' : '#d1d5db',
-                    backgroundColor: formData.paymentMethod === 'paypal' ? '#f0f7ff' : 'white'
-                  }}
-                >
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value="paypal"
-                    checked={formData.paymentMethod === 'paypal'}
-                    onChange={handleChange}
-                    className="w-4 h-4"
-                  />
-                  <div className="flex-1">
-                    <div className="font-bold text-sm text-black flex items-center gap-2">
-                      PayPal
-                      {formData.paymentMethod === 'paypal' && (
-                        <span className="bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full">Selected</span>
-                      )}
-                    </div>
-                    <div className="text-xs text-gray-600">Pay with your PayPal account</div>
-                  </div>
-                  <div className={`p-2 rounded-lg ${formData.paymentMethod === 'paypal' ? 'bg-blue-600' : 'bg-gray-200'}`}>
-                    <svg className={`w-5 h-5 ${formData.paymentMethod === 'paypal' ? 'text-white' : 'text-blue-600'}`} fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M20.067 8.478c.492.88.556 2.014.3 3.327-.74 3.806-3.276 5.12-6.514 5.12h-.5a.805.805 0 00-.794.68l-.04.22-.63 3.993-.028.17a.804.804 0 01-.794.68H7.72a.483.483 0 01-.477-.558L9.187 7.99a.962.962 0 01.949-.8h4.087c1.032 0 1.946.124 2.742.39 1.17.39 2.015 1.038 2.538 1.989.164.297.296.611.396.937l.168-.028z"/>
-                    </svg>
-                  </div>
-                </label>
               </div>
             </div>
           </div>
 
           {/* Right Side - Order Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-4 sticky top-20 shadow-lg border-2 border-gray-200">
-              <div className="flex items-center gap-2 mb-4 pb-3 border-b-2 border-gray-200">
-                <div className="bg-gradient-to-br from-yellow-400 to-orange-500 p-2 rounded-lg shadow-md">
-                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-white rounded-xl p-6 sticky top-24 shadow-md border-2 border-gray-300">
+              <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-gray-300">
+                <div className="bg-gradient-to-br from-orange-500 to-red-500 p-3 rounded-xl shadow-sm">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                 </div>
-                <h2 className="text-lg font-bold text-black">Order Summary</h2>
+                <h2 className="text-xl font-bold text-black">Order Summary</h2>
               </div>
 
               {/* Items */}
-              <div className="space-y-2 mb-4 max-h-60 overflow-y-auto">
+              <div className="space-y-3 mb-6 max-h-64 overflow-y-auto">
                 {items.map((item, index) => (
-                  <div key={`${item.product.id}-${item.selectedColor}-${index}`} className="flex gap-2 p-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                    <div className="w-14 h-14 bg-gray-50 rounded-lg flex-shrink-0 overflow-hidden ring-2 ring-gray-200">
-                      <img src={item.product.image} alt={item.product.name} className="w-full h-full object-contain p-1" />
+                  <div key={`${item.product.id}-${item.selectedColor}-${index}`} className="flex gap-3 p-3 bg-white rounded-lg shadow-sm">
+                    <div className="w-16 h-16 bg-gray-50 rounded-lg flex-shrink-0 overflow-hidden border-2 border-gray-200">
+                      <img src={item.product.image} alt={item.product.name} className="w-full h-full object-contain p-2" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-xs font-bold text-black truncate">{item.product.name}</h3>
+                      <h3 className="text-sm font-semibold text-black truncate">{item.product.name}</h3>
                       <p className="text-xs text-gray-600">{item.selectedColor} • Qty: {item.quantity}</p>
-                      <div className="flex items-center gap-1 mt-0.5">
-                        <span className="text-sm font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                      <div className="flex items-center gap-1 mt-1">
+                        <span className="text-sm font-bold text-black">
                           ${(item.product.price * item.quantity).toFixed(2)}
                         </span>
                       </div>
@@ -502,33 +480,28 @@ export default function CheckoutPage() {
               </div>
 
               {/* Pricing */}
-              <div className="bg-white rounded-lg p-3 shadow-sm space-y-2">
-                <div className="flex justify-between text-xs">
+              <div className="bg-white rounded-lg p-4 shadow-sm space-y-3">
+                <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Subtotal</span>
-                  <span className="font-bold text-black">${subtotal.toFixed(2)}</span>
+                  <span className="font-semibold text-black">${subtotal.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-xs">
+                <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Shipping</span>
-                  <span className="font-bold">
+                  <span className="font-semibold">
                     {shipping === 0 ? (
-                      <span className="text-green-600 flex items-center gap-1">
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        FREE
-                      </span>
+                      <span className="text-black font-semibold">FREE</span>
                     ) : (
                       <span className="text-black">${shipping.toFixed(2)}</span>
                     )}
                   </span>
                 </div>
-                <div className="flex justify-between text-xs">
+                <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Tax (10%)</span>
-                  <span className="font-bold text-black">${tax.toFixed(2)}</span>
+                  <span className="font-semibold text-black">${tax.toFixed(2)}</span>
                 </div>
-                <div className="border-t-2 border-gray-200 pt-2 flex justify-between items-center bg-gradient-to-r from-gray-50 to-white -mx-3 px-3 -mb-3 pb-3 rounded-b-lg mt-3">
-                  <span className="text-base font-bold text-black">Total</span>
-                  <span className="text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                <div className="border-t-2 border-gray-200 pt-3 flex justify-between items-center">
+                  <span className="text-lg font-bold text-black">Total</span>
+                  <span className="text-xl font-bold text-black">
                     ${total.toFixed(2)}
                   </span>
                 </div>
@@ -538,23 +511,22 @@ export default function CheckoutPage() {
               <button
                 type="submit"
                 disabled={isProcessing}
-                className={`w-full mt-4 py-3 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 shadow-lg ${
-                  isProcessing
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700 hover:scale-[1.02] hover:shadow-xl'
-                }`}
+                className={`w-full mt-6 py-4 rounded-xl font-bold text-base transition-all flex items-center justify-center gap-3 shadow-lg ${isProcessing
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-green-600 text-white hover:bg-green-700 hover:shadow-xl'
+                  }`}
               >
                 {isProcessing ? (
                   <>
-                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                    <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                     </svg>
                     Processing...
                   </>
                 ) : (
                   <>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                     </svg>
                     Complete Order
@@ -563,15 +535,15 @@ export default function CheckoutPage() {
               </button>
 
               {/* Security Badges */}
-              <div className="mt-3 space-y-2">
-                <div className="flex items-center justify-center gap-2 text-xs">
-                  <div className="bg-white px-2 py-1 rounded shadow-sm">
+              <div className="mt-6 space-y-2">
+                <div className="flex items-center justify-center gap-3 text-xs">
+                  <div className="bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-200">
                     <span className="font-bold text-blue-600">VISA</span>
                   </div>
-                  <div className="bg-white px-2 py-1 rounded shadow-sm">
+                  <div className="bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-200">
                     <span className="font-bold text-orange-600">MasterCard</span>
                   </div>
-                  <div className="bg-white px-2 py-1 rounded shadow-sm">
+                  <div className="bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-200">
                     <span className="font-bold text-blue-700">PayPal</span>
                   </div>
                 </div>

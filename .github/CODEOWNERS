@@ -1,0 +1,87 @@
+# VeritaShop Code Owners
+#
+# This file defines who is responsible for code in different parts of the repository.
+# When a PR is created, GitHub will automatically request reviews from the code owners.
+#
+# Format: path/to/code @username1 @username2
+# More specific patterns take precedence over general ones.
+#
+# Learn more: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# ============================================================================
+# DEFAULT OWNERS
+# ============================================================================
+# Lead reviews everything by default
+* @hjsad1994
+
+# ============================================================================
+# BACKEND
+# ============================================================================
+# Backend code - Lead + Backend developer
+/backend/ @hjsad1994 @ty2303
+
+# Database Schema - Requires Lead approval (critical changes)
+/backend/prisma/ @hjsad1994
+/backend/prisma/schema.prisma @hjsad1994
+/backend/prisma/migrations/ @hjsad1994
+
+# Backend Configuration
+/backend/src/config/ @hjsad1994 @ty2303
+/backend/.env.example @hjsad1994
+/backend/package.json @hjsad1994
+
+# Authentication & Security - Lead must review
+/backend/src/middleware/auth.ts @hjsad1994
+/backend/src/services/AuthService.ts @hjsad1994
+/backend/src/controllers/AuthController.ts @hjsad1994
+
+# ============================================================================
+# FRONTEND
+# ============================================================================
+# Frontend code - All team members
+/frontend/ @hjsad1994 @NgoTienTai @ty2303
+
+# Frontend Configuration
+/frontend/package.json @hjsad1994 @NgoTienTai
+/frontend/next.config.mjs @hjsad1994 @NgoTienTai
+/frontend/tailwind.config.ts @hjsad1994 @NgoTienTai
+
+# Core Layout Components
+/frontend/src/components/layout/ @hjsad1994 @NgoTienTai
+
+# Authentication Pages
+/frontend/src/app/login/ @hjsad1994 @ty2303
+/frontend/src/app/register/ @hjsad1994 @ty2303
+
+# Admin Dashboard
+/frontend/src/app/admin/ @hjsad1994 @NgoTienTai
+
+# Cart & Checkout (E-commerce critical)
+/frontend/src/contexts/CartContext.tsx @hjsad1994 @ty2303
+/frontend/src/app/checkout/ @hjsad1994 @ty2303
+
+# ============================================================================
+# INFRASTRUCTURE & DEVOPS
+# ============================================================================
+# Docker & Database Setup - Lead only
+/docker-compose.yml @hjsad1994
+/.env.example @hjsad1994
+
+# Git Configuration
+/.gitignore @hjsad1994
+/.gitattributes @hjsad1994
+
+# Documentation
+/POSTMAN_GUIDE.md @hjsad1994
+/README.md @hjsad1994
+
+# License
+/LICENSE @hjsad1994
+
+# ============================================================================
+# GITHUB CONFIGURATION
+# ============================================================================
+# GitHub workflows and templates - Lead approval required
+/.github/ @hjsad1994
+/.github/CODEOWNERS @hjsad1994
+/.github/workflows/ @hjsad1994

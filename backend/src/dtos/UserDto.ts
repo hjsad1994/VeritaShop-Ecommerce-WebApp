@@ -1,4 +1,5 @@
-import { User } from '@prisma/client';
+import { UpdateUserData } from './../repositories/UserRepository';
+import { User, Role } from '@prisma/client';
 
 export class UserDto {
   id: string;
@@ -41,4 +42,11 @@ export interface AuthResponseDto {
   user: UserDto;
   accessToken?: string;
   refreshToken?: string;
+}
+
+export interface UpdateUserDataDto {
+  name?: string;
+  phone?: string;
+  address?: string;
+  avatar?: string;
 }

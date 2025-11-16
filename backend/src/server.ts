@@ -7,7 +7,7 @@ import { RepositoryFactory } from './repositories';
 import { errorHandler, notFoundHandler, requestLogger } from './middleware';
 import { logger } from './utils/logger';
 import { createAuthRoutes } from './routes/authRoutes';
-
+import { createUserRoutes } from './routes/userRoutes';
 // Initialize Express app
 const app: Application = express();
 
@@ -49,7 +49,7 @@ app.get('/health', (req, res) => {
 
 // API Routes (initialize after RepositoryFactory)
 app.use('/api/auth', createAuthRoutes());
-
+app.use('/api/users', createUserRoutes());
 // 404 handler
 app.use(notFoundHandler);
 

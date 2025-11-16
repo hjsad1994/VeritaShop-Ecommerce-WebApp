@@ -41,6 +41,11 @@ export const SUCCESS_MESSAGES = {
   CREATE_PRODUCT_SUCCESS: 'Tạo sản phẩm thành công',
   UPDATE_PRODUCT_SUCCESS: 'Cập nhật sản phẩm thành công',
   DELETE_PRODUCT_SUCCESS: 'Xóa sản phẩm thành công',
+  GET_BRANDS_SUCCESS: 'Lấy danh sách thương hiệu thành công',
+  GET_BRAND_SUCCESS: 'Lấy thông tin thương hiệu thành công',
+  CREATE_BRAND_SUCCESS: 'Tạo thương hiệu thành công',
+  UPDATE_BRAND_SUCCESS: 'Cập nhật thương hiệu thành công',
+  DELETE_BRAND_SUCCESS: 'Xóa thương hiệu thành công',
 } as const;
 
 export const USER_ROLES = {

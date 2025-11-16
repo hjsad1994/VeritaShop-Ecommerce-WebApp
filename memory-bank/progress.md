@@ -129,49 +129,14 @@
 
 ## To Do (Prioritized) 📋
 
-### Phase 2: Product Management (85% Complete) ✅
-- [x] Product model (Prisma schema) ✅
-- [x] Product DTOs ✅
-  - [x] CreateProductData, UpdateProductData interfaces
-  - [x] ProductQueryOptions with filters
-  - [x] ProductDto class with response formatting
-  - [x] ProductResponse & ProductDetailResponse types
-- [x] Product repository ✅
-  - [x] 11 methods (findAll, findById, findFeatured, findPopular, create, update, delete, etc.)
-  - [x] Advanced filtering (brand, category, price, search)
-  - [x] Pagination & sorting (6 options)
-  - [x] Transaction support
-  - [x] Vietnamese slug generation
-- [x] Product service ✅
-  - [x] getAllProducts with pagination
-  - [x] getProductById (by ID or slug)
-  - [x] getFeaturedProducts
-  - [x] getPopularProducts
-  - [x] createProduct with validation
-  - [x] updateProduct with validation
-  - [x] deleteProduct (soft delete)
-  - [x] incrementViewCount
-- [x] Product controller ✅
-  - [x] All CRUD operations
-  - [x] Error handling
-  - [x] DTO transformation
-- [x] Product routes ✅
-  - [x] Public routes (GET list, detail, featured, popular, view count)
-  - [x] Protected routes (POST, PUT, DELETE with auth & authorization)
-- [x] Product validation ✅
-  - [x] Query validation (page, limit, filters, sort)
-  - [x] Create validation (all required fields)
-  - [x] Update validation (partial updates)
-- [x] Product API Testing ✅
-  - [x] All public endpoints tested
-  - [x] Validation tested (duplicate slug detection)
-  - [x] Seed data created (3 products, brands, categories)
-  - [x] Test results documented (PRODUCT_API_TEST_RESULTS.md)
-- [x] Category model ✅
-- [x] Brand model ✅
-- [x] Product-Category-Brand relationships ✅
-- [ ] Category API (TODO)
-- [ ] Brand API (TODO)
+### Phase 2: Product/Category/Brand APIs (100% Complete) ✅
+- [x] Product API ✅ (8 endpoints, 11 repository methods)
+- [x] Category API ✅ (7 endpoints, 11 repository methods, nested hierarchy)
+- [x] Brand API ✅ (6 endpoints, refactored with constants)
+- [x] All APIs using centralized constants ✅
+- [x] Vietnamese slug generation for all ✅
+- [x] Comprehensive testing completed ✅
+- [x] Full documentation created ✅
 
 ### Phase 3: Cart & Orders
 - [ ] Cart model
@@ -210,20 +175,34 @@
 
 ## Current Status Summary
 
-### Overall Progress: ~45%
-- ✅ Backend foundation: 100%
-- ✅ User management (Full Stack): 100%
-- ✅ Frontend-Backend Integration: 100%
+### Overall Progress: ~60%
+- ✅ Frontend UI: 100%
+- ✅ Backend Architecture: 100%
+- ✅ User Authentication (Full Stack): 100%
 - ✅ Database Setup: 100%
-- ✅ Authentication Flow: 100%
-- ✅ Database Schema Design: 100%
+- ✅ Frontend-Backend Integration: 100%
+- ✅ Database Schema Design: 100% (13 models)
 - ✅ GitIgnore Configuration: 100%
-- ✅ Product Management API: 85% (missing Category/Brand APIs)
+- ✅ Product API: 100% (8 endpoints, tested)
+- ✅ Category API: 100% (7 endpoints, nested hierarchy, tested)
+- ✅ Brand API: 100% (6 endpoints, refactored with constants, tested)
 - ⏳ Cart & Orders: 0% (APIs not implemented yet)
 - ⏳ Payment: 0%
-- ⏳ Admin features: 50% (UI only, no backend)
 
-### What's Working ✅
+### Current Focus
+**Phase 2 COMPLETED**: All 3 core API modules (Product, Category, Brand) are 100% complete, tested, and production-ready!
+
+**Next Phase**: Cart & Order Management APIs
+
+### Next Actions
+1. ✅ COMPLETED: Product API implementation
+2. ✅ COMPLETED: Category API implementation
+3. ✅ COMPLETED: Brand API implementation
+4. ✅ COMPLETED: Refactor all APIs to use constants
+5. ✅ COMPLETED: Comprehensive testing & documentation
+6. **NEXT**: Implement Cart API
+7. **NEXT**: Implement Order API
+8. **NEXT**: Frontend integration with all APIs
 1. Complete backend architecture
 2. Complete frontend UI (all pages)
 3. Type-safe TypeScript codebase (both sides)
@@ -271,7 +250,7 @@
 - Code Comments: Well documented
 
 ### API Endpoints
-- Implemented: 14 endpoints (Auth + User + Products)
+- Implemented: 21 endpoints (Auth + User + Product + Category + Brand)
   - **Authentication (4):**
     - POST /api/auth/register
     - POST /api/auth/login
@@ -289,8 +268,23 @@
     - POST /api/products (Admin/Manager)
     - PUT /api/products/:id (Admin/Manager)
     - DELETE /api/products/:id (Admin)
-- Tested: 13 endpoints ✅ (all working)
-- Documented: All endpoints (Postman + PRODUCT_API_TEST_RESULTS.md)
+  - **Category Management (7):**
+    - GET /api/categories (list with pagination)
+    - GET /api/categories/tree (hierarchical structure)
+    - GET /api/categories/:id (by ID or slug)
+    - GET /api/categories/:slug/products
+    - POST /api/categories (Admin/Manager)
+    - PUT /api/categories/:id (Admin/Manager)
+    - DELETE /api/categories/:id (Admin)
+  - **Brand Management (6):**
+    - GET /api/brands (list with pagination)
+    - GET /api/brands/:slug (by ID or slug)
+    - GET /api/brands/:slug/products
+    - POST /api/brands (Admin/Manager)
+    - PUT /api/brands/:id (Admin/Manager)
+    - DELETE /api/brands/:id (Admin)
+- Tested: 21 endpoints ✅ (all working)
+- Documented: All endpoints (3 comprehensive test result docs)
 
 ### Database Models
 - Defined: 13 models (User, Brand, Category, Product, ProductSpecs, ProductVariant, ProductImage, Review, Comment, Cart, CartItem, Order, OrderItem)
@@ -302,7 +296,9 @@
 ### Repositories Implemented
 - UserRepository: ✅ Complete (user management)
 - ProductRepository: ✅ Complete (11 methods with advanced filtering)
-- Remaining: Brand, Category, Order, Cart repositories
+- CategoryRepository: ✅ Complete (11 methods with nested hierarchy)
+- BrandRepository: ✅ Complete (10 methods with slug generation)
+- Remaining: Order, Cart repositories
 
 ### Frontend Pages
 - Total: 12+ pages
@@ -322,15 +318,12 @@
 - Auto cookie management ✅
 
 ## Next Session Goals
-1. ✅ COMPLETED: PostgreSQL database setup
-2. ✅ COMPLETED: Configure .env files
-3. ✅ COMPLETED: Run migrations
-4. ✅ COMPLETED: Test authentication endpoints
-5. ✅ COMPLETED: Integrate frontend with backend
-6. ✅ COMPLETED: Product API implementation (Controller, Service, Repository)
-7. ✅ COMPLETED: Product API testing
-8. **NEW PRIORITY**: Integrate frontend Product pages with backend API
-9. **NEXT**: Implement Category & Brand APIs
+1. ✅ COMPLETED: Product API implementation & testing
+2. ✅ COMPLETED: Category API implementation & testing  
+3. ✅ COMPLETED: Brand API refactoring with constants
+4. **NEW PRIORITY**: Implement Cart API
+5. **NEXT**: Implement Order API
+6. **NEXT**: Frontend integration with Product/Category/Brand APIs
 
 ## Timeline Estimate
 - Phase 2 (Products): ~2-3 sessions

@@ -1,9 +1,124 @@
 # Active Context - Current Work Status
 
 ## Current Focus
-**Product API Module Completed (85%)** - Hoàn thành toàn bộ Product API: Repository (11 methods) → Service (8 methods) → Controller (8 handlers) → Routes (8 endpoints) → Validation → Testing. Tất cả public endpoints đã tested và hoạt động tốt. Seed data đã tạo (3 products, brands, categories). Còn thiếu Category và Brand APIs.
+**Category & Brand APIs Completed (100%)** - Đã hoàn thành đầy đủ cả Category API và Brand API. Cả 3 API modules (Product, Category, Brand) đều đã được refactor để sử dụng centralized constants, tested toàn diện, và sẵn sàng production. Tất cả endpoints đang hoạt động tốt với full CRUD, authentication, authorization, và Vietnamese error messages.
 
 ## Recent Changes (Session: 2025-11-16)
+
+### SESSION 7: Brand API Constants Refactoring & Testing (COMPLETED - LATEST)
+
+#### Brand API Refactored to Use Constants ✅
+
+**Problem Solved:**
+- Brand API đang sử dụng hardcoded error messages
+- Không consistent với Category và Product APIs
+- Khó maintain và test
+
+**Solution Implemented:**
+1. ✅ Added 5 Brand constants to `constants/index.ts`
+2. ✅ Refactored BrandRepository (3 error messages)
+3. ✅ Refactored BrandService (4 error handlers)
+4. ✅ Verified BrandController (already using constants)
+
+**Constants Added:**
+```typescript
+BRAND_SLUG_EXISTS: 'Slug thương hiệu đã tồn tại',
+BRAND_NAME_REQUIRED: 'Tên thương hiệu là bắt buộc',
+BRAND_NAME_TOO_SHORT: 'Tên thương hiệu phải có ít nhất 2 ký tự',
+BRAND_NAME_TOO_LONG: 'Tên thương hiệu không được vượt quá 100 ký tự',
+BRAND_HAS_PRODUCTS: 'Không thể xóa thương hiệu có sản phẩm đang hoạt động',
+```
+
+**Testing Results:**
+- ✅ All 6 Brand endpoints tested and working
+- ✅ GET /api/brands - Returns 3 brands (Apple, Samsung, Xiaomi)
+- ✅ GET /api/brands/:slug - Works with slug and ID
+- ✅ GET /api/brands/:slug/products - Returns brand + products
+- ✅ POST, PUT, DELETE - Protected endpoints working with constants
+
+**Files Modified:**
+1. `backend/src/constants/index.ts` - Added 5 constants
+2. `backend/src/repositories/BrandRepository.ts` - 3 messages updated
+3. `backend/src/services/BrandService.ts` - 4 error handlers updated
+
+**Documentation Created:**
+1. `backend/BRAND_API_CONSTANTS_REFACTORING.md`
+2. `backend/BRAND_API_TEST_RESULTS.md`
+
+**Impact:**
+- ✅ All 3 API modules now consistent (Product, Category, Brand)
+- ✅ 100% using centralized constants
+- ✅ Better maintainability and testability
+- ✅ Ready for production
+
+---
+
+### SESSION 6: Category API Full Implementation & Testing (COMPLETED)
+
+#### Complete Category Module Implemented ✅
+
+**Files Created (7 files):**
+1. `backend/src/dtos/CategoryDto.ts` - Response formatting with nested children
+2. `backend/src/repositories/CategoryRepository.ts` - 11 methods (378 lines)
+3. `backend/src/services/CategoryService.ts` - 8 methods (231 lines)
+4. `backend/src/controllers/CategoryController.ts` - 7 handlers (179 lines)
+5. `backend/src/validations/CategoryValidation.ts` - 3 validation schemas
+6. `backend/src/routes/categoryRoutes.ts` - 7 routes with middleware
+7. `backend/CATEGORY_API_TEST_RESULTS.md` - Comprehensive test documentation
+
+**Files Modified (5 files):**
+1. `backend/src/repositories/index.ts` - Added CategoryRepository
+2. `backend/src/services/index.ts` - Added CategoryService
+3. `backend/src/server.ts` - Mounted /api/categories routes
+4. `backend/src/constants/index.ts` - Added 8 error messages, 5 success messages
+5. `backend/prisma/seed.ts` - Created category hierarchy (3 parent + 5 children)
+
+**Category API Endpoints (7 endpoints):**
+
+**Public Routes:**
+- ✅ GET /api/categories - List all with pagination
+- ✅ GET /api/categories/tree - Hierarchical tree structure
+- ✅ GET /api/categories/:id - Get by ID or slug
+- ✅ GET /api/categories/:slug/products - Category with products
+
+**Protected Routes (Admin/Manager):**
+- ✅ POST /api/categories - Create category
+- ✅ PUT /api/categories/:id - Update category
+
+**Protected Routes (Admin only):**
+- ✅ DELETE /api/categories/:id - Soft delete
+
+**Key Features:**
+- ✅ **Nested hierarchy** - Parent-child relationships (unlimited depth)
+- ✅ **Vietnamese slug generation** - "Điện thoại" → "dien-thoai"
+- ✅ **Circular reference prevention** - Cannot create loops
+- ✅ **Soft delete** - Cannot delete if has active products
+- ✅ **Full validation** - Name, slug uniqueness, parent exists
+- ✅ **Constants usage** - All error/success messages from constants
+
+**Testing Results:**
+- ✅ 12 categories in database (3 parent + 5 children + 4 old test data)
+- ✅ Hierarchy: Điện thoại (3 children), Laptop (2 children), Tablet
+- ✅ All endpoints tested and working perfectly
+- ✅ Vietnamese characters preserved correctly
+
+**Seed Data Structure:**
+```
+Điện thoại (parent)
+├── Điện thoại Flagship
+├── Điện thoại Gaming
+└── Điện thoại Phổ thông
+
+Laptop (parent)
+├── Laptop Gaming
+└── Laptop Văn phòng
+
+Tablet (parent)
+```
+
+---
+
+### SESSION 5: Product API Full Stack Implementation & Testing (COMPLETED)
 
 ### SESSION 5: Product API Full Stack Implementation & Testing (COMPLETED - LATEST)
 

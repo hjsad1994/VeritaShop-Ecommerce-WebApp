@@ -30,10 +30,11 @@ model User {
   refreshToken String?   @unique
 
   // Relations
-  reviews      Review[]
-  comments     Comment[]
-  cart         Cart?
-  orders       Order[]
+  reviews         Review[]
+  reviewResponses ReviewResponse[] @relation("ReviewResponses")
+  comments        Comment[]
+  cart            Cart?
+  orders          Order[]
 
   @@index([email])
   @@index([role])
@@ -238,13 +239,45 @@ model Review {
   updatedAt   DateTime  @updatedAt
 
   // Relations
-  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product     Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  images      ReviewImage[]
+  response    ReviewResponse?
 
   @@unique([productId, userId])  // Mỗi user chỉ review 1 lần cho 1 product
   @@index([productId])
   @@index([userId])
   @@index([rating])
+}
+
+model ReviewImage {
+  id          String    @id @default(cuid())
+  reviewId    String
+  imageUrl    String
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+
+  // Relations
+  review      Review    @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@index([reviewId])
+  @@map("review_images")
+}
+
+model ReviewResponse {
+  id          String    @id @default(cuid())
+  reviewId    String    @unique
+  userId      String    // Admin/Manager who responded
+  content     String    @db.Text
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  review      Review    @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  responder   User      @relation("ReviewResponses", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([reviewId])
+  @@map("review_responses")
 }
 
 model Comment {

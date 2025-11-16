@@ -38,6 +38,14 @@ export const ERROR_MESSAGES = {
   BRAND_NAME_TOO_SHORT: 'Tên thương hiệu phải có ít nhất 2 ký tự',
   BRAND_NAME_TOO_LONG: 'Tên thương hiệu không được vượt quá 100 ký tự',
   BRAND_HAS_PRODUCTS: 'Không thể xóa thương hiệu có sản phẩm đang hoạt động',
+  REVIEW_NOT_FOUND: 'Không tìm thấy đánh giá',
+  REVIEW_ALREADY_EXISTS: 'Bạn đã đánh giá sản phẩm này rồi',
+  REVIEW_UNAUTHORIZED: 'Bạn không có quyền chỉnh sửa đánh giá này',
+  REVIEW_MUST_PURCHASE: 'Bạn phải mua sản phẩm trước khi đánh giá',
+  REVIEW_IMAGE_LIMIT: 'Mỗi đánh giá chỉ được tối đa 5 ảnh',
+  REVIEW_IMAGE_NOT_FOUND: 'Không tìm thấy ảnh đánh giá',
+  REVIEW_RESPONSE_NOT_FOUND: 'Không tìm thấy phản hồi đánh giá',
+  REVIEW_RESPONSE_ALREADY_EXISTS: 'Đánh giá này đã có phản hồi',
 } as const;
 
 export const SUCCESS_MESSAGES = {
@@ -63,6 +71,14 @@ export const SUCCESS_MESSAGES = {
   CREATE_CATEGORY_SUCCESS: 'Tạo danh mục thành công',
   UPDATE_CATEGORY_SUCCESS: 'Cập nhật danh mục thành công',
   DELETE_CATEGORY_SUCCESS: 'Xóa danh mục thành công',
+  GET_REVIEWS_SUCCESS: 'Lấy danh sách đánh giá thành công',
+  GET_REVIEW_SUCCESS: 'Lấy thông tin đánh giá thành công',
+  CREATE_REVIEW_SUCCESS: 'Tạo đánh giá thành công',
+  UPDATE_REVIEW_SUCCESS: 'Cập nhật đánh giá thành công',
+  DELETE_REVIEW_SUCCESS: 'Xóa đánh giá thành công',
+  REVIEW_HELPFUL_ADDED: 'Đã đánh dấu hữu ích',
+  CREATE_REVIEW_RESPONSE_SUCCESS: 'Tạo phản hồi thành công',
+  UPDATE_REVIEW_RESPONSE_SUCCESS: 'Cập nhật phản hồi thành công',
 } as const;
 
 export const USER_ROLES = {

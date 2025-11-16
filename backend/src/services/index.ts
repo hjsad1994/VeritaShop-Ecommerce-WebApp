@@ -4,6 +4,7 @@ import { AuthService } from './AuthService';
 import { ProductService } from './ProductService';
 import { BrandService } from './BrandService';
 import { CategoryService } from './CategoryService';
+import { ReviewService } from './ReviewService';
 
 export class ServiceFactory {
   private static authService: AuthService;
@@ -11,6 +12,7 @@ export class ServiceFactory {
   private static productService: ProductService;
   private static brandService: BrandService;
   private static categoryService: CategoryService;
+  private static reviewService: ReviewService;
 
   static getAuthService(): AuthService {
     if (!this.authService) {
@@ -50,5 +52,13 @@ export class ServiceFactory {
       this.categoryService = new CategoryService(categoryRepository);
     }
     return this.categoryService;
+  }
+
+  static getReviewService(): ReviewService {
+    if (!this.reviewService) {
+      const reviewRepository = RepositoryFactory.getReviewRepository();
+      this.reviewService = new ReviewService(reviewRepository);
+    }
+    return this.reviewService;
   }
 }

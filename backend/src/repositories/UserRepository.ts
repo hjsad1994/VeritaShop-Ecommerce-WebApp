@@ -10,9 +10,11 @@ export interface CreateUserData {
 
 export interface UpdateUserData {
   name?: string;
-  email?: string;
-  password?: string;
-  role?: Role;
+  // email?: string;
+  // password?: string;
+  phone?: string;
+  address?: string;
+  avatar?: string;
   refreshToken?: string | null;
 }
 
@@ -75,5 +77,8 @@ export class UserRepository extends BaseRepository<User> {
     refreshToken: string | null
   ): Promise<User> {
     return this.update(userId, { refreshToken });
+  }
+  async updateProfile(userId: string, data: UpdateUserData): Promise<User> {
+    return this.update(userId, data);
   }
 }

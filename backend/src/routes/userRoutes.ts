@@ -1,6 +1,6 @@
 import { UserController } from './../controllers/UserController';
 import express, { Router } from 'express';
-import { UserValidation } from "../dtos/UserValidation";
+import { UserValidation } from "../validations/UserValidation";
 import { validate } from '../middleware/validate';
 import { authenticate } from '../middleware';
 

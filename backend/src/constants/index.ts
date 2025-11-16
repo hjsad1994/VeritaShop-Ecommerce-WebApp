@@ -21,6 +21,11 @@ export const ERROR_MESSAGES = {
   TOKEN_REQUIRED: 'Vui lòng cung cấp access token',
   INTERNAL_ERROR: 'Đã xảy ra lỗi, vui lòng thử lại sau',
   VALIDATION_ERROR: 'Dữ liệu không hợp lệ',
+  PRODUCT_NOT_FOUND: 'Không tìm thấy sản phẩm',
+  BRAND_NOT_FOUND: 'Không tìm thấy thương hiệu',
+  CATEGORY_NOT_FOUND: 'Không tìm thấy danh mục',
+  PRODUCT_SLUG_EXISTS: 'Slug sản phẩm đã tồn tại',
+
 } as const;
 
 export const SUCCESS_MESSAGES = {
@@ -31,6 +36,11 @@ export const SUCCESS_MESSAGES = {
   GET_CURRENT_USER_SUCCESS: 'Lấy thông tin người dùng thành công',
   UPDATE_USER_SUCCESS: 'Cập nhật thông tin người dùng thành công',
   DELETE_USER_SUCCESS: 'Xóa người dùng thành công',
+  GET_PRODUCTS_SUCCESS: 'Lấy danh sách sản phẩm thành công',
+  GET_PRODUCT_SUCCESS: 'Lấy thông tin sản phẩm thành công',
+  CREATE_PRODUCT_SUCCESS: 'Tạo sản phẩm thành công',
+  UPDATE_PRODUCT_SUCCESS: 'Cập nhật sản phẩm thành công',
+  DELETE_PRODUCT_SUCCESS: 'Xóa sản phẩm thành công',
 } as const;
 
 export const USER_ROLES = {

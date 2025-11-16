@@ -8,6 +8,7 @@ import { errorHandler, notFoundHandler, requestLogger } from './middleware';
 import { logger } from './utils/logger';
 import { createAuthRoutes } from './routes/authRoutes';
 import { createUserRoutes } from './routes/userRoutes';
+import { createProductRoutes } from './routes/productRoutes';
 // Initialize Express app
 const app: Application = express();
 
@@ -50,6 +51,7 @@ app.get('/health', (req, res) => {
 // API Routes (initialize after RepositoryFactory)
 app.use('/api/auth', createAuthRoutes());
 app.use('/api/users', createUserRoutes());
+app.use('/api/products', createProductRoutes());
 // 404 handler
 app.use(notFoundHandler);
 

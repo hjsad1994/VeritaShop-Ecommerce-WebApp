@@ -1,6 +1,6 @@
 import express, { Router } from 'express';
 import { AuthController } from '../controllers/authController';
-import { AuthValidation } from '../dtos/AuthValidation';
+import { AuthValidation } from '../validations/AuthValidation';
 import { validate } from '../middleware/validate';
 
 // Factory function to create routes after initialization

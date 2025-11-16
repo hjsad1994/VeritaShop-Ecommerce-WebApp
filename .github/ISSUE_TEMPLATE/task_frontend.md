@@ -70,7 +70,6 @@ assignees: ''
 - [ ] Loading states được implement
 - [ ] Code được format và lint clean
 - [ ] TypeScript types đầy đủ
-- [ ] Tested trên nhiều browsers
 
 ## Files cần làm việc
 <!-- Danh sách files cần tạo hoặc chỉnh sửa -->
@@ -102,27 +101,9 @@ frontend/src/
 - [ ] API endpoint: /api/...
 - [ ] Component: ComponentName
 
-## Testing Checklist
-<!-- Các bước test cần thực hiện -->
-
-- [ ] Test trên Chrome
-- [ ] Test trên Firefox
-- [ ] Test trên Safari
-- [ ] Test responsive mobile
-- [ ] Test với data thật
-- [ ] Test error cases
-- [ ] Test loading states
-
 ## Notes
 <!-- Ghi chú thêm cho người thực hiện -->
 
-
-## References
-<!-- Links tham khảo -->
-
-- Documentation:
-- Related PRs:
-- Design files:
 
 ## Deliverables
 <!-- Những gì cần submit khi hoàn thành -->
@@ -138,5 +119,5 @@ frontend/src/
 - [ ] 0% - Task assigned
 - [ ] 25% - Started development
 - [ ] 50% - Core functionality done
-- [ ] 75% - Testing and bug fixes
+- [ ] 75% - Bug fixes and refinements
 - [ ] 100% - Ready for review

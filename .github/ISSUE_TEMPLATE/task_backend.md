@@ -124,7 +124,6 @@ model ModelName {
 - [ ] Business logic đúng yêu cầu
 - [ ] Code được format và lint clean
 - [ ] TypeScript types đầy đủ
-- [ ] Tests coverage > 80%
 - [ ] API documentation updated
 
 ## Files cần làm việc
@@ -156,28 +155,6 @@ backend/src/
 - [ ] External service: ServiceName
 - [ ] Library: PackageName
 
-## Testing Requirements
-<!-- Yêu cầu về testing -->
-
-**Unit Tests:**
-- [ ] Service layer tests
-- [ ] Repository tests
-- [ ] Validation tests
-
-**Integration Tests:**
-- [ ] API endpoint tests
-- [ ] Database integration tests
-- [ ] Authentication/Authorization tests
-
-**Test Cases:**
-```typescript
-// Test case 1: Success case
-// Test case 2: Validation error
-// Test case 3: Unauthorized access
-// Test case 4: Not found
-// Test case 5: Server error
-```
-
 ## Environment Variables
 <!-- Biến môi trường cần thêm -->
 
@@ -207,20 +184,10 @@ API_KEY=xxx
 <!-- Ghi chú thêm cho người thực hiện -->
 
 
-## References
-<!-- Links tham khảo -->
-
-- API Documentation:
-- Related PRs:
-- External API docs:
-- Database schema:
-
 ## Deliverables
 <!-- Những gì cần submit khi hoàn thành -->
 
 - [ ] Code implementation
-- [ ] Unit tests
-- [ ] Integration tests
 - [ ] API documentation (Postman/Swagger)
 - [ ] Database migration files
 - [ ] Environment variables documentation
@@ -232,5 +199,5 @@ API_KEY=xxx
 - [ ] 0% - Task assigned
 - [ ] 25% - Database schema designed
 - [ ] 50% - Core logic implemented
-- [ ] 75% - Tests written and passing
+- [ ] 75% - Bug fixes and refinements
 - [ ] 100% - Ready for review

@@ -12,9 +12,11 @@
     "kill": "kill-node.bat"
   },
   "dependencies": {
+    "axios": "^1.13.2",
     "next": "^15.0.3",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "react-hot-toast": "^2.6.0"
   },
   "devDependencies": {
     "@types/node": "^20",

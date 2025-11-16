@@ -2,8 +2,12 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
+import { authService } from '@/lib/api';
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -13,6 +17,7 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -21,17 +26,59 @@ export default function RegisterPage() {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Frontend validation
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match');
+      toast.error('Passwords do not match');
       return;
     }
     if (!acceptTerms) {
-      alert('Please accept the terms and conditions');
+      toast.error('Please accept the terms and conditions');
       return;
     }
-    console.log('Register:', formData);
+
+    // Additional password validation
+    if (formData.password.length < 6) {
+      toast.error('Password must be at least 6 characters long');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Call the register API
+      const response = await authService.register({
+        email: formData.email,
+        password: formData.password,
+        name: formData.fullName.trim() || undefined, // Map fullName to name, send undefined if empty
+      });
+
+      // Show success message
+      toast.success(response.message || 'Registration successful! Please login.');
+
+      // Redirect to login page after a short delay
+      setTimeout(() => {
+        router.push('/login');
+      }, 1500);
+
+    } catch (error: any) {
+      // Handle API errors
+      console.error('Registration error:', error);
+
+      if (error.errors && Array.isArray(error.errors)) {
+        // Show validation errors from backend
+        error.errors.forEach((err: any) => {
+          toast.error(err.message);
+        });
+      } else {
+        // Show general error message
+        toast.error(error.message || 'Registration failed. Please try again.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -229,9 +276,10 @@ export default function RegisterPage() {
             {/* Create Account Button */}
             <button
               type="submit"
-              className="w-full bg-white text-black py-3.5 rounded-xl font-semibold hover:bg-gray-100 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
+              disabled={isLoading}
+              className="w-full bg-white text-black py-3.5 rounded-xl font-semibold hover:bg-gray-100 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
-              Create account
+              {isLoading ? 'Creating account...' : 'Create account'}
             </button>
 
             {/* Divider */}

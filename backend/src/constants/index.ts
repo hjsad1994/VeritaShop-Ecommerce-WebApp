@@ -25,7 +25,19 @@ export const ERROR_MESSAGES = {
   BRAND_NOT_FOUND: 'Không tìm thấy thương hiệu',
   CATEGORY_NOT_FOUND: 'Không tìm thấy danh mục',
   PRODUCT_SLUG_EXISTS: 'Slug sản phẩm đã tồn tại',
-
+  CATEGORY_SLUG_EXISTS: 'Slug danh mục đã tồn tại',
+  CATEGORY_NAME_REQUIRED: 'Tên danh mục là bắt buộc',
+  CATEGORY_NAME_TOO_SHORT: 'Tên danh mục phải có ít nhất 2 ký tự',
+  CATEGORY_NAME_TOO_LONG: 'Tên danh mục không được vượt quá 100 ký tự',
+  CATEGORY_PARENT_NOT_FOUND: 'Không tìm thấy danh mục cha',
+  CATEGORY_CIRCULAR_REFERENCE: 'Không thể tạo danh mục vòng lặp: danh mục cha không thể là danh mục con của chính nó',
+  CATEGORY_CANNOT_BE_OWN_PARENT: 'Danh mục không thể là cha của chính nó',
+  CATEGORY_HAS_PRODUCTS: 'Không thể xóa danh mục có sản phẩm đang hoạt động',
+  BRAND_SLUG_EXISTS: 'Slug thương hiệu đã tồn tại',
+  BRAND_NAME_REQUIRED: 'Tên thương hiệu là bắt buộc',
+  BRAND_NAME_TOO_SHORT: 'Tên thương hiệu phải có ít nhất 2 ký tự',
+  BRAND_NAME_TOO_LONG: 'Tên thương hiệu không được vượt quá 100 ký tự',
+  BRAND_HAS_PRODUCTS: 'Không thể xóa thương hiệu có sản phẩm đang hoạt động',
 } as const;
 
 export const SUCCESS_MESSAGES = {
@@ -46,6 +58,11 @@ export const SUCCESS_MESSAGES = {
   CREATE_BRAND_SUCCESS: 'Tạo thương hiệu thành công',
   UPDATE_BRAND_SUCCESS: 'Cập nhật thương hiệu thành công',
   DELETE_BRAND_SUCCESS: 'Xóa thương hiệu thành công',
+  GET_CATEGORIES_SUCCESS: 'Lấy danh sách danh mục thành công',
+  GET_CATEGORY_SUCCESS: 'Lấy thông tin danh mục thành công',
+  CREATE_CATEGORY_SUCCESS: 'Tạo danh mục thành công',
+  UPDATE_CATEGORY_SUCCESS: 'Cập nhật danh mục thành công',
+  DELETE_CATEGORY_SUCCESS: 'Xóa danh mục thành công',
 } as const;
 
 export const USER_ROLES = {

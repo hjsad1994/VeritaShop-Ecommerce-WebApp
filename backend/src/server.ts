@@ -10,6 +10,7 @@ import { createAuthRoutes } from './routes/authRoutes';
 import { createUserRoutes } from './routes/userRoutes';
 import { createProductRoutes } from './routes/productRoutes';
 import { createBrandRoutes } from './routes/brandRoutes';
+import { createCategoryRoutes } from './routes/categoryRoutes';
 // Initialize Express app
 const app: Application = express();
 
@@ -54,6 +55,7 @@ app.use('/api/auth', createAuthRoutes());
 app.use('/api/users', createUserRoutes());
 app.use('/api/products', createProductRoutes());
 app.use('/api/brands', createBrandRoutes());
+app.use('/api/categories', createCategoryRoutes());
 // 404 handler
 app.use(notFoundHandler);
 

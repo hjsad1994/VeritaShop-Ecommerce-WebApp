@@ -51,15 +51,65 @@ async function main() {
     }
   }
 
-  // Create Categories
-  const categories = [
-    { name: "Smartphones", slug: "smartphones", description: "Mobile phones and accessories" },
-    { name: "Laptops", slug: "laptops", description: "Laptop computers" },
-    { name: "Tablets", slug: "tablets", description: "Tablet devices" },
+  // Create Categories with hierarchy
+  const parentCategories = [
+    { name: "Điện thoại", slug: "dien-thoai", description: "Điện thoại thông minh" },
+    { name: "Laptop", slug: "laptop", description: "Máy tính xách tay" },
+    { name: "Tablet", slug: "tablet", description: "Máy tính bảng" },
   ];
 
-  const createdCategories = [];
-  for (const categoryData of categories) {
+  const createdParentCategories = [];
+  for (const categoryData of parentCategories) {
+    const existingCategory = await prisma.category.findUnique({
+      where: { slug: categoryData.slug }
+    });
+
+    if (!existingCategory) {
+      const category = await prisma.category.create({ data: categoryData });
+      createdParentCategories.push(category);
+      console.log("Parent category created:", category.name);
+    } else {
+      createdParentCategories.push(existingCategory);
+      console.log("Parent category already exists:", existingCategory.name);
+    }
+  }
+
+  // Create child categories
+  const childCategories = [
+    { 
+      name: "Điện thoại Flagship", 
+      slug: "dien-thoai-flagship", 
+      description: "Điện thoại cao cấp",
+      parentId: createdParentCategories[0].id 
+    },
+    { 
+      name: "Điện thoại Gaming", 
+      slug: "dien-thoai-gaming", 
+      description: "Điện thoại chuyên game",
+      parentId: createdParentCategories[0].id 
+    },
+    { 
+      name: "Điện thoại Phổ thông", 
+      slug: "dien-thoai-pho-thong", 
+      description: "Điện thoại giá rẻ",
+      parentId: createdParentCategories[0].id 
+    },
+    { 
+      name: "Laptop Gaming", 
+      slug: "laptop-gaming", 
+      description: "Laptop chuyên game",
+      parentId: createdParentCategories[1].id 
+    },
+    { 
+      name: "Laptop Văn phòng", 
+      slug: "laptop-van-phong", 
+      description: "Laptop văn phòng",
+      parentId: createdParentCategories[1].id 
+    },
+  ];
+
+  const createdCategories = [...createdParentCategories];
+  for (const categoryData of childCategories) {
     const existingCategory = await prisma.category.findUnique({
       where: { slug: categoryData.slug }
     });
@@ -67,10 +117,10 @@ async function main() {
     if (!existingCategory) {
       const category = await prisma.category.create({ data: categoryData });
       createdCategories.push(category);
-      console.log("Category created:", category.name);
+      console.log("Child category created:", category.name);
     } else {
       createdCategories.push(existingCategory);
-      console.log("Category already exists:", existingCategory.name);
+      console.log("Child category already exists:", existingCategory.name);
     }
   }
 

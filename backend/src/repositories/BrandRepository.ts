@@ -1,5 +1,6 @@
 import { PrismaClient, Brand } from '@prisma/client';
 import { BaseRepository } from './BaseRepository';
+import { ERROR_MESSAGES } from '../constants';
 
 export interface CreateBrandData {
     name: string;
@@ -97,7 +98,7 @@ export class BrandRepository extends BaseRepository<Brand> {
         // Check slug uniqueness
         const existingBrand = await this.slugExists(slug);
         if (existingBrand) {
-            throw new Error(`Brand with slug "${slug}" already exists`);
+            throw new Error(ERROR_MESSAGES.BRAND_SLUG_EXISTS);
         }
 
         const brand = await this.prisma.brand.create({
@@ -123,7 +124,7 @@ export class BrandRepository extends BaseRepository<Brand> {
         });
 
         if (!existingBrand) {
-            throw new Error('Record to update not found.');
+            throw new Error(ERROR_MESSAGES.BRAND_NOT_FOUND);
         }
 
         // If updating name and no slug provided, regenerate slug
@@ -136,7 +137,7 @@ export class BrandRepository extends BaseRepository<Brand> {
         if (slug && slug !== existingBrand.slug) {
             const slugTaken = await this.slugExists(slug, id);
             if (slugTaken) {
-                throw new Error(`Brand with slug "${slug}" already exists`);
+                throw new Error(ERROR_MESSAGES.BRAND_SLUG_EXISTS);
             }
         }
 

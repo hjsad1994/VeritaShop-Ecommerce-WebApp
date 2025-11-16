@@ -3,12 +3,14 @@ import { RepositoryFactory } from '../repositories';
 import { AuthService } from './AuthService';
 import { ProductService } from './ProductService';
 import { BrandService } from './BrandService';
+import { CategoryService } from './CategoryService';
 
 export class ServiceFactory {
   private static authService: AuthService;
   private static userService: UserService;
   private static productService: ProductService;
   private static brandService: BrandService;
+  private static categoryService: CategoryService;
 
   static getAuthService(): AuthService {
     if (!this.authService) {
@@ -40,5 +42,13 @@ export class ServiceFactory {
       this.brandService = new BrandService(brandRepository);
     }
     return this.brandService;
+  }
+
+  static getCategoryService(): CategoryService {
+    if (!this.categoryService) {
+      const categoryRepository = RepositoryFactory.getCategoryRepository();
+      this.categoryService = new CategoryService(categoryRepository);
+    }
+    return this.categoryService;
   }
 }

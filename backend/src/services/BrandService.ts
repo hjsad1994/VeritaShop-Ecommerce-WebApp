@@ -95,14 +95,12 @@ export class BrandService {
             
             logger.info(`Brand created successfully: ${brand.name}`);
             return brand;
-        } catch (error) {
-            if (error instanceof Error) {
-                if (error.message.includes('slug') && error.message.includes('already exists')) {
-                    throw new ApiError(409, 'Slug thương hiệu đã tồn tại');
-                }
-            }
+        } catch (error: any) {
             logger.error('Error creating brand:', error);
-            throw new ApiError(500, ERROR_MESSAGES.INTERNAL_ERROR);
+            if (error.message === ERROR_MESSAGES.BRAND_SLUG_EXISTS) {
+                throw new ApiError(409, error.message);
+            }
+            throw new ApiError(500, error.message || ERROR_MESSAGES.INTERNAL_ERROR);
         }
     }
 
@@ -115,17 +113,15 @@ export class BrandService {
             
             logger.info(`Brand updated successfully: ${brand.name}`);
             return brand;
-        } catch (error) {
-            if (error instanceof Error) {
-                if (error.message.includes('slug') && error.message.includes('already exists')) {
-                    throw new ApiError(409, 'Slug thương hiệu đã tồn tại');
-                }
-                if (error.message.includes('Record to update not found')) {
-                    throw new ApiError(404, ERROR_MESSAGES.BRAND_NOT_FOUND);
-                }
-            }
+        } catch (error: any) {
             logger.error('Error updating brand:', error);
-            throw new ApiError(500, ERROR_MESSAGES.INTERNAL_ERROR);
+            if (error.message === ERROR_MESSAGES.BRAND_SLUG_EXISTS) {
+                throw new ApiError(409, error.message);
+            }
+            if (error.message === ERROR_MESSAGES.BRAND_NOT_FOUND) {
+                throw new ApiError(404, error.message);
+            }
+            throw new ApiError(500, error.message || ERROR_MESSAGES.INTERNAL_ERROR);
         }
     }
 
@@ -143,18 +139,18 @@ export class BrandService {
             // Check if brand has products
             const productCount = await this.brandRepository.getProductCount(id);
             if (productCount > 0) {
-                throw new ApiError(400, `Không thể xóa thương hiệu đang có ${productCount} sản phẩm`);
+                throw new ApiError(400, `${ERROR_MESSAGES.BRAND_HAS_PRODUCTS} (${productCount} sản phẩm)`);
             }
 
             await this.brandRepository.delete(id);
             
             logger.info(`Brand soft deleted: ${brand.name}`);
-        } catch (error) {
+        } catch (error: any) {
             if (error instanceof ApiError) {
                 throw error;
             }
             logger.error('Error deleting brand:', error);
-            throw new ApiError(500, ERROR_MESSAGES.INTERNAL_ERROR);
+            throw new ApiError(500, error.message || ERROR_MESSAGES.INTERNAL_ERROR);
         }
     }
 

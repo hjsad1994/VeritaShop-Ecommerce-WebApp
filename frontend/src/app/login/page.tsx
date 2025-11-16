@@ -2,16 +2,64 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
+import { authService } from '@/lib/api';
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Login:', { email, password, rememberMe });
+
+    if (!email || !password) {
+      toast.error('Please enter both email and password');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Call the login API
+      const response = await authService.login({
+        email,
+        password,
+      });
+
+      // Show success message
+      toast.success(response.message || 'Login successful!');
+
+      // Store user info in localStorage if needed
+      if (response.data?.user) {
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+      }
+
+      // Redirect to home page after a short delay
+      setTimeout(() => {
+        router.push('/');
+      }, 1000);
+
+    } catch (error: any) {
+      // Handle API errors
+      console.error('Login error:', error);
+
+      if (error.errors && Array.isArray(error.errors)) {
+        // Show validation errors from backend
+        error.errors.forEach((err: any) => {
+          toast.error(err.message);
+        });
+      } else {
+        // Show general error message
+        toast.error(error.message || 'Login failed. Please check your credentials.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -138,9 +186,10 @@ export default function LoginPage() {
             {/* Sign In Button */}
             <button
               type="submit"
-              className="w-full bg-white text-black py-3.5 rounded-xl font-semibold hover:bg-gray-100 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
+              disabled={isLoading}
+              className="w-full bg-white text-black py-3.5 rounded-xl font-semibold hover:bg-gray-100 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
-              Sign in
+              {isLoading ? 'Signing in...' : 'Sign in'}
             </button>
 
             {/* Divider */}

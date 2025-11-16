@@ -1,6 +1,6 @@
 # VeritaShop API - Postman Collection
 
-## 📦 Files đã tạoo
+## 📦 Files đã tạooaa
 
 1. **VeritaShop-API.postman_collection.json** - Collection chứa tất cả API endpoints
 2. **VeritaShop-Local.postman_environment.json** - Environment cho local development

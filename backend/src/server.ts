@@ -9,6 +9,7 @@ import { logger } from './utils/logger';
 import { createAuthRoutes } from './routes/authRoutes';
 import { createUserRoutes } from './routes/userRoutes';
 import { createProductRoutes } from './routes/productRoutes';
+import { createBrandRoutes } from './routes/brandRoutes';
 // Initialize Express app
 const app: Application = express();
 
@@ -52,6 +53,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', createAuthRoutes());
 app.use('/api/users', createUserRoutes());
 app.use('/api/products', createProductRoutes());
+app.use('/api/brands', createBrandRoutes());
 // 404 handler
 app.use(notFoundHandler);
 

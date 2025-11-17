@@ -19,6 +19,9 @@ class CategoryService {
     if (params.includeChildren !== undefined) {
       query.append('includeChildren', params.includeChildren.toString());
     }
+    if (params.isActive !== undefined) {
+      query.append('isActive', params.isActive.toString());
+    }
     return query.toString();
   }
 

@@ -77,6 +77,7 @@ export interface CategoryQueryParams {
   limit?: number;
   search?: string;
   includeChildren?: boolean;
+  isActive?: boolean;
 }
 
 export interface CreateCategoryRequest {
@@ -95,17 +96,34 @@ export interface Product {
   id: string;
   name: string;
   slug: string;
-  brand: string;
-  price: number;
-  oldPrice?: number | null;
-  image: string;
-  isFeatured?: boolean;
-  rating?: number;
-  totalReviews?: number;
-  stock?: number;
-  categoryId?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  description?: string;
+  brand: {
+    id: string;
+    name: string;
+    slug: string;
+    logo?: string | null;
+  };
+  category: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+  basePrice: string; // Backend returns as string
+  discount: number;
+  finalPrice: string; // Backend returns as string
+  isFeatured: boolean;
+  isActive: boolean;
+  viewCount: number;
+  soldCount: number;
+  averageRating: string;
+  reviewCount: number;
+  primaryImage?: string | null;
+  minPrice?: number | null;
+  maxPrice?: number | null;
+  categoryId: string;
+  brandId: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ProductDetail extends Product {
@@ -135,3 +153,32 @@ export interface ProductQueryParams {
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
 }
+
+// Brand and Category types for product creation
+export interface Brand {
+  id: string;
+  name: string;
+  slug: string;
+  logo?: string | null;
+  description?: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateProductRequest {
+  name: string;
+  description?: string;
+  brandId: string;
+  categoryId: string;
+  basePrice: number;
+  discount?: number;
+  isFeatured?: boolean;
+  isActive?: boolean;
+  slug?: string;
+}
+
+export type UpdateProductRequest = Partial<Omit<CreateProductRequest, 'brandId' | 'categoryId'>> & {
+  brandId?: string;
+  categoryId?: string;
+};

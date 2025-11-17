@@ -1,7 +1,6 @@
 'use client';
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
 
 interface Props {
   children: ReactNode;
@@ -15,15 +14,13 @@ interface State {
 }
 
 // Auth Error Fallback Component
-const AuthErrorFallback: React.FC<{ 
-  error?: Error; 
+const AuthErrorFallback: React.FC<{
+  error?: Error;
   resetError: () => void;
 }> = ({ error, resetError }) => {
-  const { logout } = useAuth();
-
   const handleReset = () => {
-    // Clear auth state and localStorage
-    logout();
+    // Clear localStorage directly since we can't use useAuth hook here
+    localStorage.removeItem('verita-user');
     resetError();
   };
 

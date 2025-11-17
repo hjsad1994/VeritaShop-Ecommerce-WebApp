@@ -1,15 +1,27 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import productService from '@/lib/api/productService';
+import brandService from '@/lib/api/brandService';
+import categoryService from '@/lib/api/categoryService';
+import {
+  Product,
+  Brand,
+  Category,
+  CreateProductRequest,
+  UpdateProductRequest
+} from '@/lib/api/types';
 
-interface Product {
-  id: number;
+type ProductFormValues = {
   name: string;
-  category: string;
-  price: number;
   description: string;
-  image: string;
-}
+  brandId: string;
+  categoryId: string;
+  basePrice: string;
+  discount: string;
+  isFeatured: boolean;
+  isActive: boolean;
+};
 
 export default function ProductsPage() {
   const [showModal, setShowModal] = useState(false);
@@ -17,79 +29,229 @@ export default function ProductsPage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const [products, setProducts] = useState<Product[]>([
-    { id: 1, name: 'iPhone 15 Pro Max', category: 'iPhone', price: 1199, description: 'Latest iPhone with A17 Pro chip and titanium design', image: '/api/placeholder/80/80' },
-    { id: 2, name: 'Samsung Galaxy S24 Ultra', category: 'Samsung', price: 1199, description: 'Premium Samsung flagship with S Pen and AI features', image: '/api/placeholder/80/80' },
-    { id: 3, name: 'ASUS ROG Phone 8 Pro', category: 'Gaming', price: 1099, description: 'Ultimate gaming phone with advanced cooling system', image: '/api/placeholder/80/80' },
-    { id: 4, name: 'OnePlus 12', category: 'OnePlus', price: 799, description: 'Flagship killer with Hasselblad camera system', image: '/api/placeholder/80/80' },
-    { id: 5, name: 'Xiaomi 14 Ultra', category: 'Xiaomi', price: 1299, description: 'Professional photography phone with Leica optics', image: '/api/placeholder/80/80' }
-  ]);
+  // Data from API
+  const [products, setProducts] = useState<Product[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
 
-  const categories = ['all', 'iPhone', 'Samsung', 'Gaming', 'Xiaomi', 'OnePlus', 'Huawei'];
+  // Form data
+  const [formData, setFormData] = useState<ProductFormValues>({
+    name: '',
+    description: '',
+    brandId: '',
+    categoryId: '',
+    basePrice: '',
+    discount: '0',
+    isFeatured: false,
+    isActive: true
+  });
+
+  const getErrorMessage = (err: unknown, fallback = 'An unexpected error occurred'): string => {
+    if (err instanceof Error) {
+      return err.message;
+    }
+    if (typeof err === 'string') {
+      return err;
+    }
+    return fallback;
+  };
+
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Load all data in parallel
+      const [productsRes, brandsRes, categoriesRes] = await Promise.all([
+        productService.getProducts({ limit: 100 }),
+        brandService.getBrands({ isActive: true, limit: 100 }),
+        categoryService.getCategories({ isActive: true, limit: 100 })
+      ]);
+
+      setProducts(productsRes.products);
+      setBrands(brandsRes.brands);
+      setCategories(categoriesRes.categories);
+    } catch (err: unknown) {
+      console.error('Error loading data:', err);
+      setError(getErrorMessage(err, 'Failed to load data'));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Load data on mount
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         product.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = filterCategory === 'all' || product.category === filterCategory;
+                         (product.description && product.description.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesCategory = filterCategory === 'all' || product.category?.id === filterCategory;
     return matchesSearch && matchesCategory;
   });
 
   const handleAdd = () => {
     setModalMode('add');
     setSelectedProduct(null);
+    setFormData({
+      name: '',
+      description: '',
+      brandId: brands.length > 0 ? brands[0].id : '',
+      categoryId: categories.length > 0 ? categories[0].id : '',
+      basePrice: '',
+      discount: '0',
+      isFeatured: false,
+      isActive: true
+    });
     setShowModal(true);
   };
 
   const handleEdit = (product: Product) => {
     setModalMode('edit');
     setSelectedProduct(product);
+    setFormData({
+      name: product.name,
+      description: product.description || '',
+      brandId: product.brand?.id || product.brandId || '', // Hiển thị thương hiệu hiện tại
+      categoryId: product.category?.id || product.categoryId || '', // Hiển thị danh mục hiện tại
+      basePrice: (parseFloat(product.basePrice) / 1000000).toString(), // Convert from VND to millions for display
+      discount: product.discount.toString(),
+      isFeatured: product.isFeatured,
+      isActive: product.isActive
+    });
     setShowModal(true);
   };
 
-  const handleDelete = (productId: number) => {
-    if (confirm('Are you sure you want to delete this product?')) {
+  const handleDelete = async (productId: string) => {
+    if (!confirm('Are you sure you want to delete this product?')) {
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      await productService.deleteProduct(productId);
+
+      // Remove from local state
       setProducts(products.filter(p => p.id !== productId));
+
+      alert('Product deleted successfully!');
+    } catch (err: unknown) {
+      console.error('Error deleting product:', err);
+      alert(getErrorMessage(err, 'Failed to delete product'));
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    
-    if (modalMode === 'add') {
-      const newProduct: Product = {
-        id: Math.max(...products.map(p => p.id)) + 1,
-        name: formData.get('name') as string,
-        category: formData.get('category') as string,
-        price: parseFloat(formData.get('price') as string),
-        description: formData.get('description') as string,
-        image: '/api/placeholder/80/80'
-      };
-      setProducts([...products, newProduct]);
-    } else if (selectedProduct) {
-      setProducts(products.map(p => 
-        p.id === selectedProduct.id 
-          ? {
-              ...p,
-              name: formData.get('name') as string,
-              category: formData.get('category') as string,
-              price: parseFloat(formData.get('price') as string),
-              description: formData.get('description') as string
-            }
-          : p
-      ));
+
+    if (!formData.name || !formData.basePrice) {
+      alert('Vui lòng điền tên sản phẩm và giá');
+      return;
     }
-    
-    setShowModal(false);
+
+    // For new products, brand and category are required
+    if (modalMode === 'add' && (!formData.brandId || !formData.categoryId)) {
+      alert('Vui lòng chọn thương hiệu và danh mục cho sản phẩm mới');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      setError(null);
+
+      const basePriceVnd = parseFloat(formData.basePrice) * 1000000; // Convert from millions to VND
+      const discountValue = parseFloat(formData.discount) || 0;
+
+      if (modalMode === 'add') {
+        const newProductPayload: CreateProductRequest = {
+          name: formData.name,
+          brandId: formData.brandId,
+          categoryId: formData.categoryId,
+          basePrice: basePriceVnd,
+          discount: discountValue,
+          isFeatured: formData.isFeatured,
+          isActive: formData.isActive
+        };
+
+        if (formData.description) {
+          newProductPayload.description = formData.description;
+        }
+
+        const newProduct = await productService.createProduct(newProductPayload);
+        setProducts([...products, newProduct]);
+        alert('Product created successfully!');
+      } else if (selectedProduct) {
+        const productData: UpdateProductRequest = {
+          name: formData.name,
+          basePrice: basePriceVnd,
+          discount: discountValue,
+          isFeatured: formData.isFeatured,
+          isActive: formData.isActive
+        };
+
+        if (formData.description) {
+          productData.description = formData.description;
+        }
+        if (formData.brandId) {
+          productData.brandId = formData.brandId;
+        }
+        if (formData.categoryId) {
+          productData.categoryId = formData.categoryId;
+        }
+
+        const updatedProduct = await productService.updateProduct(selectedProduct.id, productData);
+        setProducts(products.map(p => p.id === selectedProduct.id ? updatedProduct : p));
+        alert('Product updated successfully!');
+      }
+
+      setShowModal(false);
+    } catch (err: unknown) {
+      console.error('Error saving product:', err);
+      setError(getErrorMessage(err, 'Failed to save product'));
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    const fieldName = name as keyof ProductFormValues;
+    const nextValue = (type === 'checkbox'
+      ? (e.target as HTMLInputElement).checked
+      : value) as ProductFormValues[typeof fieldName];
+
+    setFormData(prev => ({
+      ...prev,
+      [fieldName]: nextValue
+    }));
+  };
+
+  if (loading) {
+    return (
+      <div className="p-8">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4"></div>
+            <p className="text-black">Loading products...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h2 className="text-3xl font-bold text-black mb-2">Product Management</h2>
-          <p className="text-sm text-black">Manage your product catalog</p>
+          <p className="text-sm text-black">Manage your product catalog ({products.length} products)</p>
         </div>
         <button
           onClick={handleAdd}
@@ -101,6 +263,12 @@ export default function ProductsPage() {
           Add Product
         </button>
       </div>
+
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-red-600">{error}</p>
+        </div>
+      )}
 
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         <div className="p-6 border-b border-gray-200">
@@ -117,15 +285,15 @@ export default function ProductsPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
-            
+
             <select
               value={filterCategory}
               onChange={(e) => setFilterCategory(e.target.value)}
               className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-black"
             >
               <option value="all">All Categories</option>
-              {categories.filter(c => c !== 'all').map(category => (
-                <option key={category} value={category}>{category}</option>
+              {categories.map(category => (
+                <option key={category.id} value={category.id}>{category.name}</option>
               ))}
             </select>
           </div>
@@ -136,9 +304,10 @@ export default function ProductsPage() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="text-left py-4 px-6 text-sm font-semibold text-black">Product</th>
+                <th className="text-left py-4 px-6 text-sm font-semibold text-black">Brand</th>
                 <th className="text-left py-4 px-6 text-sm font-semibold text-black">Category</th>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-black">Description</th>
                 <th className="text-left py-4 px-6 text-sm font-semibold text-black">Price</th>
+                <th className="text-left py-4 px-6 text-sm font-semibold text-black">Status</th>
                 <th className="text-left py-4 px-6 text-sm font-semibold text-black">Actions</th>
               </tr>
             </thead>
@@ -154,19 +323,36 @@ export default function ProductsPage() {
                       </div>
                       <div>
                         <p className="font-semibold text-black">{product.name}</p>
+                        <p className="text-sm text-gray-600">{product.slug}</p>
                       </div>
                     </div>
                   </td>
                   <td className="py-4 px-6">
-                    <span className="px-3 py-1 bg-black text-white rounded-full text-xs font-semibold">
-                      {product.category}
+                    <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
+                      {product.brand?.name || 'Unknown Brand'}
                     </span>
                   </td>
                   <td className="py-4 px-6">
-                    <p className="text-sm text-black max-w-xs">{product.description}</p>
+                    <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
+                      {product.category?.name || 'Unknown'}
+                    </span>
                   </td>
                   <td className="py-4 px-6">
-                    <p className="font-bold text-black">${product.price}</p>
+                    <p className="font-bold text-black">
+                      ${product.finalPrice ? parseInt(product.finalPrice).toLocaleString() : 'N/A'}
+                    </p>
+                    {product.discount > 0 && product.basePrice && (
+                      <p className="text-sm text-gray-500 line-through">
+                        ${parseInt(product.basePrice).toLocaleString()}
+                      </p>
+                    )}
+                  </td>
+                  <td className="py-4 px-6">
+                    <div className="flex gap-2">
+                      {product.isFeatured && (
+                        <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs font-semibold">Featured</span>
+                      )}
+                    </div>
                   </td>
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-2">
@@ -181,7 +367,8 @@ export default function ProductsPage() {
                       </button>
                       <button
                         onClick={() => handleDelete(product.id)}
-                        className="p-2 text-black hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors border border-gray-300"
+                        disabled={submitting}
+                        className="p-2 text-black hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors border border-gray-300 disabled:opacity-50"
                         title="Delete"
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -223,37 +410,74 @@ export default function ProductsPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-semibold text-black mb-2">Name</label>
+                  <label className="block text-sm font-semibold text-black mb-2">Product Name *</label>
                   <input
                     type="text"
                     name="name"
-                    defaultValue={selectedProduct?.name}
+                    value={formData.name}
+                    onChange={handleInputChange}
                     required
                     placeholder="e.g., iPhone 15 Pro Max"
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-black placeholder:text-gray-400"
                   />
                 </div>
 
+                <div>
+                  <label className="block text-sm font-semibold text-black mb-2">Description</label>
+                  <textarea
+                    name="description"
+                    value={formData.description}
+                    onChange={handleInputChange}
+                    rows={4}
+                    placeholder="Enter product description..."
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent resize-none text-black placeholder:text-gray-400"
+                  />
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-black mb-2">Category</label>
+                    <label className="block text-sm font-semibold text-black mb-2">Brand</label>
                     <select
-                      name="category"
-                      defaultValue={selectedProduct?.category || 'iPhone'}
+                      name="brandId"
+                      value={formData.brandId}
+                      onChange={handleInputChange}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-black"
                     >
-                      {categories.filter(c => c !== 'all').map(category => (
-                        <option key={category} value={category}>{category}</option>
+                      {modalMode === 'add' && (
+                        <option value="">-- Chọn thương hiệu --</option>
+                      )}
+                      {brands.map(brand => (
+                        <option key={brand.id} value={brand.id}>{brand.name}</option>
                       ))}
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-black mb-2">Price ($)</label>
+                    <label className="block text-sm font-semibold text-black mb-2">Category</label>
+                    <select
+                      name="categoryId"
+                      value={formData.categoryId}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-black"
+                    >
+                      {modalMode === 'add' && (
+                        <option value="">-- Chọn danh mục --</option>
+                      )}
+                      {categories.map(category => (
+                        <option key={category.id} value={category.id}>{category.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-black mb-2">Base Price ($) *</label>
                     <input
                       type="number"
-                      name="price"
-                      defaultValue={selectedProduct?.price}
+                      name="basePrice"
+                      value={formData.basePrice}
+                      onChange={handleInputChange}
                       step="0.01"
                       min="0"
                       required
@@ -261,27 +485,55 @@ export default function ProductsPage() {
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-black placeholder:text-gray-400"
                     />
                   </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-black mb-2">Discount (%)</label>
+                    <input
+                      type="number"
+                      name="discount"
+                      value={formData.discount}
+                      onChange={handleInputChange}
+                      step="0.01"
+                      min="0"
+                      max="100"
+                      placeholder="0"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-black placeholder:text-gray-400"
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-black mb-2">Description</label>
-                  <textarea
-                    name="description"
-                    defaultValue={selectedProduct?.description}
-                    required
-                    rows={4}
-                    placeholder="Enter product description..."
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent resize-none text-black placeholder:text-gray-400"
-                  />
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      name="isFeatured"
+                      checked={formData.isFeatured}
+                      onChange={handleInputChange}
+                      className="mr-2"
+                    />
+                    <span className="text-sm font-semibold text-black">Featured Product</span>
+                  </label>
+
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      name="isActive"
+                      checked={formData.isActive}
+                      onChange={handleInputChange}
+                      className="mr-2"
+                    />
+                    <span className="text-sm font-semibold text-black">Active</span>
+                  </label>
                 </div>
               </div>
 
               <div className="flex gap-3 mt-6">
                 <button
                   type="submit"
-                  className="flex-1 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors font-semibold"
+                  disabled={submitting}
+                  className="flex-1 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors font-semibold disabled:opacity-50"
                 >
-                  {modalMode === 'add' ? 'Add Product' : 'Save Changes'}
+                  {submitting ? 'Saving...' : (modalMode === 'add' ? 'Add Product' : 'Save Changes')}
                 </button>
                 <button
                   type="button"

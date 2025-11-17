@@ -1,11 +1,12 @@
 import apiClient from './apiClient';
-import type { User, ApiResponse } from './types';
+import type { User, ApiResponse, PaginationMeta } from './types';
 
 export interface GetAllUsersParams {
   page?: number;
   limit?: number;
   search?: string;
   role?: string;
+  isActive?: boolean;
 }
 
 export interface CreateUserData {
@@ -13,6 +14,10 @@ export interface CreateUserData {
   password: string;
   name?: string;
   role?: string;
+  phone?: string;
+  address?: string;
+  avatar?: string;
+  isActive?: boolean;
 }
 
 export interface UpdateUserData {
@@ -22,6 +27,13 @@ export interface UpdateUserData {
   phone?: string;
   address?: string;
   avatar?: string;
+  password?: string;
+  isActive?: boolean;
+}
+
+interface UserListResponse {
+  users: User[];
+  pagination: PaginationMeta;
 }
 
 /**
@@ -33,16 +45,19 @@ export const adminService = {
    * @param params - Pagination and filter parameters
    * @returns Promise with users data
    */
-  async getAllUsers(params?: GetAllUsersParams): Promise<ApiResponse<{ users: User[] }>> {
+  async getAllUsers(params?: GetAllUsersParams): Promise<ApiResponse<UserListResponse>> {
     const queryParams = new URLSearchParams();
     
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.limit) queryParams.append('limit', params.limit.toString());
     if (params?.search) queryParams.append('search', params.search);
     if (params?.role) queryParams.append('role', params.role);
+    if (typeof params?.isActive === 'boolean') queryParams.append('isActive', params.isActive ? 'true' : 'false');
     
     const url = queryParams.toString() ? `/admin/users?${queryParams}` : '/admin/users';
-    const response = await apiClient.get<ApiResponse<{ users: User[] }>>(url);
+    const response = await apiClient.get<ApiResponse<UserListResponse>>(url, {
+      withCredentials: true,
+    });
     return response.data;
   },
 
@@ -52,7 +67,9 @@ export const adminService = {
    * @returns Promise with user data
    */
   async getUserById(id: string): Promise<ApiResponse<{ user: User }>> {
-    const response = await apiClient.get<ApiResponse<{ user: User }>>(`/admin/users/${id}`);
+    const response = await apiClient.get<ApiResponse<{ user: User }>>(`/admin/users/${id}`, {
+      withCredentials: true,
+    });
     return response.data;
   },
 
@@ -63,7 +80,9 @@ export const adminService = {
    * @returns Promise with updated user data
    */
   async updateUser(id: string, data: UpdateUserData): Promise<ApiResponse<{ user: User }>> {
-    const response = await apiClient.put<ApiResponse<{ user: User }>>(`/admin/users/${id}`, data);
+    const response = await apiClient.put<ApiResponse<{ user: User }>>(`/admin/users/${id}`, data, {
+      withCredentials: true,
+    });
     return response.data;
   },
 
@@ -73,7 +92,9 @@ export const adminService = {
    * @returns Promise with success message
    */
   async deleteUser(id: string): Promise<ApiResponse<null>> {
-    const response = await apiClient.delete<ApiResponse<null>>(`/admin/users/${id}`);
+    const response = await apiClient.delete<ApiResponse<null>>(`/admin/users/${id}`, {
+      withCredentials: true,
+    });
     return response.data;
   },
 
@@ -83,7 +104,9 @@ export const adminService = {
    * @returns Promise with created user data
    */
   async createUser(data: CreateUserData): Promise<ApiResponse<{ user: User }>> {
-    const response = await apiClient.post<ApiResponse<{ user: User }>>('/admin/users', data);
+    const response = await apiClient.post<ApiResponse<{ user: User }>>('/admin/users', data, {
+      withCredentials: true,
+    });
     return response.data;
   },
 };

@@ -7,7 +7,7 @@ CLAUDE.md
 REVIEW_API_TEST_RESULTS.md
 *_TEST_RESULTS.md
 memory-bank/
-
+.cursor/
 # OS Files
 .DS_Store
 .DS_Store?

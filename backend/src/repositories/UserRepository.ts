@@ -1,4 +1,4 @@
-import { PrismaClient, User, Role } from '@prisma/client';
+import { PrismaClient, User, Role, Prisma } from '@prisma/client';
 import { BaseRepository } from './BaseRepository';
 
 export interface CreateUserData {
@@ -6,16 +6,30 @@ export interface CreateUserData {
   password: string;
   name?: string;
   role?: Role;
+  phone?: string;
+  address?: string;
+  avatar?: string;
+  isActive?: boolean;
 }
 
 export interface UpdateUserData {
   name?: string;
-  // email?: string;
-  // password?: string;
+  email?: string;
+  password?: string;
   phone?: string;
   address?: string;
   avatar?: string;
   refreshToken?: string | null;
+  role?: Role;
+  isActive?: boolean;
+}
+
+export interface FindUsersParams {
+  skip?: number;
+  take?: number;
+  search?: string;
+  role?: Role;
+  isActive?: boolean;
 }
 
 export class UserRepository extends BaseRepository<User> {
@@ -60,16 +74,49 @@ export class UserRepository extends BaseRepository<User> {
     });
   }
 
-  async findAll(skip?: number, take?: number): Promise<User[]> {
+  private buildUserWhereClause(params?: Omit<FindUsersParams, 'skip' | 'take'>): Prisma.UserWhereInput | undefined {
+    if (!params) return undefined;
+
+    const filters: Prisma.UserWhereInput[] = [];
+
+    if (params.search) {
+      filters.push({
+        OR: [
+          { name: { contains: params.search, mode: 'insensitive' } },
+          { email: { contains: params.search, mode: 'insensitive' } },
+        ],
+      });
+    }
+
+    if (params.role) {
+      filters.push({ role: params.role });
+    }
+
+    if (typeof params.isActive === 'boolean') {
+      filters.push({ isActive: params.isActive });
+    }
+
+    if (!filters.length) {
+      return undefined;
+    }
+
+    return { AND: filters };
+  }
+
+  async findAll(params: FindUsersParams = {}): Promise<User[]> {
+    const { skip, take, ...filterParams } = params;
     return this.prisma.user.findMany({
       skip,
       take,
+      where: this.buildUserWhereClause(filterParams),
       orderBy: { createdAt: 'desc' },
     });
   }
 
-  async count(): Promise<number> {
-    return this.prisma.user.count();
+  async count(params?: Omit<FindUsersParams, 'skip' | 'take'>): Promise<number> {
+    return this.prisma.user.count({
+      where: this.buildUserWhereClause(params),
+    });
   }
 
   async updateRefreshToken(

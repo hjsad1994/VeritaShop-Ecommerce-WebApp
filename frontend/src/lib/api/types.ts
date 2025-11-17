@@ -11,7 +11,7 @@ export interface User {
 
 export interface ApiResponse<T> {
   success: boolean;
-  message: string;
+  message?: string;
   data: T;
 }
 
@@ -42,4 +42,48 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   user: User;
+}
+
+// Category API Types
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  image?: string | null;
+  parentId?: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  productCount?: number;
+}
+
+export interface CategoryListResponse {
+  categories: Category[];
+  pagination: PaginationMeta;
+}
+
+export interface CategoryQueryParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  includeChildren?: boolean;
+}
+
+export interface CreateCategoryRequest {
+  name: string;
+  description?: string;
+  image?: string;
+  parentId?: string | null;
+}
+
+export interface UpdateCategoryRequest extends Partial<CreateCategoryRequest> {
+  isActive?: boolean;
 }

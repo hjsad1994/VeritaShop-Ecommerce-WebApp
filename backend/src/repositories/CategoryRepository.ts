@@ -326,9 +326,17 @@ export class CategoryRepository extends BaseRepository<Category> {
     }
 
     /**
-     * Xóa category (soft delete)
+     * Xóa category (hard delete)
      */
     async delete(id: string): Promise<Category> {
+        const category = await this.prisma.category.findUnique({
+            where: { id }
+        });
+
+        if (!category) {
+            throw new Error(ERROR_MESSAGES.CATEGORY_NOT_FOUND);
+        }
+
         // Check if category has active products
         const productCount = await this.prisma.product.count({
             where: {
@@ -341,11 +349,8 @@ export class CategoryRepository extends BaseRepository<Category> {
             throw new Error(`${ERROR_MESSAGES.CATEGORY_HAS_PRODUCTS} (${productCount} sản phẩm)`);
         }
 
-        const category = await this.prisma.category.update({
-            where: { id },
-            data: {
-                isActive: false
-            }
+        await this.prisma.category.delete({
+            where: { id }
         });
 
         return category;

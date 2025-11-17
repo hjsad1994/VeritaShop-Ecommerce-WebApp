@@ -281,7 +281,8 @@ export default function AccountsPage() {
                   <td colSpan={6} className="py-8 text-center text-red-500 space-y-3">
                     <p>{error}</p>
                     <button
-                      onClick={fetchUsers}
+                      type="button"
+                      onClick={() => fetchUsers()}
                       className="inline-flex items-center px-4 py-2 border border-red-200 text-sm font-medium text-red-600 rounded-lg hover:bg-red-50 transition-colors"
                     >
                       Thử tải lại

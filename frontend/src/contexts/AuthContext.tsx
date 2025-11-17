@@ -108,6 +108,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           role: response.data.user.role,
           avatar: response.data.user.avatar,
           phone: response.data.user.phone,
+          isActive: response.data.user.isActive ?? true,
           createdAt: response.data.user.createdAt,
           updatedAt: response.data.user.updatedAt,
         };

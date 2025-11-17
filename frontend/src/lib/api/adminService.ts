@@ -17,6 +17,7 @@ export interface CreateUserData {
   phone?: string;
   address?: string;
   avatar?: string;
+  isActive?: boolean;
 }
 
 export interface UpdateUserData {
@@ -27,6 +28,7 @@ export interface UpdateUserData {
   address?: string;
   avatar?: string;
   password?: string;
+  isActive?: boolean;
 }
 
 interface UserListResponse {

@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useCart } from '@/contexts/CartContext';
+import UserMenu from '@/components/layout/UserMenu';
 
 interface HeaderProps {
   isScrolled?: boolean;
@@ -11,6 +12,23 @@ interface HeaderProps {
 
 export default function Header({ isScrolled = false, theme = 'dark' }: HeaderProps) {
   const { getTotalItems, openCart } = useCart();
+  const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
+  
+  const notificationDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (notificationDropdownRef.current && !notificationDropdownRef.current.contains(event.target as Node)) {
+        setIsNotificationDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
   const isLight = theme === 'light';
 
   const textClass = isLight ? 'text-black hover:text-gray-600' : 'text-white hover:text-gray-300';
@@ -77,8 +95,61 @@ export default function Header({ isScrolled = false, theme = 'dark' }: HeaderPro
             <Link href="/blog" className={`transition-all font-medium tracking-wide ${textClass}`}>Blog</Link>
           </nav>
           <div className="flex items-center space-x-4">
-            <Link href="/orders" className={`transition-all font-medium tracking-wide ${textClass}`}>Đơn hàng</Link>
-            <Link href="/login" className={`transition-all font-medium tracking-wide ${textClass}`}>Login</Link>
+            <Link href="/orders" className={`p-2 rounded-full transition-all ${textClass} hover:bg-gray-100 dark:hover:bg-gray-800 relative`}>
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+              </svg>
+              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+            </Link>
+            
+            {/* Notification Bell */}
+            <div className="relative" ref={notificationDropdownRef}>
+              <button
+                onClick={() => setIsNotificationDropdownOpen(!isNotificationDropdownOpen)}
+                className={`p-2 rounded-full transition-all ${textClass} hover:bg-gray-100 dark:hover:bg-gray-800 relative`}
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-ping"></span>
+                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              </button>
+
+              {/* Notification Dropdown */}
+              {isNotificationDropdownOpen && (
+                <div className={`absolute top-full right-0 mt-2 w-80 ${dropdownBgClass} border rounded-lg shadow-xl`}>
+                  <div className="p-4">
+                    <h3 className={`font-semibold ${isLight ? 'text-black' : 'text-white'} mb-3`}>Notifications</h3>
+                    <div className="space-y-2 max-h-96 overflow-y-auto">
+                      <div className={`p-3 rounded-lg ${isLight ? 'bg-gray-50' : 'bg-gray-800'}`}>
+                        <p className={`text-sm font-medium ${isLight ? 'text-black' : 'text-white'}`}>Order #1234 has been delivered</p>
+                        <p className={`text-xs ${isLight ? 'text-gray-600' : 'text-gray-400'} mt-1`}>5 minutes ago</p>
+                      </div>
+                      <div className={`p-3 rounded-lg ${isLight ? 'bg-gray-50' : 'bg-gray-800'}`}>
+                        <p className={`text-sm font-medium ${isLight ? 'text-black' : 'text-white'}`}>New promotion: 20% off iPhone 15</p>
+                        <p className={`text-xs ${isLight ? 'text-gray-600' : 'text-gray-400'} mt-1`}>1 hour ago</p>
+                      </div>
+                      <div className={`p-3 rounded-lg ${isLight ? 'bg-gray-50' : 'bg-gray-800'}`}>
+                        <p className={`text-sm font-medium ${isLight ? 'text-black' : 'text-white'}`}>Thank you for your purchase!</p>
+                        <p className={`text-xs ${isLight ? 'text-gray-600' : 'text-gray-400'} mt-1`}>Yesterday</p>
+                      </div>
+                    </div>
+                    <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                      <button className={`text-sm ${isLight ? 'text-blue-600 hover:text-blue-700' : 'text-blue-400 hover:text-blue-300'} font-medium`}>
+                        View all notifications
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* User Menu */}
+            <UserMenu 
+              theme={theme}
+              textClass={textClass}
+            />
+
             <button
               onClick={openCart}
               className={`px-6 py-2 rounded-md font-semibold transition-all flex items-center gap-2 relative ${buttonClass}`}

@@ -436,7 +436,7 @@ export default function CheckoutPage() {
                           value={formData.cardCVV || ''}
                           onChange={handleChange}
                           className={`w-full px-4 py-3 text-sm border-2 rounded-xl focus:outline-none transition text-black placeholder:text-gray-400 ${errors.cardCVV ? 'border-gray-800 bg-gray-100' : 'border-gray-300 focus:border-black'
-                            }`}
+                          }`}
                           placeholder="123"
                         />
                         {errors.cardCVV && <p className="text-red-500 text-xs mt-1">{errors.cardCVV}</p>}

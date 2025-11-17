@@ -2,11 +2,13 @@
 
 import React from 'react';
 import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import Image from 'next/image';
 
 export default function Cart() {
   const { items, removeFromCart, updateQuantity, getTotalPrice, isCartOpen, closeCart } = useCart();
+  const { isAuthenticated } = useAuth();
 
   return (
     <>
@@ -214,9 +216,18 @@ export default function Cart() {
               </div>
 
               {/* Checkout Button */}
-              <Link
-                href="/checkout"
-                onClick={closeCart}
+              <button
+                onClick={() => {
+                  closeCart();
+                  
+                  if (!isAuthenticated) {
+                    // Save checkout intent for redirect after login
+                    sessionStorage.setItem('redirectPath', '/checkout');
+                    window.location.href = '/login';
+                    return;
+                  }
+                  window.location.href = '/checkout';
+                }}
                 className="w-full bg-black text-white py-4 rounded-lg font-bold hover:bg-gray-800 transition-colors mb-3 flex items-center justify-center gap-2"
               >
                 <span>Proceed to Checkout</span>
@@ -228,7 +239,7 @@ export default function Cart() {
                     d="M13 7l5 5m0 0l-5 5m5-5H6"
                   />
                 </svg>
-              </Link>
+              </button>
 
               {/* Continue Shopping */}
               <button

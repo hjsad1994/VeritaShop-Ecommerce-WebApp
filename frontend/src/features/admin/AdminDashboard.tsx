@@ -3,6 +3,23 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 
+interface DashboardStats {
+  title: string;
+  value: string;
+  change: string;
+  isPositive: boolean;
+  iconColor: string;
+  icon: React.ReactElement;
+}
+
+interface OrderItem {
+  product: {
+    name: string;
+  };
+  quantity: number;
+  price: number;
+}
+
 interface ProductSummary {
   id: number;
   name: string;
@@ -34,11 +51,20 @@ interface Order {
   id: number;
   date: string;
   items: OrderItem[];
+  customerInfo: {
+    firstName: string;
+    lastName: string;
+    name: string;
+    email: string;
+    phone?: string;
+    address: string;
+  };
   customerInfo: CustomerInfo;
   subtotal: number;
   shipping: number;
   tax: number;
   total: number;
+  status: 'pending' | 'confirmed' | 'rejected';
   status: OrderStatus;
 }
 
@@ -53,6 +79,7 @@ interface DashboardStat {
 
 export default function AdminDashboard() {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [stats, setStats] = useState<DashboardStats[]>([
   const [stats, setStats] = useState<DashboardStat[]>([
     {
       title: 'Total Revenue',
@@ -115,6 +142,11 @@ export default function AdminDashboard() {
       
       // Calculate stats
       const totalOrders = savedOrders.length;
+      const pendingOrders = savedOrders.filter((order: Order) => order.status === 'pending').length;
+      const confirmedOrders = savedOrders.filter((order: Order) => order.status === 'confirmed').length;
+      const totalRevenue = savedOrders
+        .filter((order: Order) => order.status === 'confirmed')
+        .reduce((sum: number, order: Order) => sum + order.total, 0);
       const pendingOrders = savedOrders.filter((order) => order.status === 'pending').length;
       const confirmedOrders = savedOrders.filter((order) => order.status === 'confirmed').length;
       const totalRevenue = savedOrders
@@ -305,7 +337,7 @@ export default function AdminDashboard() {
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
-              View Orders ({orders.filter(o => o.status === 'pending').length} pending)
+              View Orders ({orders.filter(o => o.status === "pending").length} pending)
             </Link>
             <Link 
               href="/admin/products"

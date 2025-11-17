@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { authService } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 
 type ApiError = {
   message?: string;
@@ -34,51 +34,111 @@ const getErrorMessages = (error: unknown): string[] => {
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login, isAuthenticated, isLoading: authLoading, user } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+  const redirectPath = searchParams?.get('redirect') || 
+                      (typeof window !== 'undefined' ? sessionStorage.getItem('redirectPath') : null);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Redirect authenticated users to appropriate page
+  useEffect(() => {
+    if (!authLoading && isAuthenticated && user) {
+      if (user.role === 'ADMIN' || user.role === 'MANAGER') {
+        router.push('/admin');
+      } else {
+        // Check if there's a saved redirect path
+        if (redirectPath && redirectPath !== '/login') {
+          router.push(redirectPath);
+          // Clear the saved redirect path
+          sessionStorage.removeItem('redirectPath');
+        } else {
+          router.push('/');
+        }
+      }
+    }
+  }, [isAuthenticated, authLoading, user, router, redirectPath]);
+
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-950 via-black to-gray-950 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-white">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Prevent multiple submissions
+    if (isSubmitting) {
+      return;
+    }
 
-    if (!email || !password) {
+    // Ensure email and password are strings and not empty
+    const emailValue = String(email || '').trim();
+    const passwordValue = String(password || '').trim();
+
+    if (!emailValue || !passwordValue) {
       toast.error('Please enter both email and password');
       return;
     }
 
-    setIsLoading(true);
+    setIsSubmitting(true);
 
     try {
-      // Call the login API
-      const response = await authService.login({
-        email,
-        password,
-      });
+      // Call the login API through AuthContext with validated values
+      await login(emailValue, passwordValue);
 
       // Show success message
-      toast.success(response.message || 'Login successful!');
+      toast.success('Login successful!');
 
-      // Store user info in localStorage if needed
-      if (response.data?.user) {
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-      }
-
-      // Redirect to home page after a short delay
+      // Redirect based on user role and saved redirect path
       setTimeout(() => {
-        router.push('/');
-      }, 1000);
+        // The login response contains user data, use it directly instead of localStorage
+        // This will be handled by the AuthContext login method
+        
+        // Check if there's a saved redirect path
+        const savedRedirect = sessionStorage.getItem('redirectPath') || redirectPath;
+        
+        // For now, let AuthContext handle the redirect logic
+        // The redirection will happen automatically when the AuthContext state updates
+        if (savedRedirect && savedRedirect !== '/login') {
+          // This will be handled by the useEffect in login page
+          // which watches for authentication state changes
+        }
+      }, 500); // Reduced timeout since we're not relying on localStorage
 
     } catch (error: unknown) {
       // Handle API errors
       console.error('Login error:', error);
 
+      const typedError = error as { 
+        errors?: Array<{ message: string }>; 
+        message?: string 
+      };
+
+      if (typedError.errors && Array.isArray(typedError.errors)) {
+        // Show validation errors from backend
+        typedError.errors.forEach((err) => {
+          toast.error(err.message);
+        });
+      } else {
+        // Show general error message
+        toast.error(typedError.message || 'Login failed. Please check your credentials.');
+      }
       getErrorMessages(error).forEach(message => {
         toast.error(message);
       });
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -120,7 +180,7 @@ export default function LoginPage() {
             <p className="text-gray-400">Sign in to continue to your account</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
             {/* Email Input */}
             <div className="group">
               <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2 group-hover:text-white transition-colors">
@@ -205,11 +265,12 @@ export default function LoginPage() {
 
             {/* Sign In Button */}
             <button
-              type="submit"
-              disabled={isLoading}
+              type="button"
+              disabled={isSubmitting}
+              onClick={handleSubmit}
               className="w-full bg-white text-black py-3.5 rounded-xl font-semibold hover:bg-gray-100 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
-              {isLoading ? 'Signing in...' : 'Sign in'}
+              {isSubmitting ? 'Signing in...' : 'Sign in'}
             </button>
 
             {/* Divider */}

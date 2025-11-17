@@ -23,7 +23,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const fetchCurrentUser = useCallback(async () => {
     try {
       setIsChecking(true);
-      const currentUser = await userService.getCurrentUser();
+      const response = await userService.getCurrentUser();
+      const currentUser = response.data.user;
       if (currentUser.role !== 'ADMIN') {
         throw new Error('Unauthorized');
       }

@@ -22,11 +22,11 @@ export default function AdminOrdersPage() {
   const fetchOrders = async () => {
     try {
       setIsLoading(true);
-      const params: { page: number; limit: number; sortBy: string; sortOrder: string; status?: OrderStatus; searchTerm?: string } = {
+      const params: { page: number; limit: number; sortBy: string; sortOrder: 'asc' | 'desc'; status?: OrderStatus; searchTerm?: string } = {
         page: currentPage,
         limit: 10,
         sortBy: 'createdAt',
-        sortOrder: 'desc'
+        sortOrder: 'desc' as const
       };
 
       if (filter !== 'all') {

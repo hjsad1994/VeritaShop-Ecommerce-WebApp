@@ -5,6 +5,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import Image from 'next/image';
+import { CartItem } from '@/lib/api/cartService';
 
 export default function Cart() {
   const { items, removeFromCart, updateQuantity, getTotalPrice, isCartOpen, closeCart } = useCart();
@@ -79,42 +80,47 @@ export default function Cart() {
               </div>
             ) : (
               <div className="space-y-4">
-                {items.map((item, index) => (
+                {items.map((item: CartItem, index) => (
                   <div
-                    key={`${item.product.id}-${item.selectedColor}-${index}`}
+                    key={`${item.id}-${index}`}
                     className="flex gap-4 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
                   >
                     {/* Product Image */}
                     <div className="w-24 h-24 bg-white rounded-lg flex-shrink-0 overflow-hidden">
-                      <Image
-                        src={item.product.image}
-                        alt={item.product.name}
-                        width={96}
-                        height={96}
-                        className="w-full h-full object-contain p-2"
-                        unoptimized
-                      />
+                      {item.variant.product.images && item.variant.product.images.length > 0 ? (
+                        <Image
+                          src={item.variant.product.images[0].url}
+                          alt={item.variant.product.name}
+                          width={96}
+                          height={96}
+                          className="w-full h-full object-contain p-2"
+                          unoptimized
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                          </svg>
+                        </div>
+                      )}
                     </div>
 
                     {/* Product Details */}
                     <div className="flex-1 min-w-0">
                       <h3 className="text-sm font-bold text-black mb-1 truncate">
-                        {item.product.name}
+                        {item.variant.product.name}
                       </h3>
-                      <p className="text-xs text-gray-600 mb-2">Color: {item.selectedColor}</p>
-                      <p className="text-lg font-bold text-black mb-3">${item.product.price}</p>
+                      <p className="text-xs text-gray-600 mb-2">Color: {item.variant.color}</p>
+                      {item.variant.storage && (
+                        <p className="text-xs text-gray-600 mb-2">Storage: {item.variant.storage}</p>
+                      )}
+                      <p className="text-lg font-bold text-black mb-3">${item.variant.price}</p>
 
                       {/* Quantity Controls */}
                       <div className="flex items-center justify-between">
                         <div className="flex items-center border-2 border-gray-300 rounded-lg">
                           <button
-                            onClick={() =>
-                              updateQuantity(
-                                item.product.id,
-                                item.selectedColor,
-                                item.quantity - 1
-                              )
-                            }
+                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
                             className="px-3 py-1 hover:bg-gray-200 transition-colors"
                           >
                             <svg
@@ -135,13 +141,7 @@ export default function Cart() {
                             {item.quantity}
                           </span>
                           <button
-                            onClick={() =>
-                              updateQuantity(
-                                item.product.id,
-                                item.selectedColor,
-                                item.quantity + 1
-                              )
-                            }
+                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
                             className="px-3 py-1 hover:bg-gray-200 transition-colors"
                           >
                             <svg
@@ -162,7 +162,7 @@ export default function Cart() {
 
                         {/* Remove Button */}
                         <button
-                          onClick={() => removeFromCart(item.product.id, item.selectedColor)}
+                          onClick={() => removeFromCart(item.id)}
                           className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                         >
                           <svg

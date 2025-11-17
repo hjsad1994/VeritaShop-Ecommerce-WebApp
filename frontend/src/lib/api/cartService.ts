@@ -123,7 +123,7 @@ class CartService {
       // If user is not authenticated, update guest cart
       const typedError = error as { response?: { status?: number } };
       if (typedError.response?.status === 401) {
-        const guestCart = this.updateGuestCartItem(itemId, quantity);
+        const guestCart = this.updateGuestCart(itemId, quantity);
         return {
           success: true,
           message: 'Cập nhật giỏ hàng khách thành công',
@@ -292,6 +292,7 @@ class CartService {
     localStorage.removeItem(this.guestCartKey);
   }
 
+  
   private convertGuestCartToCart(guestCart: GuestCart): Cart {
     return {
       id: null,
@@ -358,17 +359,17 @@ class CartService {
 
   // Check if cart is empty
   isEmpty(): Promise<boolean> {
-    return this.getCart().then(cart => cart.items.length === 0);
+    return this.getCart().then(response => response.data.items.length === 0);
   }
 
   // Get total items count
   getTotalItems(): Promise<number> {
-    return this.getCart().then(cart => cart.totalItems);
+    return this.getCart().then(response => response.data.totalItems);
   }
 
   // Get subtotal
   getSubtotal(): Promise<number> {
-    return this.getCart().then(cart => cart.subtotal);
+    return this.getCart().then(response => response.data.subtotal);
   }
 }
 

@@ -2,6 +2,11 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
+import { products, type Product } from '@/lib/data/products';
+
+export default function HomePage() {
 import Image from 'next/image';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -18,7 +23,7 @@ export default function HomePage() {
   const rotatingWords = [
     "gaming beast\nwith ROG Phone",
     "Samsung\nflagship",
-    "IPhone you've\nbeen waiting for",
+    "IPhone you've been waiting for",
     "Huawei\ninnovation"
   ];
 

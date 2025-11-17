@@ -32,6 +32,30 @@ interface CustomerInfo {
   paymentMethod: string;
 }
 
+interface OrderItem {
+  product: {
+    id: number;
+    name: string;
+    price: number;
+    image: string;
+  };
+  quantity: number;
+  selectedColor: string;
+}
+
+interface CustomerInfo {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  postalCode: string;
+  zipCode?: string;
+  country?: string;
+  paymentMethod: string;
+}
+
 interface OrderDetails {
   id: number;
   date: string;

@@ -3,6 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 
+interface OrderItem {
+  product: {
+    id: number;
+    name: string;
+    price: number;
+    image: string;
+  };
 interface DashboardStats {
   title: string;
   value: string;
@@ -32,6 +39,12 @@ interface CustomerInfo {
   phone: string;
   address: string;
   city: string;
+  postalCode: string;
+  zipCode?: string;
+  country?: string;
+  paymentMethod: string;
+}
+
   zipCode: string;
   country: string;
   paymentMethod: string;
@@ -48,11 +61,13 @@ interface Order {
   shipping: number;
   tax: number;
   total: number;
+  status: 'pending' | 'confirmed' | 'rejected';
   status: OrderStatus;
 }
 
 export default function AdminDashboard() {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [stats, setStats] = useState([
   const [stats, setStats] = useState<DashboardStats[]>([
     {
       title: 'Total Revenue',

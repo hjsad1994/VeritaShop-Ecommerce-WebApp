@@ -108,6 +108,11 @@ export default function RegisterPage() {
       // Handle API errors
       console.error('Registration error:', error);
 
+      const apiError = error as { errors?: Array<{ message: string }>; message?: string };
+      
+      if (apiError.errors && Array.isArray(apiError.errors)) {
+        // Show validation errors from backend
+        apiError.errors.forEach((err) => {
       const typedError = error as { 
         errors?: Array<{ message: string }>; 
         message?: string 
@@ -120,6 +125,7 @@ export default function RegisterPage() {
         });
       } else {
         // Show general error message
+        toast.error(apiError.message || 'Registration failed. Please try again.');
         toast.error(typedError.message || 'Registration failed. Please try again.');
       }
       getRegisterErrorMessages(error).forEach(message => toast.error(message));

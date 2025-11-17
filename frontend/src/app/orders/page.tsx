@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import Link from 'next/link';
+import AuthGuard from '@/components/auth/AuthGuard';
+import Image from 'next/image';
 
 interface OrderItem {
   product: {
@@ -26,6 +28,8 @@ interface CustomerInfo {
   postalCode: string;
   zipCode?: string;
   country?: string;
+  zipCode: string;
+  country: string;
   paymentMethod: string;
 }
 
@@ -52,7 +56,7 @@ export default function OrdersPage() {
 
   const fetchOrders = () => {
     try {
-      const savedOrders = JSON.parse(localStorage.getItem('veritas-orders') || '[]');
+      const savedOrders = JSON.parse(localStorage.getItem('veritas-orders') || '[]') as Order[];
       // Sort orders by date (newest first)
       savedOrders.sort((a: Order, b: Order) => new Date(b.date).getTime() - new Date(a.date).getTime());
       setOrders(savedOrders);
@@ -128,8 +132,9 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <Header theme="light" />
+    <AuthGuard>
+      <div className="min-h-screen bg-white">
+        <Header theme="light" />
 
       <div className="bg-gray-50 py-4 text-center text-sm font-medium mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -241,10 +246,12 @@ export default function OrdersPage() {
                       {order.items.slice(0, 3).map((item, index) => (
                         <div key={index} className="flex items-center gap-3">
                           <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                            <img 
-                              src={item.product.image} 
-                              alt={item.product.name} 
-                              className="w-full h-full object-contain p-1" 
+                            <Image
+                              src={item.product.image}
+                              alt={item.product.name}
+                              width={48}
+                              height={48}
+                              className="w-full h-full object-contain p-1"
                             />
                           </div>
                           <div className="flex-1 min-w-0">
@@ -287,5 +294,6 @@ export default function OrdersPage() {
 
       <Footer />
     </div>
+    </AuthGuard>
   );
 }

@@ -5,9 +5,37 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { authService } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
+
+type ApiError = {
+  message?: string;
+  errors?: Array<{ message?: string }>;
+};
+
+const getRegisterErrorMessages = (error: unknown): string[] => {
+  if (typeof error === 'string') {
+    return [error];
+  }
+  if (error && typeof error === 'object') {
+    const apiError = error as ApiError;
+    if (apiError.errors && apiError.errors.length > 0) {
+      const messages = apiError.errors
+        .map(err => err?.message)
+        .filter((msg): msg is string => Boolean(msg));
+      if (messages.length > 0) {
+        return messages;
+      }
+    }
+    if (apiError.message) {
+      return [apiError.message];
+    }
+  }
+  return ['Registration failed. Please try again.'];
+};
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -56,12 +84,25 @@ export default function RegisterPage() {
       });
 
       // Show success message
-      toast.success(response.message || 'Registration successful! Please login.');
+      toast.success(response.message || 'Registration successful! Logging you in...');
 
-      // Redirect to login page after a short delay
-      setTimeout(() => {
-        router.push('/login');
-      }, 1500);
+      // Automatically login after successful registration
+      try {
+        await login(formData.email, formData.password);
+        toast.success('Logged in successfully!');
+        
+        // Redirect to home page after a short delay
+        setTimeout(() => {
+          router.push('/');
+        }, 1000);
+      } catch (loginError) {
+        // If auto-login fails, redirect to login page
+        console.error('Auto-login error after registration:', loginError);
+        toast.error('Registration successful. Please login manually.');
+        setTimeout(() => {
+          router.push('/login');
+        }, 1500);
+      }
 
     } catch (error: unknown) {
       // Handle API errors
@@ -72,12 +113,22 @@ export default function RegisterPage() {
       if (apiError.errors && Array.isArray(apiError.errors)) {
         // Show validation errors from backend
         apiError.errors.forEach((err) => {
+      const typedError = error as { 
+        errors?: Array<{ message: string }>; 
+        message?: string 
+      };
+
+      if (typedError.errors && Array.isArray(typedError.errors)) {
+        // Show validation errors from backend
+        typedError.errors.forEach((err) => {
           toast.error(err.message);
         });
       } else {
         // Show general error message
         toast.error(apiError.message || 'Registration failed. Please try again.');
+        toast.error(typedError.message || 'Registration failed. Please try again.');
       }
+      getRegisterErrorMessages(error).forEach(message => toast.error(message));
     } finally {
       setIsLoading(false);
     }

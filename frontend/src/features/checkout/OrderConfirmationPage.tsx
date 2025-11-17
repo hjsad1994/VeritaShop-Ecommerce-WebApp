@@ -5,6 +5,32 @@ import { useSearchParams } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import Link from 'next/link';
+import Image from 'next/image';
+
+interface ProductInfo {
+  id: number;
+  name: string;
+  price: number;
+  image: string;
+}
+
+interface OrderItem {
+  product: ProductInfo;
+  quantity: number;
+  selectedColor?: string;
+}
+
+interface CustomerInfo {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  zipCode: string;
+  country: string;
+  paymentMethod: string;
+}
 
 interface OrderItem {
   product: {
@@ -50,8 +76,8 @@ function OrderConfirmationContent() {
 
   useEffect(() => {
     if (orderId) {
-      const orders = JSON.parse(localStorage.getItem('veritas-orders') || '[]');
-      const foundOrder = orders.find((o: OrderDetails) => o.id === parseInt(orderId));
+      const orders = JSON.parse(localStorage.getItem('veritas-orders') || '[]') as OrderDetails[];
+      const foundOrder = orders.find((o) => o.id === parseInt(orderId, 10));
       setOrder(foundOrder || null);
     }
     setIsLoading(false);
@@ -151,10 +177,9 @@ function OrderConfirmationContent() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pb-24">
         {/* Status Message */}
         <div className="text-center mb-12">
-          <div className={`w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 ${
-            order.status === 'confirmed' ? 'bg-green-100' : 
-            order.status === 'rejected' ? 'bg-red-100' : 'bg-yellow-100'
-          }`}>
+          <div className={`w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 ${order.status === 'confirmed' ? 'bg-green-100' :
+              order.status === 'rejected' ? 'bg-red-100' : 'bg-yellow-100'
+            }`}>
             {order.status === 'confirmed' ? (
               <svg className="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -169,19 +194,18 @@ function OrderConfirmationContent() {
               </svg>
             )}
           </div>
-          <h1 className={`text-4xl font-bold mb-4 ${
-            order.status === 'confirmed' ? 'text-green-600' : 
-            order.status === 'rejected' ? 'text-red-600' : 'text-yellow-600'
-          }`}>
-            {order.status === 'confirmed' ? 'Đơn hàng đã được xác nhận!' : 
-             order.status === 'rejected' ? 'Đơn hàng đã bị từ chối!' : 
-             'Đơn hàng đang chờ xác nhận!'}
+          <h1 className={`text-4xl font-bold mb-4 ${order.status === 'confirmed' ? 'text-green-600' :
+              order.status === 'rejected' ? 'text-red-600' : 'text-yellow-600'
+            }`}>
+            {order.status === 'confirmed' ? 'Đơn hàng đã được xác nhận!' :
+              order.status === 'rejected' ? 'Đơn hàng đã bị từ chối!' :
+                'Đơn hàng đang chờ xác nhận!'}
           </h1>
           <p className="text-lg text-gray-600 mb-2">
             {statusInfo.message}
           </p>
           <p className="text-gray-600">
-            {order.status === 'confirmed' 
+            {order.status === 'confirmed'
               ? `Một email xác nhận đã được gửi đến ${order.customerInfo.email}`
               : `Thông tin đơn hàng đã được gửi đến ${order.customerInfo.email}`
             }
@@ -225,7 +249,6 @@ function OrderConfirmationContent() {
               <p className="font-bold text-black">{order.customerInfo.firstName} {order.customerInfo.lastName}</p>
               <p>{order.customerInfo.address}</p>
               <p>{order.customerInfo.city}, {order.customerInfo.zipCode}</p>
-              <p>{order.customerInfo.country}</p>
               <p className="mt-2">
                 <span className="text-gray-600">Phone:</span> {order.customerInfo.phone}
               </p>
@@ -239,30 +262,25 @@ function OrderConfirmationContent() {
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
             </svg>
-            {order.status === 'confirmed' ? 'Trạng thái đơn hàng' : 
-             order.status === 'rejected' ? 'Thông tin đơn hàng' : 
-             'Trạng thái đơn hàng'}
+            {order.status === 'confirmed' ? 'Trạng thái đơn hàng' :
+              order.status === 'rejected' ? 'Thông tin đơn hàng' :
+                'Trạng thái đơn hàng'}
           </h3>
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <div className="flex items-center mb-2">
-                <div className={`w-3 h-3 rounded-full ${
-                  order.status === 'pending' ? 'bg-yellow-600' : 
-                  order.status === 'rejected' ? 'bg-red-600' : 'bg-green-600'
-                }`}></div>
-                <div className={`flex-1 h-1 mx-2 ${
-                  order.status === 'pending' ? 'bg-yellow-600' : 
-                  order.status === 'rejected' ? 'bg-red-600' : 'bg-green-600'
-                }`}></div>
-                <div className={`w-3 h-3 rounded-full ${
-                  order.status === 'confirmed' ? 'bg-green-600' : 'bg-gray-300'
-                }`}></div>
-                <div className={`flex-1 h-1 mx-2 ${
-                  order.status === 'confirmed' ? 'bg-green-600' : 'bg-gray-300'
-                }`}></div>
-                <div className={`w-3 h-3 rounded-full ${
-                  order.status === 'confirmed' ? 'bg-green-600' : 'bg-gray-300'
-                }`}></div>
+                <div className={`w-3 h-3 rounded-full ${order.status === 'pending' ? 'bg-yellow-600' :
+                    order.status === 'rejected' ? 'bg-red-600' : 'bg-green-600'
+                  }`}></div>
+                <div className={`flex-1 h-1 mx-2 ${order.status === 'pending' ? 'bg-yellow-600' :
+                    order.status === 'rejected' ? 'bg-red-600' : 'bg-green-600'
+                  }`}></div>
+                <div className={`w-3 h-3 rounded-full ${order.status === 'confirmed' ? 'bg-green-600' : 'bg-gray-300'
+                  }`}></div>
+                <div className={`flex-1 h-1 mx-2 ${order.status === 'confirmed' ? 'bg-green-600' : 'bg-gray-300'
+                  }`}></div>
+                <div className={`w-3 h-3 rounded-full ${order.status === 'confirmed' ? 'bg-green-600' : 'bg-gray-300'
+                  }`}></div>
               </div>
               <div className="flex justify-between text-xs text-gray-600">
                 <span>Đã đặt hàng</span>
@@ -272,11 +290,11 @@ function OrderConfirmationContent() {
             </div>
           </div>
           <p className="text-sm text-gray-700 mt-4">
-            {order.status === 'confirmed' 
+            {order.status === 'confirmed'
               ? `Đơn hàng của bạn đã được xác nhận và sẽ được giao trước ngày ${estimatedDelivery.toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}`
               : order.status === 'rejected'
-              ? 'Đơn hàng của bạn đã bị từ chối. Vui lòng liên hệ với bộ phận hỗ trợ khách hàng để biết thêm chi tiết.'
-              : 'Đơn hàng của bạn đang chờ admin xác nhận. Chúng tôi sẽ xử lý trong thời gian sớm nhất.'
+                ? 'Đơn hàng của bạn đã bị từ chối. Vui lòng liên hệ với bộ phận hỗ trợ khách hàng để biết thêm chi tiết.'
+                : 'Đơn hàng của bạn đang chờ admin xác nhận. Chúng tôi sẽ xử lý trong thời gian sớm nhất.'
             }
           </p>
         </div>
@@ -288,11 +306,18 @@ function OrderConfirmationContent() {
             {order.items.map((item, index) => (
               <div key={index} className="flex gap-4 pb-4 border-b border-gray-200 last:border-0">
                 <div className="w-20 h-20 bg-gray-50 rounded-lg flex-shrink-0 overflow-hidden">
-                  <img src={item.product.image} alt={item.product.name} className="w-full h-full object-contain p-2" />
+                  <Image
+                    src={item.product.image}
+                    alt={item.product.name}
+                    width={64}
+                    height={64}
+                    className="w-full h-full object-contain p-2"
+                    unoptimized
+                  />
                 </div>
                 <div className="flex-1">
                   <h4 className="font-bold text-black">{item.product.name}</h4>
-                  <p className="text-sm text-gray-600">Color: {item.selectedColor}</p>
+                  <p className="text-sm text-gray-600">Color: {item.selectedColor || 'N/A'}</p>
                   <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
                 </div>
                 <div className="text-right">

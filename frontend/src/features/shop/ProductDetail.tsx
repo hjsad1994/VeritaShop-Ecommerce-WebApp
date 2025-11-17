@@ -2,10 +2,12 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { getProductById, type Review } from '@/lib/data/products';
 import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
 import Toast from '@/components/ui/Toast';
 
 interface ProductDetailProps {
@@ -33,6 +35,7 @@ const colorMap: { [key: string]: string } = {
 
 export default function ProductDetail({ productId }: ProductDetailProps) {
   const { addToCart, openCart } = useCart();
+  const { isAuthenticated } = useAuth();
   const [selectedImage, setSelectedImage] = React.useState(0);
   const [quantity, setQuantity] = React.useState(1);
   const [selectedColor, setSelectedColor] = React.useState(0);
@@ -72,6 +75,13 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
   const images = Array(4).fill(product.image);
 
   const handleAddToCart = () => {
+    if (!isAuthenticated) {
+      // Save current page for redirect after login
+      sessionStorage.setItem('redirectPath', window.location.pathname);
+      window.location.href = '/login';
+      return;
+    }
+    
     setIsAddingToCart(true);
     addToCart(product, quantity, product.colors[selectedColor]);
     
@@ -83,12 +93,15 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
   };
 
   const handleBuyNow = () => {
-    console.log('Buying now:', {
-      product,
-      quantity,
-      color: product.colors[selectedColor]
-    });
-    alert('Proceeding to checkout...');
+    if (!isAuthenticated) {
+      // Save checkout intent for redirect after login
+      sessionStorage.setItem('redirectPath', '/checkout');
+      window.location.href = '/login';
+      return;
+    }
+    
+    // Navigate to checkout
+    window.location.href = '/checkout';
   };
 
   const handleSubmitReview = (e: React.FormEvent) => {
@@ -129,11 +142,14 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
         <div className="grid lg:grid-cols-2 gap-12">
           {/* Left: Images */}
           <div>
-            <div className="bg-gray-50 rounded-2xl aspect-square mb-6 flex items-center justify-center overflow-hidden">
-              <img 
+            <div className="bg-gray-50 rounded-2xl aspect-square mb-6 flex items-center justify-center overflow-hidden relative">
+              <Image
                 src={images[selectedImage]}
                 alt={product.name}
-                className="w-full h-full object-contain p-8"
+                fill
+                className="object-contain p-8"
+                unoptimized
+                sizes="(min-width: 1024px) 50vw, 100vw"
               />
             </div>
             <div className="grid grid-cols-4 gap-4">
@@ -145,7 +161,14 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
                     selectedImage === idx ? 'border-black' : 'border-gray-200 hover:border-gray-400'
                   }`}
                 >
-                  <img src={img} alt={`View ${idx + 1}`} className="w-full h-full object-contain p-2 bg-gray-50" />
+                  <Image
+                    src={img}
+                    alt={`View ${idx + 1}`}
+                    fill
+                    className="object-contain p-2 bg-gray-50"
+                    unoptimized
+                    sizes="100px"
+                  />
                 </button>
               ))}
             </div>

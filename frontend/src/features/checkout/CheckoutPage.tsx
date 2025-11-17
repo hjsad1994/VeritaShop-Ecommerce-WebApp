@@ -6,6 +6,7 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { useCart } from '@/contexts/CartContext';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface FormData {
   firstName: string;
@@ -435,7 +436,7 @@ export default function CheckoutPage() {
                           value={formData.cardCVV || ''}
                           onChange={handleChange}
                           className={`w-full px-4 py-3 text-sm border-2 rounded-xl focus:outline-none transition text-black placeholder:text-gray-400 ${errors.cardCVV ? 'border-gray-800 bg-gray-100' : 'border-gray-300 focus:border-black'
-                            }`}
+                          }`}
                           placeholder="123"
                         />
                         {errors.cardCVV && <p className="text-red-500 text-xs mt-1">{errors.cardCVV}</p>}
@@ -464,7 +465,14 @@ export default function CheckoutPage() {
                 {items.map((item, index) => (
                   <div key={`${item.product.id}-${item.selectedColor}-${index}`} className="flex gap-3 p-3 bg-white rounded-lg shadow-sm">
                     <div className="w-16 h-16 bg-gray-50 rounded-lg flex-shrink-0 overflow-hidden border-2 border-gray-200">
-                      <img src={item.product.image} alt={item.product.name} className="w-full h-full object-contain p-2" />
+                      <Image
+                        src={item.product.image}
+                        alt={item.product.name}
+                        width={64}
+                        height={64}
+                        className="w-full h-full object-contain p-2"
+                        unoptimized
+                      />
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="text-sm font-semibold text-black truncate">{item.product.name}</h3>

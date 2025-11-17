@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { getProductById, type Review } from '@/lib/data/products';
 
 interface ProductDetailProps {
@@ -44,6 +45,7 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
           <h1 className="text-4xl font-bold text-black mb-4">Product Not Found</h1>
           <p className="text-gray-600 mb-6">The product you&apos;re looking for doesn&apos;t exist.</p>
           <Link href="/shop" className="px-6 py-3 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-all inline-block">
+          <Link href="/shop" className="px-6 py-3 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-all">
             Back to Shop
           </Link>
         </div>
@@ -122,44 +124,44 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
               
               {/* Category Dropdown */}
               <div className="relative group">
-                <a href="#" className="text-black hover:text-gray-600 transition-all font-medium flex items-center gap-1">
+                <button type="button" className="text-black hover:text-gray-600 transition-all font-medium flex items-center gap-1">
                   Category
                   <svg className="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
-                </a>
+                </button>
                 
                 {/* Dropdown Menu */}
                 <div className="absolute top-full left-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform group-hover:translate-y-0 -translate-y-2">
                   <div className="py-2">
-                    <a href="#" className="block px-4 py-2 text-black hover:bg-gray-100 transition-all text-sm">
+                    <button type="button" className="block w-full text-left px-4 py-2 text-black hover:bg-gray-100 transition-all text-sm">
                       iPhone
-                    </a>
-                    <a href="#" className="block px-4 py-2 text-black hover:bg-gray-100 transition-all text-sm">
+                    </button>
+                    <button type="button" className="block w-full text-left px-4 py-2 text-black hover:bg-gray-100 transition-all text-sm">
                       Samsung
-                    </a>
-                    <a href="#" className="block px-4 py-2 text-black hover:bg-gray-100 transition-all text-sm">
+                    </button>
+                    <button type="button" className="block w-full text-left px-4 py-2 text-black hover:bg-gray-100 transition-all text-sm">
                       Gaming Phones
-                    </a>
-                    <a href="#" className="block px-4 py-2 text-black hover:bg-gray-100 transition-all text-sm">
+                    </button>
+                    <button type="button" className="block w-full text-left px-4 py-2 text-black hover:bg-gray-100 transition-all text-sm">
                       Huawei
-                    </a>
-                    <a href="#" className="block px-4 py-2 text-black hover:bg-gray-100 transition-all text-sm">
+                    </button>
+                    <button type="button" className="block w-full text-left px-4 py-2 text-black hover:bg-gray-100 transition-all text-sm">
                       Xiaomi
-                    </a>
-                    <a href="#" className="block px-4 py-2 text-black hover:bg-gray-100 transition-all text-sm">
+                    </button>
+                    <button type="button" className="block w-full text-left px-4 py-2 text-black hover:bg-gray-100 transition-all text-sm">
                       OnePlus
-                    </a>
+                    </button>
                     <div className="border-t border-gray-200 my-2"></div>
-                    <a href="#" className="block px-4 py-2 text-black hover:bg-gray-100 transition-all text-sm">
+                    <button type="button" className="block w-full text-left px-4 py-2 text-black hover:bg-gray-100 transition-all text-sm">
                       All Categories
-                    </a>
+                    </button>
                   </div>
                 </div>
               </div>
               
-              <a href="#" className="text-black hover:text-gray-600 transition-all font-medium">About</a>
-              <a href="#" className="text-black hover:text-gray-600 transition-all font-medium">Blog</a>
+              <button type="button" className="text-black hover:text-gray-600 transition-all font-medium">About</button>
+              <button type="button" className="text-black hover:text-gray-600 transition-all font-medium">Blog</button>
             </nav>
             <div className="flex items-center space-x-4">
               <button className="text-black hover:text-gray-600 transition-all font-medium">Login</button>
@@ -197,10 +199,13 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
           <div>
             {/* Main Image */}
             <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-4">
-              <img
+              <Image
                 src={product.images[selectedImage]}
                 alt={product.name}
+                width={800}
+                height={800}
                 className="w-full h-full object-cover"
+                unoptimized
               />
             </div>
 
@@ -214,7 +219,14 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
                     selectedImage === idx ? 'border-black' : 'border-transparent hover:border-gray-300'
                   }`}
                 >
-                  <img src={img} alt={`View ${idx + 1}`} className="w-full h-full object-cover" />
+                  <Image
+                    src={img}
+                    alt={`View ${idx + 1}`}
+                    width={200}
+                    height={200}
+                    className="w-full h-full object-cover"
+                    unoptimized
+                  />
                 </button>
               ))}
             </div>
@@ -471,7 +483,14 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
 
               {/* Product Info */}
               <div className="flex items-center gap-4 mb-6 pb-6 border-b border-gray-200">
-                <img src={product.image} alt={product.name} className="w-16 h-16 object-cover rounded-lg" />
+                <Image
+                  src={product.image}
+                  alt={product.name}
+                  width={64}
+                  height={64}
+                  className="w-16 h-16 object-cover rounded-lg"
+                  unoptimized
+                />
                 <div>
                   <h3 className="font-semibold text-black">{product.name}</h3>
                   <p className="text-sm text-gray-500">{product.brand}</p>

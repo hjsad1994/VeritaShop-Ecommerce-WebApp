@@ -1,10 +1,27 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import productService from '@/lib/api/productService';
 import brandService from '@/lib/api/brandService';
 import categoryService from '@/lib/api/categoryService';
-import { Product, Brand, Category } from '@/lib/api/types';
+import {
+  Product,
+  Brand,
+  Category,
+  CreateProductRequest,
+  UpdateProductRequest
+} from '@/lib/api/types';
+
+type ProductFormValues = {
+  name: string;
+  description: string;
+  brandId: string;
+  categoryId: string;
+  basePrice: string;
+  discount: string;
+  isFeatured: boolean;
+  isActive: boolean;
+};
 
 export default function ProductsPage() {
   const [showModal, setShowModal] = useState(false);
@@ -22,7 +39,7 @@ export default function ProductsPage() {
   const [categories, setCategories] = useState<Category[]>([]);
 
   // Form data
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<ProductFormValues>({
     name: '',
     description: '',
     brandId: '',
@@ -33,12 +50,17 @@ export default function ProductsPage() {
     isActive: true
   });
 
-  // Load data on mount
-  useEffect(() => {
-    loadData();
-  }, []);
+  const getErrorMessage = (err: unknown, fallback = 'An unexpected error occurred'): string => {
+    if (err instanceof Error) {
+      return err.message;
+    }
+    if (typeof err === 'string') {
+      return err;
+    }
+    return fallback;
+  };
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -53,13 +75,18 @@ export default function ProductsPage() {
       setProducts(productsRes.products);
       setBrands(brandsRes.brands);
       setCategories(categoriesRes.categories);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error loading data:', err);
-      setError(err.message || 'Failed to load data');
+      setError(getErrorMessage(err, 'Failed to load data'));
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // Load data on mount
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -113,9 +140,9 @@ export default function ProductsPage() {
       setProducts(products.filter(p => p.id !== productId));
 
       alert('Product deleted successfully!');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error deleting product:', err);
-      alert(err.message || 'Failed to delete product');
+      alert(getErrorMessage(err, 'Failed to delete product'));
     } finally {
       setSubmitting(false);
     }
@@ -140,7 +167,7 @@ export default function ProductsPage() {
       setError(null);
 
       // Build product data with only the fields that should be updated
-      const productData: any = {
+      const productData: UpdateProductRequest = {
         name: formData.name,
         basePrice: parseFloat(formData.basePrice) * 1000000, // Convert from millions to VND
         discount: parseFloat(formData.discount) || 0,
@@ -164,7 +191,12 @@ export default function ProductsPage() {
       }
 
       if (modalMode === 'add') {
-        const newProduct = await productService.createProduct(productData);
+        const newProductPayload: CreateProductRequest = {
+          ...productData,
+          brandId: formData.brandId,
+          categoryId: formData.categoryId
+        };
+        const newProduct = await productService.createProduct(newProductPayload);
         setProducts([...products, newProduct]);
         alert('Product created successfully!');
       } else if (selectedProduct) {
@@ -174,9 +206,9 @@ export default function ProductsPage() {
       }
 
       setShowModal(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error saving product:', err);
-      setError(err.message || 'Failed to save product');
+      setError(getErrorMessage(err, 'Failed to save product'));
     } finally {
       setSubmitting(false);
     }
@@ -184,9 +216,14 @@ export default function ProductsPage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
+    const fieldName = name as keyof ProductFormValues;
+    const nextValue = (type === 'checkbox'
+      ? (e.target as HTMLInputElement).checked
+      : value) as ProductFormValues[typeof fieldName];
+
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+      [fieldName]: nextValue
     }));
   };
 

@@ -177,4 +177,7 @@ export interface CreateProductRequest {
   slug?: string;
 }
 
-export interface UpdateProductRequest extends Partial<CreateProductRequest> {}
+export type UpdateProductRequest = Partial<Omit<CreateProductRequest, 'brandId' | 'categoryId'>> & {
+  brandId?: string;
+  categoryId?: string;
+};

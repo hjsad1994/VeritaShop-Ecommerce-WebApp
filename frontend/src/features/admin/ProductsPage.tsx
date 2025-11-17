@@ -166,40 +166,46 @@ export default function ProductsPage() {
       setSubmitting(true);
       setError(null);
 
-      // Build product data with only the fields that should be updated
-      const productData: UpdateProductRequest = {
-        name: formData.name,
-        basePrice: parseFloat(formData.basePrice) * 1000000, // Convert from millions to VND
-        discount: parseFloat(formData.discount) || 0,
-        isFeatured: formData.isFeatured,
-        isActive: formData.isActive
-      };
-
-      // Only include optional fields if they have values
-      if (formData.description) {
-        productData.description = formData.description;
-      }
-
-      // Only include brandId if it's selected and not empty
-      if (formData.brandId && formData.brandId !== '') {
-        productData.brandId = formData.brandId;
-      }
-
-      // Only include categoryId if it's selected and not empty
-      if (formData.categoryId && formData.categoryId !== '') {
-        productData.categoryId = formData.categoryId;
-      }
+      const basePriceVnd = parseFloat(formData.basePrice) * 1000000; // Convert from millions to VND
+      const discountValue = parseFloat(formData.discount) || 0;
 
       if (modalMode === 'add') {
         const newProductPayload: CreateProductRequest = {
-          ...productData,
+          name: formData.name,
           brandId: formData.brandId,
-          categoryId: formData.categoryId
+          categoryId: formData.categoryId,
+          basePrice: basePriceVnd,
+          discount: discountValue,
+          isFeatured: formData.isFeatured,
+          isActive: formData.isActive
         };
+
+        if (formData.description) {
+          newProductPayload.description = formData.description;
+        }
+
         const newProduct = await productService.createProduct(newProductPayload);
         setProducts([...products, newProduct]);
         alert('Product created successfully!');
       } else if (selectedProduct) {
+        const productData: UpdateProductRequest = {
+          name: formData.name,
+          basePrice: basePriceVnd,
+          discount: discountValue,
+          isFeatured: formData.isFeatured,
+          isActive: formData.isActive
+        };
+
+        if (formData.description) {
+          productData.description = formData.description;
+        }
+        if (formData.brandId) {
+          productData.brandId = formData.brandId;
+        }
+        if (formData.categoryId) {
+          productData.categoryId = formData.categoryId;
+        }
+
         const updatedProduct = await productService.updateProduct(selectedProduct.id, productData);
         setProducts(products.map(p => p.id === selectedProduct.id ? updatedProduct : p));
         alert('Product updated successfully!');

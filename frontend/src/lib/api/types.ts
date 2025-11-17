@@ -77,6 +77,7 @@ export interface CategoryQueryParams {
   limit?: number;
   search?: string;
   includeChildren?: boolean;
+  isActive?: boolean;
 }
 
 export interface CreateCategoryRequest {

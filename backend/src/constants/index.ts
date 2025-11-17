@@ -46,6 +46,9 @@ export const ERROR_MESSAGES = {
   REVIEW_IMAGE_NOT_FOUND: 'Không tìm thấy ảnh đánh giá',
   REVIEW_RESPONSE_NOT_FOUND: 'Không tìm thấy phản hồi đánh giá',
   REVIEW_RESPONSE_ALREADY_EXISTS: 'Đánh giá này đã có phản hồi',
+  COMMENT_NOT_FOUND: 'Không tìm thấy bình luận',
+  COMMENT_UNAUTHORIZED: 'Bạn không có quyền chỉnh sửa bình luận này',
+  COMMENT_PARENT_NOT_FOUND: 'Không tìm thấy bình luận cha',
 } as const;
 
 export const SUCCESS_MESSAGES = {
@@ -79,6 +82,11 @@ export const SUCCESS_MESSAGES = {
   REVIEW_HELPFUL_ADDED: 'Đã đánh dấu hữu ích',
   CREATE_REVIEW_RESPONSE_SUCCESS: 'Tạo phản hồi thành công',
   UPDATE_REVIEW_RESPONSE_SUCCESS: 'Cập nhật phản hồi thành công',
+  GET_COMMENTS_SUCCESS: 'Lấy danh sách bình luận thành công',
+  GET_COMMENT_SUCCESS: 'Lấy thông tin bình luận thành công',
+  CREATE_COMMENT_SUCCESS: 'Tạo bình luận thành công',
+  UPDATE_COMMENT_SUCCESS: 'Cập nhật bình luận thành công',
+  DELETE_COMMENT_SUCCESS: 'Xóa bình luận thành công',
 } as const;
 
 export const USER_ROLES = {

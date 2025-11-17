@@ -157,7 +157,7 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
                 <button
                   key={idx}
                   onClick={() => setSelectedImage(idx)}
-                  className={`aspect-square rounded-lg overflow-hidden border-2 transition ${
+                  className={`relative aspect-square rounded-lg overflow-hidden border-2 transition ${
                     selectedImage === idx ? 'border-black' : 'border-gray-200 hover:border-gray-400'
                   }`}
                 >

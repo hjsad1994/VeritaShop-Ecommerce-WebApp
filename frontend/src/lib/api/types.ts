@@ -182,3 +182,58 @@ export type UpdateProductRequest = Partial<Omit<CreateProductRequest, 'brandId' 
   brandId?: string;
   categoryId?: string;
 };
+
+// Cart API Types
+export interface CartProductImage {
+  id: string;
+  url: string;
+  sortOrder: number;
+}
+
+export interface CartProduct {
+  id: string;
+  name: string;
+  slug: string;
+  basePrice: number;
+  images: CartProductImage[];
+}
+
+export interface CartVariant {
+  id: string;
+  productId: string;
+  color: string;
+  storage: string | null;
+  price: number;
+  isActive: boolean;
+  product: CartProduct;
+}
+
+export interface CartItem {
+  id: string;
+  cartId: string;
+  variantId: string;
+  quantity: number;
+  variant: CartVariant;
+  itemSubtotal: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Cart {
+  id: string | null;
+  userId: string;
+  items: CartItem[];
+  subtotal: number;
+  totalItems: number;
+  createdAt: Date | null;
+  updatedAt: Date | null;
+}
+
+export interface AddCartItemRequest {
+  variantId: string;
+  quantity: number;
+}
+
+export interface UpdateCartItemRequest {
+  quantity: number;
+}

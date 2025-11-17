@@ -174,6 +174,189 @@ async function main() {
     }
   }
 
+  // Create additional test products for order testing
+  const additionalProducts = [
+    {
+      name: "iPhone 15 Pro",
+      slug: "iphone-15-pro",
+      description: "Premium smartphone with A17 Pro chip and titanium design.",
+      brandId: createdBrands[0].id,
+      categoryId: createdCategories[2].id, // Điện thoại Flagship
+      basePrice: 24990000,
+      discount: 5,
+      isFeatured: true,
+      isActive: true,
+    },
+    {
+      name: "Samsung Galaxy Tab S9",
+      slug: "samsung-galaxy-tab-s9",
+      description: "High-end tablet with AMOLED display and S Pen.",
+      brandId: createdBrands[1].id,
+      categoryId: createdCategories[6].id, // Tablet
+      basePrice: 15990000,
+      discount: 10,
+      isFeatured: false,
+      isActive: true,
+    },
+    {
+      name: "MacBook Air M2",
+      slug: "macbook-air-m2",
+      description: "Ultra-thin laptop with M2 chip and all-day battery life.",
+      brandId: createdBrands[0].id,
+      categoryId: createdCategories[4].id, // Laptop Văn phòng
+      basePrice: 29990000,
+      discount: 8,
+      isFeatured: true,
+      isActive: true,
+    },
+  ];
+
+  for (const productData of additionalProducts) {
+    const existingProduct = await prisma.product.findUnique({
+      where: { slug: productData.slug }
+    });
+
+    if (!existingProduct) {
+      const product = await prisma.product.create({ data: productData });
+      console.log("Additional product created:", product.name);
+
+      // Create variants for each product
+      if (productData.slug === "iphone-15-pro") {
+        const variants = [
+          {
+            productId: product.id,
+            color: "Titanium Natural",
+            storage: "128GB",
+            price: 24990000,
+            comparePrice: 24990000,
+            stock: 15,
+            sku: "IP15PRO-NAT-128",
+            isActive: true,
+          },
+          {
+            productId: product.id,
+            color: "Titanium Blue",
+            storage: "256GB",
+            price: 27990000,
+            comparePrice: 27990000,
+            stock: 10,
+            sku: "IP15PRO-BLU-256",
+            isActive: true,
+          },
+          {
+            productId: product.id,
+            color: "Titanium White",
+            storage: "512GB",
+            price: 32990000,
+            comparePrice: 32990000,
+            stock: 5,
+            sku: "IP15PRO-WHT-512",
+            isActive: true,
+          },
+        ];
+
+        for (const variantData of variants) {
+          // Extract stock separately and remove from variant data
+          const { stock, ...variantDataWithoutStock } = variantData;
+          const variant = await prisma.productVariant.create({ data: variantDataWithoutStock });
+          // Create inventory record for stock
+          await prisma.inventory.create({
+            data: {
+              variantId: variant.id,
+              quantity: stock,
+              reserved: 0,
+              minStock: 5,
+              maxStock: 50,
+            }
+          });
+          console.log("  Variant created:", variant.color, variant.storage, "- Stock:", stock);
+        }
+      } else if (productData.slug === "samsung-galaxy-tab-s9") {
+        const variants = [
+          {
+            productId: product.id,
+            color: "Graphite",
+            storage: "128GB WiFi",
+            price: 15990000,
+            comparePrice: 15990000,
+            stock: 8,
+            sku: "TABS9-GRP-128W",
+            isActive: true,
+          },
+          {
+            productId: product.id,
+            color: "Silver",
+            storage: "256GB 5G",
+            price: 18990000,
+            comparePrice: 18990000,
+            stock: 6,
+            sku: "TABS9-SLV-2565G",
+            isActive: true,
+          },
+        ];
+
+        for (const variantData of variants) {
+          // Extract stock separately and remove from variant data
+          const { stock, ...variantDataWithoutStock } = variantData;
+          const variant = await prisma.productVariant.create({ data: variantDataWithoutStock });
+          // Create inventory record for stock
+          await prisma.inventory.create({
+            data: {
+              variantId: variant.id,
+              quantity: stock,
+              reserved: 0,
+              minStock: 5,
+              maxStock: 50,
+            }
+          });
+          console.log("  Variant created:", variant.color, variant.storage, "- Stock:", stock);
+        }
+      } else if (productData.slug === "macbook-air-m2") {
+        const variants = [
+          {
+            productId: product.id,
+            color: "Midnight",
+            storage: "256GB SSD",
+            price: 29990000,
+            comparePrice: 29990000,
+            stock: 12,
+            sku: "MBA-M2-MID-256",
+            isActive: true,
+          },
+          {
+            productId: product.id,
+            color: "Starlight",
+            storage: "512GB SSD",
+            price: 34990000,
+            comparePrice: 34990000,
+            stock: 8,
+            sku: "MBA-M2-STL-512",
+            isActive: true,
+          },
+        ];
+
+        for (const variantData of variants) {
+          // Extract stock separately and remove from variant data
+          const { stock, ...variantDataWithoutStock } = variantData;
+          const variant = await prisma.productVariant.create({ data: variantDataWithoutStock });
+          // Create inventory record for stock
+          await prisma.inventory.create({
+            data: {
+              variantId: variant.id,
+              quantity: stock,
+              reserved: 0,
+              minStock: 5,
+              maxStock: 50,
+            }
+          });
+          console.log("  Variant created:", variant.color, variant.storage, "- Stock:", stock);
+        }
+      }
+    } else {
+      console.log("Additional product already exists:", existingProduct.name);
+    }
+  }
+
   console.log("\n✅ Seed data created successfully!");
 }
 

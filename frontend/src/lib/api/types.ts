@@ -87,3 +87,49 @@ export interface CreateCategoryRequest {
 export interface UpdateCategoryRequest extends Partial<CreateCategoryRequest> {
   isActive?: boolean;
 }
+
+// Product API Types
+export interface Product {
+  id: string;
+  name: string;
+  slug: string;
+  brand: string;
+  price: number;
+  oldPrice?: number | null;
+  image: string;
+  isFeatured?: boolean;
+  rating?: number;
+  totalReviews?: number;
+  stock?: number;
+  categoryId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ProductDetail extends Product {
+  description?: string;
+  specs?: Array<{ label: string; value: string }>;
+  images?: string[];
+  colors?: string[];
+  inventory?: {
+    quantity: number;
+  };
+}
+
+export interface ProductListResponse {
+  products: Product[];
+  pagination: PaginationMeta;
+}
+
+export interface ProductQueryParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  brand?: string;
+  category?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  isFeatured?: boolean;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+}

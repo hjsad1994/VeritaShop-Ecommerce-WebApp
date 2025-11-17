@@ -120,14 +120,9 @@ export default function LoginPage() {
       // Handle API errors
       console.error('Login error:', error);
 
-      const apiError = error as { errors?: Array<{ message: string }>; message?: string };
-      
-      if (apiError.errors && Array.isArray(apiError.errors)) {
-        // Show validation errors from backend
-        apiError.errors.forEach((err) => {
-      const typedError = error as { 
-        errors?: Array<{ message: string }>; 
-        message?: string 
+      const typedError = error as {
+        errors?: Array<{ message: string }>;
+        message?: string
       };
 
       if (typedError.errors && Array.isArray(typedError.errors)) {
@@ -137,7 +132,6 @@ export default function LoginPage() {
         });
       } else {
         // Show general error message
-        toast.error(apiError.message || 'Login failed. Please check your credentials.');
         toast.error(typedError.message || 'Login failed. Please check your credentials.');
       }
       getErrorMessages(error).forEach(message => {

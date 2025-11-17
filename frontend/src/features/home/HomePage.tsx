@@ -2,11 +2,6 @@
 
 import React from 'react';
 import Link from 'next/link';
-import Header from '@/components/layout/Header';
-import Footer from '@/components/layout/Footer';
-import { products, type Product } from '@/lib/data/products';
-
-export default function HomePage() {
 import Image from 'next/image';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';

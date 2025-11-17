@@ -10,6 +10,8 @@ interface OrderItem {
     price: number;
     image: string;
   };
+}
+
 interface DashboardStats {
   title: string;
   value: string;
@@ -45,11 +47,6 @@ interface CustomerInfo {
   paymentMethod: string;
 }
 
-  zipCode: string;
-  country: string;
-  paymentMethod: string;
-}
-
 type OrderStatus = 'pending' | 'confirmed' | 'rejected';
 
 interface Order {
@@ -61,13 +58,11 @@ interface Order {
   shipping: number;
   tax: number;
   total: number;
-  status: 'pending' | 'confirmed' | 'rejected';
   status: OrderStatus;
 }
 
 export default function AdminDashboard() {
   const [orders, setOrders] = useState<Order[]>([]);
-  const [stats, setStats] = useState([
   const [stats, setStats] = useState<DashboardStats[]>([
     {
       title: 'Total Revenue',

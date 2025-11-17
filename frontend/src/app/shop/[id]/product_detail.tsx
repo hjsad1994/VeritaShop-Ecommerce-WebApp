@@ -45,7 +45,6 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
           <h1 className="text-4xl font-bold text-black mb-4">Product Not Found</h1>
           <p className="text-gray-600 mb-6">The product you&apos;re looking for doesn&apos;t exist.</p>
           <Link href="/shop" className="px-6 py-3 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-all inline-block">
-          <Link href="/shop" className="px-6 py-3 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-all">
             Back to Shop
           </Link>
         </div>

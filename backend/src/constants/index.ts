@@ -64,6 +64,9 @@ export const ERROR_MESSAGES = {
   ORDER_INVALID_STATUS: 'Trạng thái đơn hàng không hợp lệ',
   ORDER_INVALID_STATUS_TRANSITION: 'Không thể chuyển sang trạng thái này',
   INSUFFICIENT_STOCK: 'Không đủ hàng trong kho',
+  WISHLIST_NOT_FOUND: 'Không tìm thấy danh sách yêu thích',
+  WISHLIST_ITEM_NOT_FOUND: 'Không tìm thấy sản phẩm trong danh sách yêu thích',
+  WISHLIST_ITEM_ALREADY_EXISTS: 'Sản phẩm đã có trong danh sách yêu thích',
 } as const;
 
 export const SUCCESS_MESSAGES = {
@@ -123,6 +126,10 @@ export const SUCCESS_MESSAGES = {
   UPDATE_ORDER_STATUS_SUCCESS: 'Cập nhật trạng thái đơn hàng thành công',
   CANCEL_ORDER_SUCCESS: 'Hủy đơn hàng thành công',
   CONFIRM_DELIVERY_SUCCESS: 'Xác nhận đã nhận hàng thành công',
+  GET_WISHLIST_SUCCESS: 'Lấy danh sách yêu thích thành công',
+  WISHLIST_ITEM_ADDED: 'Đã thêm sản phẩm vào danh sách yêu thích',
+  WISHLIST_ITEM_REMOVED: 'Đã xóa sản phẩm khỏi danh sách yêu thích',
+  WISHLIST_CLEARED: 'Đã xóa tất cả sản phẩm trong danh sách yêu thích',
 } as const;
 
 export const USER_ROLES = {

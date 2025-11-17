@@ -16,6 +16,7 @@ import { createCommentRoutes } from './routes/commentRoutes';
 import { createCartRoutes } from './routes/cartRoutes';
 import { createInventoryRoutes } from './routes/inventoryRoutes';
 import { createOrderRoutes } from './routes/orderRoutes';
+import { createWishlistRoutes } from './routes/wishlistRoutes';
 // Initialize Express app
 const app: Application = express();
 
@@ -66,6 +67,7 @@ app.use('/api/comments', createCommentRoutes());
 app.use('/api/cart', createCartRoutes());
 app.use('/api/inventory', createInventoryRoutes());
 app.use('/api/orders', createOrderRoutes());
+app.use('/api/wishlist', createWishlistRoutes());
 // 404 handler
 app.use(notFoundHandler);
 

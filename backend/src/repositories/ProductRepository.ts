@@ -407,6 +407,25 @@ export class ProductRepository extends BaseRepository<Product> {
     }
 
     /**
+     * Find product variant by ID with product relation
+     */
+    async findVariantById(variantId: string) {
+        return await this.prisma.productVariant.findUnique({
+            where: { id: variantId },
+            include: {
+                product: {
+                    select: {
+                        id: true,
+                        name: true,
+                        slug: true,
+                        isActive: true,
+                    },
+                },
+            },
+        });
+    }
+
+    /**
      * Generate slug from product name
      */
     private generateSlug(name: string): string {

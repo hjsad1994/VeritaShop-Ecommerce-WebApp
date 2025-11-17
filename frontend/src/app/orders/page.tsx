@@ -28,8 +28,6 @@ interface CustomerInfo {
   postalCode: string;
   zipCode?: string;
   country?: string;
-  zipCode: string;
-  country: string;
   paymentMethod: string;
 }
 

@@ -77,6 +77,8 @@ export class RepositoryFactory {
       throw new Error('RepositoryFactory not initialized. Call initialize() first.');
     }
     return this.prisma;
+  }
+
   static getOrderRepository(): OrderRepository {
     if (!this.prisma) {
       throw new Error('RepositoryFactory not initialized. Call initialize() first.');

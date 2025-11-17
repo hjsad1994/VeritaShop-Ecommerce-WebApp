@@ -46,6 +46,12 @@ export const ERROR_MESSAGES = {
   REVIEW_IMAGE_NOT_FOUND: 'Không tìm thấy ảnh đánh giá',
   REVIEW_RESPONSE_NOT_FOUND: 'Không tìm thấy phản hồi đánh giá',
   REVIEW_RESPONSE_ALREADY_EXISTS: 'Đánh giá này đã có phản hồi',
+  CART_NOT_FOUND: 'Không tìm thấy giỏ hàng',
+  CART_ITEM_NOT_FOUND: 'Không tìm thấy sản phẩm trong giỏ hàng',
+  CART_EMPTY: 'Giỏ hàng trống',
+  INVALID_QUANTITY: 'Số lượng không hợp lệ',
+  VARIANT_NOT_FOUND: 'Không tìm thấy phiên bản sản phẩm',
+  VARIANT_OUT_OF_STOCK: 'Sản phẩm không đủ số lượng trong kho',
 } as const;
 
 export const SUCCESS_MESSAGES = {
@@ -79,6 +85,11 @@ export const SUCCESS_MESSAGES = {
   REVIEW_HELPFUL_ADDED: 'Đã đánh dấu hữu ích',
   CREATE_REVIEW_RESPONSE_SUCCESS: 'Tạo phản hồi thành công',
   UPDATE_REVIEW_RESPONSE_SUCCESS: 'Cập nhật phản hồi thành công',
+  GET_CART_SUCCESS: 'Lấy giỏ hàng thành công',
+  CART_ITEM_ADDED: 'Đã thêm sản phẩm vào giỏ hàng',
+  CART_ITEM_UPDATED: 'Đã cập nhật số lượng sản phẩm',
+  CART_ITEM_REMOVED: 'Đã xóa sản phẩm khỏi giỏ hàng',
+  CART_CLEARED: 'Đã xóa tất cả sản phẩm trong giỏ hàng',
 } as const;
 
 export const USER_ROLES = {

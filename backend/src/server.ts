@@ -12,6 +12,7 @@ import { createProductRoutes } from './routes/productRoutes';
 import { createBrandRoutes } from './routes/brandRoutes';
 import { createCategoryRoutes } from './routes/categoryRoutes';
 import { createReviewRoutes } from './routes/reviewRoutes';
+import { createCartRoutes } from './routes/cartRoutes';
 // Initialize Express app
 const app: Application = express();
 
@@ -58,6 +59,7 @@ app.use('/api/products', createProductRoutes());
 app.use('/api/brands', createBrandRoutes());
 app.use('/api/categories', createCategoryRoutes());
 app.use('/api/reviews', createReviewRoutes());
+app.use('/api/cart', createCartRoutes());
 // 404 handler
 app.use(notFoundHandler);
 

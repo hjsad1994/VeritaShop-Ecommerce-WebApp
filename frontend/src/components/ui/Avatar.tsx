@@ -71,7 +71,7 @@ const Avatar: React.FC<AvatarProps> = ({
         className={`${sizeClasses} rounded-full overflow-hidden bg-gray-200 flex-shrink-0 ${className}`}
       >
         <Image
-          src={user.avatar}
+          src={user.avatar!}
           alt={`${user.name || 'User'} avatar`}
           width={dimensions.width}
           height={dimensions.height}

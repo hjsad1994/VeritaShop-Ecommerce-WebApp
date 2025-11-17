@@ -12,14 +12,6 @@ interface DashboardStats {
   icon: React.ReactElement;
 }
 
-interface OrderItem {
-  product: {
-    name: string;
-  };
-  quantity: number;
-  price: number;
-}
-
 interface ProductSummary {
   id: number;
   name: string;
@@ -51,20 +43,11 @@ interface Order {
   id: number;
   date: string;
   items: OrderItem[];
-  customerInfo: {
-    firstName: string;
-    lastName: string;
-    name: string;
-    email: string;
-    phone?: string;
-    address: string;
-  };
   customerInfo: CustomerInfo;
   subtotal: number;
   shipping: number;
   tax: number;
   total: number;
-  status: 'pending' | 'confirmed' | 'rejected';
   status: OrderStatus;
 }
 

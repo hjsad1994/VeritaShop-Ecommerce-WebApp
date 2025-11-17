@@ -34,12 +34,6 @@ interface Order {
   id: number;
   date: string;
   items: OrderItem[];
-  customerInfo: {
-    name: string;
-    email: string;
-    phone?: string;
-    address: string;
-  };
   customerInfo: CustomerInfo;
   subtotal: number;
   shipping: number;

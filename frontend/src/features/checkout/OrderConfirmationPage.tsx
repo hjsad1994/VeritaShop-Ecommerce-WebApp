@@ -17,30 +17,6 @@ interface ProductInfo {
 interface OrderItem {
   product: ProductInfo;
   quantity: number;
-  selectedColor: string;
-}
-
-interface CustomerInfo {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  address: string;
-  city: string;
-  zipCode: string;
-  country: string;
-  paymentMethod: string;
-}
-
-interface OrderItem {
-  product: {
-    id: number;
-    name: string;
-    price: number;
-    image: string;
-  };
-  quantity: number;
-  price: number;
   selectedColor?: string;
 }
 
@@ -52,6 +28,7 @@ interface CustomerInfo {
   address: string;
   city: string;
   zipCode: string;
+  country: string;
   paymentMethod: string;
 }
 
@@ -316,7 +293,7 @@ function OrderConfirmationContent() {
                 </div>
                 <div className="flex-1">
                   <h4 className="font-bold text-black">{item.product.name}</h4>
-                  <p className="text-sm text-gray-600">Color: {item.selectedColor}</p>
+                  <p className="text-sm text-gray-600">Color: {item.selectedColor || 'N/A'}</p>
                   <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
                 </div>
                 <div className="text-right">

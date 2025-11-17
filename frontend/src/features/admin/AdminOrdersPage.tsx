@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 
 interface OrderItem {
   product: {
@@ -302,10 +303,13 @@ export default function AdminOrdersPage() {
                     {selectedOrder.items.map((item, index) => (
                       <div key={index} className="flex gap-4 p-4 bg-white rounded-lg border border-gray-200">
                         <div className="w-20 h-20 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden">
-                          <img
+                          <Image
                             src={item.product.image}
                             alt={item.product.name}
+                            width={80}
+                            height={80}
                             className="w-full h-full object-contain p-2"
+                            unoptimized
                           />
                         </div>
                         <div className="flex-1">

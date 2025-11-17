@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { products, type Product } from '@/lib/data/products';
@@ -85,12 +86,15 @@ export default function HomePage() {
 
                 {/* Product image */}
                 <div className="relative z-10 group">
-                  <img
+                  <Image
                     src="/images/iphone17.png"
                     alt="Premium Smartphone"
+                    width={400}
+                    height={650}
+                    priority
                     className="relative w-auto h-[650px] object-contain drop-shadow-[0_50px_100px_rgba(59,130,246,0.5)] animate-float group-hover:scale-105 transition-transform duration-700"
-                    onError={(e) => {
-                      e.currentTarget.src = "https://images.unsplash.com/photo-1695048064555-7f2f29c9e588?w=800&h=1200&fit=crop&q=80";
+                    onError={(event) => {
+                      event.currentTarget.src = 'https://images.unsplash.com/photo-1695048064555-7f2f29c9e588?w=800&h=1200&fit=crop&q=80';
                     }}
                   />
 
@@ -194,7 +198,14 @@ export default function HomePage() {
                     className={`group relative bg-gradient-to-br ${brand.gradient} rounded-3xl p-8 hover:scale-105 transition-all duration-500 cursor-pointer min-w-[320px] border border-white/5 hover:border-white/20 overflow-hidden`}
                   >
                     <div className="absolute inset-0 opacity-30">
-                      <img src={brand.img} alt={brand.name} className="w-full h-full object-cover" />
+                      <Image
+                        src={brand.img}
+                        alt={brand.name}
+                        fill
+                        className="object-cover"
+                        unoptimized
+                        sizes="320px"
+                      />
                     </div>
                     <div className="relative z-10 text-center">
                       <h3 className="text-2xl font-bold text-white mb-2 tracking-wide drop-shadow-md">{brand.name}</h3>
@@ -279,10 +290,13 @@ export default function HomePage() {
                   className="group relative bg-gradient-to-br from-zinc-900/95 to-zinc-950 border border-zinc-800 rounded-3xl overflow-hidden hover:border-white hover:shadow-[0_0_30px_rgba(255,255,255,0.3)] transition-all duration-500 cursor-pointer flex flex-col"
                 >
                   <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-zinc-800 to-zinc-900">
-                    <img
+                    <Image
                       src={product.image}
                       alt={product.name}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                      fill
+                      className="object-cover group-hover:scale-110 transition-transform duration-700"
+                      unoptimized
+                      sizes="(min-width: 1024px) 250px, 50vw"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60"></div>
 
@@ -355,10 +369,13 @@ export default function HomePage() {
 
           <div className="grid md:grid-cols-3 gap-8">
             <div className="group relative rounded-2xl overflow-hidden cursor-pointer h-96 hover:scale-105 transition-all">
-              <img
+              <Image
                 src="https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?w=800&h=800&fit=crop"
                 alt="Flagship Phones"
-                className="w-full h-full object-cover"
+                fill
+                className="object-cover"
+                unoptimized
+                sizes="(min-width: 768px) 33vw, 100vw"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent flex flex-col justify-end p-10">
                 <h3 className="text-4xl font-light text-white mb-3 tracking-tight">Flagship Phones</h3>
@@ -370,10 +387,13 @@ export default function HomePage() {
             </div>
 
             <div className="group relative rounded-2xl overflow-hidden cursor-pointer h-96 hover:scale-105 transition-all">
-              <img
+              <Image
                 src="https://images.unsplash.com/photo-1574944985070-8f3ebc6b79d2?w=800&h=800&fit=crop"
                 alt="Gaming Phones"
-                className="w-full h-full object-cover"
+                fill
+                className="object-cover"
+                unoptimized
+                sizes="(min-width: 768px) 33vw, 100vw"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent flex flex-col justify-end p-10">
                 <h3 className="text-4xl font-light text-white mb-3 tracking-tight">Gaming Phones</h3>
@@ -385,10 +405,13 @@ export default function HomePage() {
             </div>
 
             <div className="group relative rounded-2xl overflow-hidden cursor-pointer h-96 hover:scale-105 transition-all">
-              <img
+              <Image
                 src="https://images.unsplash.com/photo-1512499617640-c74ae3a79d37?w=800&h=800&fit=crop"
                 alt="Budget Friendly"
-                className="w-full h-full object-cover"
+                fill
+                className="object-cover"
+                unoptimized
+                sizes="(min-width: 768px) 33vw, 100vw"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent flex flex-col justify-end p-10">
                 <h3 className="text-4xl font-light text-white mb-3 tracking-tight">Budget Friendly</h3>
@@ -409,7 +432,7 @@ export default function HomePage() {
             <div>
               <p className="text-sm text-gray-500 uppercase tracking-wider mb-3 font-medium">Apple</p>
               <h2 className="text-5xl md:text-6xl font-bold text-white mb-8">
-                The iPhone everyone's talking about
+                The iPhone everyone&apos;s talking about
               </h2>
               <p className="text-xl text-gray-300 mb-10 leading-relaxed">
                 Experience the power of the latest iPhone 15 series. A17 Pro chip, ProMotion display, and the best camera system ever.
@@ -439,11 +462,14 @@ export default function HomePage() {
               </Link>
             </div>
             <div className="relative">
-              <div className="aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-gray-900 to-black border border-gray-800 hover:border-white hover:shadow-[0_0_40px_rgba(255,255,255,0.4)] transition-all duration-500 cursor-pointer group">
-                <img
+              <div className="aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-gray-900 to-black border border-gray-800 hover:border-white hover:shadow-[0_0_40px_rgba(255,255,255,0.4)] transition-all duration-500 cursor-pointer group relative">
+                <Image
                   src="https://images.unsplash.com/photo-1678652197831-2d180705cd2c?q=80&w=800&h=800&fit=crop"
                   alt="iPhone 15 Pro"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform duration-500"
+                  unoptimized
+                  sizes="(min-width: 768px) 50vw, 100vw"
                 />
               </div>
             </div>
@@ -456,11 +482,14 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-16 items-center">
             <div className="order-2 md:order-1 relative">
-              <div className="aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-purple-900 to-black border border-gray-800 hover:border-white hover:shadow-[0_0_40px_rgba(255,255,255,0.4)] transition-all duration-500 cursor-pointer group">
-                <img
+              <div className="aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-purple-900 to-black border border-gray-800 hover:border-white hover:shadow-[0_0_40px_rgba(255,255,255,0.4)] transition-all duration-500 cursor-pointer group relative">
+                <Image
                   src="https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=800&h=800&fit=crop"
                   alt="Samsung Galaxy"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform duration-500"
+                  unoptimized
+                  sizes="(min-width: 768px) 50vw, 100vw"
                 />
               </div>
             </div>
@@ -488,7 +517,7 @@ export default function HomePage() {
                 <div className="flex items-start gap-4 p-4 rounded-xl hover:bg-gray-900 transition-all duration-300 cursor-pointer group border border-transparent hover:border-gray-800">
                   <div>
                     <h4 className="font-bold text-white text-xl mb-1 group-hover:text-blue-400 transition-colors">Dynamic AMOLED 2X</h4>
-                    <p className="text-gray-400 group-hover:text-gray-300 transition-colors">6.8" QHD+ 120Hz display</p>
+                    <p className="text-gray-400 group-hover:text-gray-300 transition-colors">6.8&quot; QHD+ 120Hz display</p>
                   </div>
                 </div>
               </div>
@@ -537,10 +566,13 @@ export default function HomePage() {
                 className="group bg-gray-900 border border-gray-800 rounded-xl overflow-hidden hover:scale-105 transition-all duration-500 cursor-pointer hover:border-white hover:shadow-[0_0_35px_rgba(255,255,255,0.35)]"
               >
                 <div className="h-96 overflow-hidden bg-gradient-to-br from-gray-900 to-black relative">
-                  <img
+                  <Image
                     src={phone.image}
                     alt={phone.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                    fill
+                    className="object-cover group-hover:scale-110 transition-transform duration-700"
+                    unoptimized
+                    sizes="(min-width: 768px) 30vw, 100vw"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </div>

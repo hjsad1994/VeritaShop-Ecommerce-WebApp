@@ -7,6 +7,32 @@ import toast from 'react-hot-toast';
 import { authService } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 
+type ApiError = {
+  message?: string;
+  errors?: Array<{ message?: string }>;
+};
+
+const getRegisterErrorMessages = (error: unknown): string[] => {
+  if (typeof error === 'string') {
+    return [error];
+  }
+  if (error && typeof error === 'object') {
+    const apiError = error as ApiError;
+    if (apiError.errors && apiError.errors.length > 0) {
+      const messages = apiError.errors
+        .map(err => err?.message)
+        .filter((msg): msg is string => Boolean(msg));
+      if (messages.length > 0) {
+        return messages;
+      }
+    }
+    if (apiError.message) {
+      return [apiError.message];
+    }
+  }
+  return ['Registration failed. Please try again.'];
+};
+
 export default function RegisterPage() {
   const router = useRouter();
   const { login } = useAuth();
@@ -96,6 +122,7 @@ export default function RegisterPage() {
         // Show general error message
         toast.error(typedError.message || 'Registration failed. Please try again.');
       }
+      getRegisterErrorMessages(error).forEach(message => toast.error(message));
     } finally {
       setIsLoading(false);
     }

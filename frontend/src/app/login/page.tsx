@@ -6,6 +6,32 @@ import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
 
+type ApiError = {
+  message?: string;
+  errors?: Array<{ message?: string }>;
+};
+
+const getErrorMessages = (error: unknown): string[] => {
+  if (typeof error === 'string') {
+    return [error];
+  }
+  if (error && typeof error === 'object') {
+    const apiError = error as ApiError;
+    if (apiError.errors && apiError.errors.length > 0) {
+      const messages = apiError.errors
+        .map(err => err?.message)
+        .filter((msg): msg is string => Boolean(msg));
+      if (messages.length > 0) {
+        return messages;
+      }
+    }
+    if (apiError.message) {
+      return [apiError.message];
+    }
+  }
+  return ['Login failed. Please check your credentials.'];
+};
+
 export default function LoginPage() {
   const router = useRouter();
   const { login, isAuthenticated, isLoading: authLoading, user } = useAuth();
@@ -108,6 +134,9 @@ export default function LoginPage() {
         // Show general error message
         toast.error(typedError.message || 'Login failed. Please check your credentials.');
       }
+      getErrorMessages(error).forEach(message => {
+        toast.error(message);
+      });
     } finally {
       setIsSubmitting(false);
     }

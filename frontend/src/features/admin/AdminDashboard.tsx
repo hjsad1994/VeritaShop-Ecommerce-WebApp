@@ -20,6 +20,33 @@ interface OrderItem {
   price: number;
 }
 
+interface ProductSummary {
+  id: number;
+  name: string;
+  price: number;
+  image: string;
+}
+
+interface OrderItem {
+  product: ProductSummary;
+  quantity: number;
+  selectedColor: string;
+}
+
+interface CustomerInfo {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  zipCode: string;
+  country: string;
+  paymentMethod: string;
+}
+
+type OrderStatus = 'pending' | 'confirmed' | 'rejected';
+
 interface Order {
   id: number;
   date: string;
@@ -32,16 +59,28 @@ interface Order {
     phone?: string;
     address: string;
   };
+  customerInfo: CustomerInfo;
   subtotal: number;
   shipping: number;
   tax: number;
   total: number;
   status: 'pending' | 'confirmed' | 'rejected';
+  status: OrderStatus;
+}
+
+interface DashboardStat {
+  title: string;
+  value: string;
+  change: string;
+  isPositive: boolean;
+  iconColor: string;
+  icon: React.ReactNode;
 }
 
 export default function AdminDashboard() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [stats, setStats] = useState<DashboardStats[]>([
+  const [stats, setStats] = useState<DashboardStat[]>([
     {
       title: 'Total Revenue',
       value: '$0',
@@ -98,7 +137,7 @@ export default function AdminDashboard() {
 
   const fetchOrders = () => {
     try {
-      const savedOrders = JSON.parse(localStorage.getItem('veritas-orders') || '[]');
+      const savedOrders = JSON.parse(localStorage.getItem('veritas-orders') || '[]') as Order[];
       setOrders(savedOrders);
       
       // Calculate stats
@@ -108,6 +147,11 @@ export default function AdminDashboard() {
       const totalRevenue = savedOrders
         .filter((order: Order) => order.status === 'confirmed')
         .reduce((sum: number, order: Order) => sum + order.total, 0);
+      const pendingOrders = savedOrders.filter((order) => order.status === 'pending').length;
+      const confirmedOrders = savedOrders.filter((order) => order.status === 'confirmed').length;
+      const totalRevenue = savedOrders
+        .filter((order) => order.status === 'confirmed')
+        .reduce((sum, order) => sum + order.total, 0);
       
       setStats([
         {

@@ -1,7 +1,12 @@
 # ==================== ROOT PROJECT GITIGNORE ====================
 
-# Claude Code - AI Assistant files
+# AI Assistant files
 .claude/
+.factory/
+CLAUDE.md
+REVIEW_API_TEST_RESULTS.md
+*_TEST_RESULTS.md
+memory-bank/
 
 # OS Files
 .DS_Store

@@ -54,6 +54,8 @@ export class RepositoryFactory {
       throw new Error('RepositoryFactory not initialized. Call initialize() first.');
     }
     return new CommentRepository(this.prisma);
+  }
+
   static getCartRepository(): CartRepository {
     if (!this.prisma) {
       throw new Error('RepositoryFactory not initialized. Call initialize() first.');

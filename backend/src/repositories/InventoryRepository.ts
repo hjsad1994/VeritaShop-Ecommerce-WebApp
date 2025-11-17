@@ -130,9 +130,8 @@ export class InventoryRepository extends BaseRepository<any> {
       }
     }
 
-    if (lowStock) {
-      where.available = { lt: this.prisma.inventory.fields.minStock };
-    }
+    // Note: lowStock filter will be applied post-query since Prisma doesn't support
+    // comparing two columns in where clause directly
 
     if (search) {
       where.variant = {
@@ -143,11 +142,8 @@ export class InventoryRepository extends BaseRepository<any> {
       };
     }
 
-    // Get total count
-    const total = await this.prisma.inventory.count({ where });
-
-    // Get inventory records
-    const inventories = await this.prisma.inventory.findMany({
+    // Get inventory records (may need post-filtering for lowStock)
+    let inventories = await this.prisma.inventory.findMany({
       where,
       include: {
         variant: {
@@ -163,15 +159,24 @@ export class InventoryRepository extends BaseRepository<any> {
           },
         },
       },
-      skip,
-      take: limit,
       orderBy: {
         updatedAt: 'desc',
       },
     });
 
+    // Apply lowStock filter post-query if needed
+    if (lowStock) {
+      inventories = inventories.filter(
+        (inv) => inv.minStock > 0 && inv.available < inv.minStock
+      );
+    }
+
+    // Calculate total and apply pagination
+    const total = inventories.length;
+    const paginatedInventories = inventories.slice(skip, skip + limit);
+
     return {
-      inventories,
+      inventories: paginatedInventories,
       total,
       page,
       limit,
@@ -355,14 +360,12 @@ export class InventoryRepository extends BaseRepository<any> {
       }),
 
       // Low stock count (available < minStock and minStock > 0)
-      this.prisma.inventory.count({
-        where: {
-          AND: [
-            { available: { lt: this.prisma.inventory.fields.minStock } },
-            { minStock: { gt: 0 } },
-          ],
-        },
-      }),
+      // Using raw query since Prisma doesn't support column comparison
+      this.prisma.$queryRaw<[{ count: bigint }]>`
+        SELECT COUNT(*)::int as count
+        FROM "Inventory"
+        WHERE "available" < "minStock" AND "minStock" > 0
+      `.then((result) => Number(result[0].count)),
 
       // Out of stock count
       this.prisma.inventory.count({
@@ -386,12 +389,10 @@ export class InventoryRepository extends BaseRepository<any> {
    * Get low stock items
    */
   async getLowStockItems(limit: number = 20) {
-    return await this.prisma.inventory.findMany({
+    // Get all inventory and filter in memory since Prisma doesn't support column comparison
+    const allInventory = await this.prisma.inventory.findMany({
       where: {
-        AND: [
-          { available: { lt: this.prisma.inventory.fields.minStock } },
-          { minStock: { gt: 0 } },
-        ],
+        minStock: { gt: 0 },
       },
       include: {
         variant: {
@@ -406,11 +407,15 @@ export class InventoryRepository extends BaseRepository<any> {
           },
         },
       },
-      take: limit,
       orderBy: {
         available: 'asc',
       },
     });
+
+    // Filter items where available < minStock
+    return allInventory
+      .filter((inv) => inv.available < inv.minStock)
+      .slice(0, limit);
   }
 
   /**

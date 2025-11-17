@@ -84,6 +84,54 @@ class ProductService {
   async getProductsByCategory(categorySlug: string, params: Omit<ProductQueryParams, 'category'> = {}): Promise<ProductListResponse> {
     return this.getProducts({ ...params, category: categorySlug });
   }
+
+  // Admin functions
+
+  /**
+   * Create a new product (Admin only)
+   */
+  async createProduct(productData: {
+    name: string;
+    description?: string;
+    brandId: string;
+    categoryId: string;
+    basePrice: number;
+    discount?: number;
+    isFeatured?: boolean;
+    isActive?: boolean;
+    slug?: string;
+  }): Promise<Product> {
+    const response = await apiClient.post<ApiResponse<Product>>(this.basePath, productData);
+    return response.data.data;
+  }
+
+  /**
+   * Update an existing product (Admin/Manager only)
+   */
+  async updateProduct(
+    id: string,
+    updateData: {
+      name?: string;
+      description?: string;
+      brandId?: string;
+      categoryId?: string;
+      basePrice?: number;
+      discount?: number;
+      isFeatured?: boolean;
+      isActive?: boolean;
+      slug?: string;
+    }
+  ): Promise<Product> {
+    const response = await apiClient.put<ApiResponse<Product>>(`${this.basePath}/${id}`, updateData);
+    return response.data.data;
+  }
+
+  /**
+   * Delete a product (Admin only)
+   */
+  async deleteProduct(id: string): Promise<void> {
+    await apiClient.delete(`${this.basePath}/${id}`);
+  }
 }
 
 const productService = new ProductService();

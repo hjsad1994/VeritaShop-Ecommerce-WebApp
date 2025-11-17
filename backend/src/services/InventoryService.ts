@@ -36,7 +36,7 @@ export class InventoryService {
   constructor() {
     this.inventoryRepository = RepositoryFactory.getInventoryRepository();
     this.productRepository = RepositoryFactory.getProductRepository();
-    this.prisma = new PrismaClient();
+    this.prisma = RepositoryFactory.getPrisma();
   }
 
   /**

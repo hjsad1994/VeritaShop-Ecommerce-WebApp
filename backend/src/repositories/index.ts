@@ -70,4 +70,11 @@ export class RepositoryFactory {
     }
     return new InventoryRepository(this.prisma);
   }
+
+  static getPrisma(): PrismaClient {
+    if (!this.prisma) {
+      throw new Error('RepositoryFactory not initialized. Call initialize() first.');
+    }
+    return this.prisma;
+  }
 }

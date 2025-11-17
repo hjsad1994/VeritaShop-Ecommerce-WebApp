@@ -55,6 +55,13 @@ export const ERROR_MESSAGES = {
   INVALID_QUANTITY: 'Số lượng không hợp lệ',
   VARIANT_NOT_FOUND: 'Không tìm thấy phiên bản sản phẩm',
   VARIANT_OUT_OF_STOCK: 'Sản phẩm không đủ số lượng trong kho',
+  ORDER_NOT_FOUND: 'Không tìm thấy đơn hàng',
+  ORDER_UNAUTHORIZED: 'Bạn không có quyền xem đơn hàng này',
+  ORDER_CANNOT_CANCEL: 'Không thể hủy đơn hàng ở trạng thái hiện tại',
+  ORDER_ALREADY_DELIVERED: 'Đơn hàng đã được giao',
+  ORDER_INVALID_STATUS: 'Trạng thái đơn hàng không hợp lệ',
+  ORDER_INVALID_STATUS_TRANSITION: 'Không thể chuyển sang trạng thái này',
+  INSUFFICIENT_STOCK: 'Không đủ hàng trong kho',
 } as const;
 
 export const SUCCESS_MESSAGES = {
@@ -98,6 +105,12 @@ export const SUCCESS_MESSAGES = {
   CART_ITEM_UPDATED: 'Đã cập nhật số lượng sản phẩm',
   CART_ITEM_REMOVED: 'Đã xóa sản phẩm khỏi giỏ hàng',
   CART_CLEARED: 'Đã xóa tất cả sản phẩm trong giỏ hàng',
+  GET_ORDERS_SUCCESS: 'Lấy danh sách đơn hàng thành công',
+  GET_ORDER_SUCCESS: 'Lấy thông tin đơn hàng thành công',
+  CREATE_ORDER_SUCCESS: 'Tạo đơn hàng thành công',
+  UPDATE_ORDER_STATUS_SUCCESS: 'Cập nhật trạng thái đơn hàng thành công',
+  CANCEL_ORDER_SUCCESS: 'Hủy đơn hàng thành công',
+  CONFIRM_DELIVERY_SUCCESS: 'Xác nhận đã nhận hàng thành công',
 } as const;
 
 export const USER_ROLES = {

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import AuthGuard from '@/components/auth/AuthGuard';
@@ -93,9 +94,11 @@ export default function ProfilePage() {
                 <div className="text-center">
                   <div className="w-32 h-32 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
                     {formData.avatar ? (
-                      <img 
-                        src={formData.avatar} 
-                        alt="Profile" 
+                      <Image
+                        src={formData.avatar}
+                        alt="Profile"
+                        width={128}
+                        height={128}
                         className="w-full h-full rounded-full object-cover"
                       />
                     ) : (

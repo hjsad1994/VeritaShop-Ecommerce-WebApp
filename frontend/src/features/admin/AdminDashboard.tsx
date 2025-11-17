@@ -68,19 +68,9 @@ interface Order {
   status: OrderStatus;
 }
 
-interface DashboardStat {
-  title: string;
-  value: string;
-  change: string;
-  isPositive: boolean;
-  iconColor: string;
-  icon: React.ReactNode;
-}
-
 export default function AdminDashboard() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [stats, setStats] = useState<DashboardStats[]>([
-  const [stats, setStats] = useState<DashboardStat[]>([
     {
       title: 'Total Revenue',
       value: '$0',
@@ -147,11 +137,6 @@ export default function AdminDashboard() {
       const totalRevenue = savedOrders
         .filter((order: Order) => order.status === 'confirmed')
         .reduce((sum: number, order: Order) => sum + order.total, 0);
-      const pendingOrders = savedOrders.filter((order) => order.status === 'pending').length;
-      const confirmedOrders = savedOrders.filter((order) => order.status === 'confirmed').length;
-      const totalRevenue = savedOrders
-        .filter((order) => order.status === 'confirmed')
-        .reduce((sum, order) => sum + order.total, 0);
       
       setStats([
         {

@@ -2,9 +2,10 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
-import { products, Product } from '@/lib/data/products';
+import { products, type Product } from '@/lib/data/products';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 
@@ -13,12 +14,7 @@ export default function HomePage() {
   const { addToCart, openCart } = useCart();
   const [addingToCart, setAddingToCart] = React.useState<number | null>(null);
   const [lastClickedTime, setLastClickedTime] = React.useState<{ [key: number]: number }>({});
-import Image from 'next/image';
-import Header from '@/components/layout/Header';
-import Footer from '@/components/layout/Footer';
-import { products, type Product } from '@/lib/data/products';
 
-export default function HomePage() {
   const rotatingWords = [
     "gaming beast\nwith ROG Phone",
     "Samsung\nflagship",

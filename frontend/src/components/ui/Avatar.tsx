@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 
 interface AvatarProps {
   user?: {
@@ -45,19 +46,35 @@ const Avatar: React.FC<AvatarProps> = ({
     }
   };
 
+  const getSizeDimensions = () => {
+    switch (size) {
+      case 'sm':
+        return { width: 32, height: 32 };
+      case 'md':
+        return { width: 40, height: 40 };
+      case 'lg':
+        return { width: 48, height: 48 };
+      default:
+        return { width: 40, height: 40 };
+    }
+  };
+
   const sizeClasses = getSizeClasses();
+  const dimensions = getSizeDimensions();
   const initials = getInitials(user?.name);
   const hasAvatar = user?.avatar;
   const hasName = user?.name;
 
   if (hasAvatar) {
     return (
-      <div 
+      <div
         className={`${sizeClasses} rounded-full overflow-hidden bg-gray-200 flex-shrink-0 ${className}`}
       >
-        <img 
-          src={user.avatar} 
+        <Image
+          src={user.avatar}
           alt={`${user.name || 'User'} avatar`}
+          width={dimensions.width}
+          height={dimensions.height}
           className="w-full h-full object-cover"
           onError={(e) => {
             // Fallback to initials if image fails to load

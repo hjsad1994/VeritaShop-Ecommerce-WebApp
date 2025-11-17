@@ -32,7 +32,6 @@ export class CartVariantDto {
   color: string;
   storage: string | null;
   price: number;
-  stock: number;
   isActive: boolean;
   product: CartProductDto;
 
@@ -42,7 +41,6 @@ export class CartVariantDto {
     this.color = data.color;
     this.storage = data.storage;
     this.price = Number(data.price); // Convert Decimal to number
-    this.stock = data.stock;
     this.isActive = data.isActive;
     this.product = new CartProductDto(data.product);
   }

@@ -1,4 +1,5 @@
 import { CartRepository } from '../repositories/CartRepository';
+import { InventoryRepository } from '../repositories/InventoryRepository';
 import { RepositoryFactory } from '../repositories';
 import { ApiError } from '../utils/ApiError';
 import { HTTP_STATUS, ERROR_MESSAGES } from '../constants';
@@ -6,10 +7,12 @@ import { HTTP_STATUS, ERROR_MESSAGES } from '../constants';
 export class CartService {
   private cartRepository: CartRepository;
   private productRepository: any;
+  private inventoryRepository: InventoryRepository;
 
   constructor() {
     this.cartRepository = RepositoryFactory.getCartRepository();
     this.productRepository = RepositoryFactory.getProductRepository();
+    this.inventoryRepository = RepositoryFactory.getInventoryRepository();
   }
 
   /**
@@ -63,11 +66,14 @@ export class CartService {
       ? existingItem.quantity + quantity
       : quantity;
 
-    // Validate stock availability
-    if (newQuantity > variant.stock) {
+    // Validate stock availability using Inventory
+    const inventory = await this.inventoryRepository.findByVariantId(variantId);
+
+    if (!inventory || newQuantity > inventory.available) {
+      const availableStock = inventory ? inventory.available : 0;
       throw new ApiError(
         HTTP_STATUS.BAD_REQUEST,
-        `VARIANT_OUT_OF_STOCK: Chỉ còn ${variant.stock} sản phẩm trong kho`
+        `VARIANT_OUT_OF_STOCK: Chỉ còn ${availableStock} sản phẩm trong kho`
       );
     }
 
@@ -103,11 +109,16 @@ export class CartService {
       throw new ApiError(HTTP_STATUS.FORBIDDEN, ERROR_MESSAGES.FORBIDDEN);
     }
 
-    // Validate stock availability
-    if (quantity > cartItem.variant.stock) {
+    // Validate stock availability using Inventory
+    const inventory = await this.inventoryRepository.findByVariantId(
+      cartItem.variantId
+    );
+
+    if (!inventory || quantity > inventory.available) {
+      const availableStock = inventory ? inventory.available : 0;
       throw new ApiError(
         HTTP_STATUS.BAD_REQUEST,
-        `VARIANT_OUT_OF_STOCK: Chỉ còn ${cartItem.variant.stock} sản phẩm trong kho`
+        `VARIANT_OUT_OF_STOCK: Chỉ còn ${availableStock} sản phẩm trong kho`
       );
     }
 
@@ -185,14 +196,20 @@ export class CartService {
       availableStock: number;
     }> = [];
 
-    // Check stock for each item
+    // Check stock for each item using Inventory
     for (const item of cart.items) {
-      if (item.quantity > item.variant.stock) {
+      const inventory = await this.inventoryRepository.findByVariantId(
+        item.variantId
+      );
+
+      const availableStock = inventory ? inventory.available : 0;
+
+      if (item.quantity > availableStock) {
         stockIssues.push({
           itemId: item.id,
           productName: item.variant.product.name,
           requestedQuantity: item.quantity,
-          availableStock: item.variant.stock,
+          availableStock,
         });
       }
 

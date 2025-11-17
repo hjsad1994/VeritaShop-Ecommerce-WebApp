@@ -166,7 +166,11 @@ export class ProductRepository extends BaseRepository<Product> {
                 brand: true,
                 category: true,
                 specs: true,
-                variants: true,
+                variants: {
+                    include: {
+                        images: true
+                    }
+                },
                 images: true,
                 reviews: true
             }

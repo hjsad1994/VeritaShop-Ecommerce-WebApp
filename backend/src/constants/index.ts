@@ -55,6 +55,9 @@ export const ERROR_MESSAGES = {
   INVALID_QUANTITY: 'Số lượng không hợp lệ',
   VARIANT_NOT_FOUND: 'Không tìm thấy phiên bản sản phẩm',
   VARIANT_OUT_OF_STOCK: 'Sản phẩm không đủ số lượng trong kho',
+  // Inventory messages
+  INVENTORY_NOT_FOUND: 'Không tìm thấy thông tin tồn kho',
+  INSUFFICIENT_STOCK: 'Không đủ hàng trong kho',
 } as const;
 
 export const SUCCESS_MESSAGES = {
@@ -98,6 +101,16 @@ export const SUCCESS_MESSAGES = {
   CART_ITEM_UPDATED: 'Đã cập nhật số lượng sản phẩm',
   CART_ITEM_REMOVED: 'Đã xóa sản phẩm khỏi giỏ hàng',
   CART_CLEARED: 'Đã xóa tất cả sản phẩm trong giỏ hàng',
+  // Inventory messages
+  GET_INVENTORY_SUCCESS: 'Lấy thông tin tồn kho thành công',
+  STOCK_IN_SUCCESS: 'Nhập kho thành công',
+  STOCK_OUT_SUCCESS: 'Xuất kho thành công',
+  ADJUSTMENT_SUCCESS: 'Điều chỉnh tồn kho thành công',
+  GET_MOVEMENTS_SUCCESS: 'Lấy lịch sử giao dịch kho thành công',
+  GET_STATS_SUCCESS: 'Lấy thống kê tồn kho thành công',
+  GET_LOW_STOCK_SUCCESS: 'Lấy danh sách hàng sắp hết thành công',
+  UPDATE_THRESHOLDS_SUCCESS: 'Cập nhật ngưỡng tồn kho thành công',
+  CHECK_AVAILABILITY_SUCCESS: 'Kiểm tra tồn kho thành công',
 } as const;
 
 export const USER_ROLES = {

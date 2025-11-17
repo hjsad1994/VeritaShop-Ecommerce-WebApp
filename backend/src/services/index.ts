@@ -6,6 +6,7 @@ import { BrandService } from './BrandService';
 import { CategoryService } from './CategoryService';
 import { ReviewService } from './ReviewService';
 import { CommentService } from './CommentService';
+import { InventoryService } from './InventoryService';
 
 export class ServiceFactory {
   private static authService: AuthService;
@@ -15,6 +16,7 @@ export class ServiceFactory {
   private static categoryService: CategoryService;
   private static reviewService: ReviewService;
   private static commentService: CommentService;
+  private static inventoryService: InventoryService;
 
   static getAuthService(): AuthService {
     if (!this.authService) {
@@ -70,5 +72,12 @@ export class ServiceFactory {
       this.commentService = new CommentService(commentRepository);
     }
     return this.commentService;
+  }
+
+  static getInventoryService(): InventoryService {
+    if (!this.inventoryService) {
+      this.inventoryService = new InventoryService();
+    }
+    return this.inventoryService;
   }
 }

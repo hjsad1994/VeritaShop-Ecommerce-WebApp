@@ -8,6 +8,7 @@ import { ReviewService } from './ReviewService';
 import { CommentService } from './CommentService';
 import { InventoryService } from './InventoryService';
 import { WishlistService } from './WishlistService';
+import { VoucherService } from './VoucherService';
 
 export class ServiceFactory {
   private static authService: AuthService;
@@ -19,6 +20,7 @@ export class ServiceFactory {
   private static commentService: CommentService;
   private static inventoryService: InventoryService;
   private static wishlistService: WishlistService;
+  private static voucherService: VoucherService;
 
   static getAuthService(): AuthService {
     if (!this.authService) {
@@ -88,5 +90,13 @@ export class ServiceFactory {
       this.wishlistService = new WishlistService();
     }
     return this.wishlistService;
+  }
+
+  static getVoucherService(): VoucherService {
+    if (!this.voucherService) {
+      const voucherRepository = RepositoryFactory.getVoucherRepository();
+      this.voucherService = new VoucherService(voucherRepository);
+    }
+    return this.voucherService;
   }
 }

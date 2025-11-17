@@ -48,6 +48,15 @@ export default function AdminSidebar() {
     {
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 11V7a1 1 0 011-1h5a1 1 0 011 1v4m-7 0h7m-7 0a3 3 0 10-2.995 3.176L7 14h10a3 3 0 10.176-5.995L17 8" />
+        </svg>
+      ),
+      label: 'Vouchers',
+      href: '/admin/vouchers'
+    },
+    {
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
         </svg>
       ),

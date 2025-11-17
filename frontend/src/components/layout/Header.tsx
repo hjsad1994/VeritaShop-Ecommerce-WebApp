@@ -3,8 +3,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useCart } from '@/contexts/CartContext';
-import { useAuth } from '@/contexts/AuthContext';
-import Avatar from '@/components/ui/Avatar';
 import UserMenu from '@/components/layout/UserMenu';
 
 interface HeaderProps {
@@ -14,7 +12,6 @@ interface HeaderProps {
 
 export default function Header({ isScrolled = false, theme = 'dark' }: HeaderProps) {
   const { getTotalItems, openCart } = useCart();
-  const { user, isAuthenticated, logout } = useAuth();
   const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
   
   const notificationDropdownRef = useRef<HTMLDivElement>(null);
@@ -151,8 +148,6 @@ export default function Header({ isScrolled = false, theme = 'dark' }: HeaderPro
             <UserMenu 
               theme={theme}
               textClass={textClass}
-              dropdownBgClass={dropdownBgClass}
-              dropdownItemClass={dropdownItemClass}
             />
 
             <button

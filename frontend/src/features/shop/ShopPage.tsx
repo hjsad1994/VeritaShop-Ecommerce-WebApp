@@ -9,7 +9,6 @@ import ShopFilter from '@/components/ui/Filter';
 import { products } from '@/lib/data/products';
 
 export default function ShopPage() {
-  const [isFilterOpen, setIsFilterOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [selectedBrands, setSelectedBrands] = React.useState<string[]>([]);
   const [selectedPriceRange, setSelectedPriceRange] = React.useState<string>('');

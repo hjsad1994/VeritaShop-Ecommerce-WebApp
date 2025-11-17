@@ -1,14 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
 
 interface AuthPageLoaderProps {
   children: React.ReactNode;
 }
 
 export default function AuthPageLoader({ children }: AuthPageLoaderProps) {
-  const { isAuthenticated } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {

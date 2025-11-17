@@ -8,15 +8,11 @@ import Avatar from '@/components/ui/Avatar';
 interface UserMenuProps {
   theme?: 'dark' | 'light';
   textClass?: string;
-  dropdownBgClass?: string;
-  dropdownItemClass?: string;
 }
 
 export default function UserMenu({ 
   theme = 'dark', 
-  textClass = 'text-white hover:text-gray-300',
-  dropdownBgClass = 'bg-gray-900 border-gray-800',
-  dropdownItemClass = 'text-white hover:bg-gray-800'
+  textClass = 'text-white hover:text-gray-300'
 }: UserMenuProps) {
   const { user, isAuthenticated, logout } = useAuth();
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);

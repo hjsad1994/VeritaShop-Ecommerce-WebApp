@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { User } from '@/lib/api/types';
 import { authService } from '@/lib/api/authService';
-import { userService } from '@/lib/api/userService';
 import toast from 'react-hot-toast';
 
 export default function AccountsPage() {
@@ -11,7 +10,6 @@ export default function AccountsPage() {
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Mock users data since backend doesn't have getAllUsers API
@@ -111,8 +109,9 @@ export default function AccountsPage() {
         toast.error('User update limited - profile updates only work for current user');
         setShowModal(false);
       }
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to save user');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to save user';
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }

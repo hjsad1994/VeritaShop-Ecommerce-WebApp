@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { userService } from '@/lib/api/userService';
-import { User } from '@/lib/api/types';
 import toast from 'react-hot-toast';
 
 export default function AdminProfilePage() {
@@ -50,8 +49,9 @@ export default function AdminProfilePage() {
       
       setIsEditing(false);
       toast.success('Profile updated successfully');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to update profile');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to update profile';
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }

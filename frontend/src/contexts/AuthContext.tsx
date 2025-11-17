@@ -133,7 +133,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Force redirect to home page instead of login
       window.location.href = '/';
-    } catch (error) {
+    } catch {
       // Still logout on frontend even if API call fails
       setUser(null);
       localStorage.removeItem('verita-user');

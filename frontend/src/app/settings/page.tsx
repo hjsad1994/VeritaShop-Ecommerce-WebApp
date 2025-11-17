@@ -1,14 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import AuthGuard from '@/components/auth/AuthGuard';
-import { useAuth } from '@/contexts/AuthContext';
 import toast from 'react-hot-toast';
 
 export default function SettingsPage() {
-  const { user } = useAuth();
   const [notifications, setNotifications] = useState({
     email: true,
     sms: false,

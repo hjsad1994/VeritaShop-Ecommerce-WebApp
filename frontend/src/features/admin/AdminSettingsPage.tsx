@@ -43,7 +43,7 @@ export default function AdminSettingsPage() {
     }
   });
 
-  const handleSettingChange = (category: string, key: string, value: any) => {
+  const handleSettingChange = (category: string, key: string, value: string | boolean) => {
     setSettings(prev => ({
       ...prev,
       [category]: {
@@ -59,7 +59,7 @@ export default function AdminSettingsPage() {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
       toast.success('Settings saved successfully');
-    } catch (error) {
+    } catch {
       toast.error('Failed to save settings');
     } finally {
       setIsSaving(false);

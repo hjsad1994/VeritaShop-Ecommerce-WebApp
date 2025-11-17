@@ -7,6 +7,7 @@ import { ReviewRepository } from './ReviewRepository';
 import { CommentRepository } from './CommentRepository';
 import { CartRepository } from './CartRepository';
 import { OrderRepository } from './OrderRepository';
+import { WishlistRepository } from './WishlistRepository';
 
 export class RepositoryFactory {
   private static prisma: PrismaClient;
@@ -69,5 +70,12 @@ export class RepositoryFactory {
       throw new Error('RepositoryFactory not initialized. Call initialize() first.');
     }
     return new OrderRepository(this.prisma);
+  }
+
+  static getWishlistRepository(): WishlistRepository {
+    if (!this.prisma) {
+      throw new Error('RepositoryFactory not initialized. Call initialize() first.');
+    }
+    return new WishlistRepository(this.prisma);
   }
 }

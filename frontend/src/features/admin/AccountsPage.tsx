@@ -1,9 +1,16 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { User } from '@/lib/api/types';
-import { authService } from '@/lib/api/authService';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { User, PaginationMeta } from '@/lib/api/types';
+import { adminService, type GetAllUsersParams, type CreateUserData, type UpdateUserData as AdminUpdateUserData } from '@/lib/api/adminService';
 import toast from 'react-hot-toast';
+
+const normalizeUserDates = (user: User): User => ({
+  ...user,
+  createdAt: new Date(user.createdAt),
+  updatedAt: new Date(user.updatedAt),
+  isActive: user.isActive ?? true,
+});
 
 export default function AccountsPage() {
   const [showModal, setShowModal] = useState(false);
@@ -11,44 +18,68 @@ export default function AccountsPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // Mock users data since backend doesn't have getAllUsers API
-  const [users, setUsers] = useState<User[]>([
-    {
-      id: '1',
-      email: 'admin@veritashop.com',
-      name: 'Admin User',
-      role: 'ADMIN',
-      createdAt: new Date('2024-01-15'),
-      updatedAt: new Date('2024-01-15')
-    },
-    {
-      id: '2', 
-      email: 'user1@example.com',
-      name: 'John Doe',
-      role: 'USER',
-      createdAt: new Date('2024-02-20'),
-      updatedAt: new Date('2024-02-20')
-    },
-    {
-      id: '3',
-      email: 'user2@example.com', 
-      name: 'Jane Smith',
-      role: 'USER',
-      createdAt: new Date('2024-03-10'),
-      updatedAt: new Date('2024-03-10')
-    }
-  ]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [users, setUsers] = useState<User[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [pagination, setPagination] = useState<PaginationMeta | null>(null);
+  const [currentFilters, setCurrentFilters] = useState<GetAllUsersParams>({});
+  const filtersRef = useRef<GetAllUsersParams>({});
+  const [isMutating, setIsMutating] = useState(false);
 
-  useEffect(() => {
-    // In a real implementation, you might have a local cache or different approach
-    // since backend doesn't provide getAllUsers API for admin
+  const extractErrorMessage = (error: unknown): string => {
+    if (!error) return 'Không thể tải danh sách người dùng';
+    if (typeof error === 'string') return error;
+    if (error instanceof Error) return error.message;
+    if (typeof error === 'object' && 'message' in error && typeof (error as { message?: string }).message === 'string') {
+      return (error as { message?: string }).message as string;
+    }
+    return 'Không thể tải danh sách người dùng';
+  };
+
+  const getInputValue = (value: FormDataEntryValue | null): string | undefined => {
+    if (value === null) return undefined;
+    const trimmed = value.toString().trim();
+    return trimmed.length ? trimmed : undefined;
+  };
+
+  const fetchUsers = useCallback(async (params?: GetAllUsersParams) => {
+    setIsLoading(true);
+    setError(null);
+    const requestParams = params ?? filtersRef.current;
+    try {
+      const response = await adminService.getAllUsers(requestParams);
+      if (response.success && response.data?.users) {
+        setUsers(response.data.users.map(normalizeUserDates));
+        setPagination(response.data.pagination ?? null);
+        filtersRef.current = requestParams;
+        setCurrentFilters(requestParams);
+      } else {
+        throw new Error(response.message || 'Failed to load users');
+      }
+    } catch (err) {
+      const message = extractErrorMessage(err);
+      setError(message);
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  const filteredUsers = users.filter(user =>
-    user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  const filteredUsers = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    if (!normalizedQuery) {
+      return users;
+    }
+    return users.filter((user) => {
+      const nameMatch = (user.name ?? '').toLowerCase().includes(normalizedQuery);
+      const emailMatch = user.email.toLowerCase().includes(normalizedQuery);
+      return nameMatch || emailMatch;
+    });
+  }, [searchQuery, users]);
 
   const handleAdd = () => {
     setModalMode('add');
@@ -62,64 +93,134 @@ export default function AccountsPage() {
     setShowModal(true);
   };
 
-  const handleDelete = (userId: string) => {
-    if (confirm('Are you sure you want to delete this account?')) {
-      // Since backend doesn't have delete API, we'll just remove from local state
-      setUsers(users.filter(u => u.id !== userId));
-      toast.success('User deleted from local list');
+  const handleDelete = async (userId: string) => {
+    const confirmed = confirm('Bạn có chắc chắn muốn xoá người dùng này?');
+    if (!confirmed) {
+      return;
+    }
+    setIsMutating(true);
+    try {
+      const response = await adminService.deleteUser(userId);
+      if (!response.success) {
+        throw new Error(response.message || 'Xoá người dùng thất bại');
+      }
+      toast.success('Đã xoá người dùng');
+      await fetchUsers();
+    } catch (err) {
+      toast.error(extractErrorMessage(err));
+    } finally {
+      setIsMutating(false);
+    }
+  };
+
+  const handleToggleStatus = async (user: User) => {
+    setIsMutating(true);
+    try {
+      const response = await adminService.updateUser(user.id, { isActive: !user.isActive });
+      if (!response.success) {
+        throw new Error(response.message || 'Không thể cập nhật trạng thái');
+      }
+      toast.success(`Đã ${user.isActive ? 'vô hiệu hoá' : 'kích hoạt'} người dùng`);
+      await fetchUsers();
+    } catch (err) {
+      toast.error(extractErrorMessage(err));
+    } finally {
+      setIsMutating(false);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (modalMode === 'edit' && !selectedUser) {
+      toast.error('Không tìm thấy người dùng để cập nhật');
+      setShowModal(false);
+      return;
+    }
     setIsSubmitting(true);
     
     try {
       const formData = new FormData(e.currentTarget);
-      const userData = {
-        name: formData.get('name') as string,
-        phone: formData.get('phone') as string,
-        address: formData.get('address') as string,
-        avatar: formData.get('avatar') as string,
-      };
+      const name = getInputValue(formData.get('name'));
+      const phone = getInputValue(formData.get('phone'));
+      const address = getInputValue(formData.get('address'));
+      const avatar = getInputValue(formData.get('avatar'));
+      const role = (formData.get('role') as string) || 'USER';
+      const email = (formData.get('email') as string)?.trim();
+      const password = getInputValue(formData.get('password'));
+      const isActiveInput = formData.get('isActive');
+      const isActive = typeof isActiveInput === 'string' ? isActiveInput === 'true' : undefined;
 
       if (modalMode === 'add') {
-        // Use existing auth register API
-        const createData = {
-          email: formData.get('email') as string,
-          password: formData.get('password') as string,
-          name: userData.name,
+        const createPayload: CreateUserData = {
+          email: email || '',
+          password: password || '',
+          name,
+          role,
+          phone,
+          address,
+          avatar,
+          isActive: isActive ?? true,
         };
-        
-        const response = await authService.register(createData);
-        if (response.success) {
-          const newUser = {
-            ...response.data.user,
-            phone: userData.phone,
-            address: userData.address,
-            avatar: userData.avatar,
-          };
-          setUsers([...users, newUser]);
-          toast.success('User created successfully');
-          setShowModal(false);
+
+        if (!createPayload.email || !createPayload.password) {
+          throw new Error('Email và mật khẩu là bắt buộc');
         }
-      } else if (selectedUser) {
-        // For edit, we would need the user's auth token
-        // This is a limitation since we can't update other users with current APIs
-        toast.error('User update limited - profile updates only work for current user');
+
+        const response = await adminService.createUser(createPayload);
+        if (!response.success || !response.data?.user) {
+          throw new Error(response.message || 'Không thể tạo người dùng');
+        }
+
+        toast.success('Đã tạo người dùng mới');
         setShowModal(false);
+        await fetchUsers();
+      } else if (selectedUser) {
+        const updatePayload: AdminUpdateUserData = {
+          email,
+          name,
+          role,
+          phone,
+          address,
+          avatar,
+          isActive,
+        };
+
+        if (password) {
+          updatePayload.password = password;
+        }
+
+        const response = await adminService.updateUser(selectedUser.id, updatePayload);
+        if (!response.success || !response.data?.user) {
+          throw new Error(response.message || 'Không thể cập nhật người dùng');
+        }
+
+        toast.success('Đã cập nhật người dùng');
+        setShowModal(false);
+        await fetchUsers();
       }
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Failed to save user';
+    } catch (err) {
+      const message = extractErrorMessage(err) || 'Failed to save user';
       toast.error(message);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Search is handled by filteredUsers computed property
+    const normalizedQuery = searchQuery.trim();
+    const nextFilters: GetAllUsersParams = {
+      ...filtersRef.current,
+      page: 1,
+    };
+
+    if (normalizedQuery.length) {
+      nextFilters.search = normalizedQuery;
+    } else {
+      delete nextFilters.search;
+    }
+
+    await fetchUsers(nextFilters);
   };
 
   return (
@@ -162,13 +263,33 @@ export default function AccountsPage() {
               <tr>
                 <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700">User</th>
                 <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700">Role</th>
+                <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700">Status</th>
                 <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700">Join Date</th>
                 <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700">Last Updated</th>
                 <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filteredUsers.map((user) => (
+              {isLoading ? (
+                <tr>
+                  <td colSpan={6} className="py-8 text-center text-gray-500">
+                    Loading users...
+                  </td>
+                </tr>
+              ) : error ? (
+                <tr>
+                  <td colSpan={6} className="py-8 text-center text-red-500 space-y-3">
+                    <p>{error}</p>
+                    <button
+                      onClick={fetchUsers}
+                      className="inline-flex items-center px-4 py-2 border border-red-200 text-sm font-medium text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                    >
+                      Thử tải lại
+                    </button>
+                  </td>
+                </tr>
+              ) : (
+                filteredUsers.map((user) => (
                 <tr key={user.id} className="border-t border-gray-200 hover:bg-gray-50 transition-colors">
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-3">
@@ -190,6 +311,15 @@ export default function AccountsPage() {
                       {user.role === 'MANAGER' ? 'Manager' : user.role === 'ADMIN' ? 'Admin' : 'User'}
                     </span>
                   </td>
+                  <td className="py-4 px-6">
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                        user.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                      }`}
+                    >
+                      {user.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </td>
                   <td className="py-4 px-6 text-sm text-gray-700">
                     {new Date(user.createdAt).toLocaleDateString('vi-VN')}
                   </td>
@@ -200,7 +330,8 @@ export default function AccountsPage() {
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => handleEdit(user)}
-                        className="p-2 text-gray-600 hover:text-black hover:bg-gray-100 rounded-lg transition-colors"
+                        disabled={isMutating}
+                        className="p-2 text-gray-600 hover:text-black hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Edit"
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -208,8 +339,19 @@ export default function AccountsPage() {
                         </svg>
                       </button>
                       <button
+                        onClick={() => handleToggleStatus(user)}
+                        disabled={isMutating}
+                        className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        title={user.isActive ? 'Deactivate' : 'Activate'}
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6h4m-2-2v4m-7 4a8 8 0 1116 0 8 8 0 01-16 0z" />
+                        </svg>
+                      </button>
+                      <button
                         onClick={() => handleDelete(user.id)}
-                        className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        disabled={isMutating}
+                        className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Delete"
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -219,12 +361,12 @@ export default function AccountsPage() {
                     </div>
                   </td>
                 </tr>
-              ))}
+              )))}
             </tbody>
           </table>
         </div>
 
-        {filteredUsers.length === 0 && (
+        {!isLoading && !error && filteredUsers.length === 0 && (
           <div className="text-center py-12">
             <p className="text-gray-500">No accounts found</p>
           </div>
@@ -273,6 +415,31 @@ export default function AccountsPage() {
                 />
               </div>
 
+              <div>
+                <label className="block text-sm font-semibold text-black mb-2">Role</label>
+                <select
+                  name="role"
+                  defaultValue={selectedUser?.role || 'USER'}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-black bg-white"
+                >
+                  <option value="USER">User</option>
+                  <option value="MANAGER">Manager</option>
+                  <option value="ADMIN">Admin</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-black mb-2">Status</label>
+                <select
+                  name="isActive"
+                  defaultValue={(selectedUser?.isActive ?? true) ? 'true' : 'false'}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-black bg-white"
+                >
+                  <option value="true">Active</option>
+                  <option value="false">Inactive</option>
+                </select>
+              </div>
+
               {modalMode === 'add' && (
                 <div>
                   <label className="block text-sm font-semibold text-black mb-2">Password</label>
@@ -282,6 +449,19 @@ export default function AccountsPage() {
                     required
                     minLength={6}
                     placeholder="Enter password (min 6 characters)"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-black placeholder:text-gray-400"
+                  />
+                </div>
+              )}
+
+              {modalMode === 'edit' && (
+                <div>
+                  <label className="block text-sm font-semibold text-black mb-2">New Password (Optional)</label>
+                  <input
+                    type="password"
+                    name="password"
+                    minLength={6}
+                    placeholder="Leave blank to keep current password"
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-black placeholder:text-gray-400"
                   />
                 </div>
@@ -302,7 +482,7 @@ export default function AccountsPage() {
                 <label className="block text-sm font-semibold text-black mb-2">Address (Optional)</label>
                 <textarea
                   name="address"
-                  defaultValue={''}
+                  defaultValue={selectedUser?.address || ''}
                   rows={3}
                   placeholder="Enter user address"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-black placeholder:text-gray-400"
@@ -326,7 +506,7 @@ export default function AccountsPage() {
                   disabled={isSubmitting}
                   className="flex-1 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isSubmitting ? 'Creating...' : 'Create User'}
+                  {isSubmitting ? 'Đang xử lý...' : modalMode === 'add' ? 'Create User' : 'Save Changes'}
                 </button>
                 <button
                   type="button"

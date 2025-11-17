@@ -74,6 +74,9 @@ export const SUCCESS_MESSAGES = {
   LOGIN_SUCCESS: 'Đăng nhập thành công',
   LOGOUT_SUCCESS: 'Đăng xuất thành công',
   TOKEN_REFRESHED: 'Làm mới token thành công',
+  GET_USERS_SUCCESS: 'Lấy danh sách người dùng thành công',
+  GET_USER_SUCCESS: 'Lấy thông tin người dùng thành công',
+  CREATE_USER_SUCCESS: 'Tạo người dùng thành công',
   GET_CURRENT_USER_SUCCESS: 'Lấy thông tin người dùng thành công',
   UPDATE_USER_SUCCESS: 'Cập nhật thông tin người dùng thành công',
   DELETE_USER_SUCCESS: 'Xóa người dùng thành công',
@@ -135,6 +138,7 @@ export const SUCCESS_MESSAGES = {
 export const USER_ROLES = {
   USER: 'USER',
   ADMIN: 'ADMIN',
+  MANAGER: 'MANAGER',
   SUPER_ADMIN: 'SUPER_ADMIN',
 } as const;
 

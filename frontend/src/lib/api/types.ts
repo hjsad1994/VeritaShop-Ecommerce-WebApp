@@ -7,6 +7,8 @@ export interface User {
   role: 'USER' | 'ADMIN' | 'MANAGER';
   avatar?: string;
   phone?: string;
+  address?: string | null;
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

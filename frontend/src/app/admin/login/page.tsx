@@ -6,6 +6,32 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { authService } from '@/lib/api';
 
+type ApiError = {
+  message?: string;
+  errors?: Array<{ message?: string }>;
+};
+
+const getErrorMessage = (error: unknown): string => {
+  if (typeof error === 'string') {
+    return error;
+  }
+  if (error && typeof error === 'object') {
+    const apiError = error as ApiError;
+    if (apiError.errors && apiError.errors.length > 0) {
+      const messages = apiError.errors
+        .map(err => err?.message)
+        .filter((msg): msg is string => Boolean(msg));
+      if (messages.length > 0) {
+        return messages.join(', ');
+      }
+    }
+    if (apiError.message) {
+      return apiError.message;
+    }
+  }
+  return 'Failed to sign in. Please try again.';
+};
+
 export default function AdminLoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -34,12 +60,8 @@ export default function AdminLoginPage() {
       localStorage.setItem('user', JSON.stringify(user));
       toast.success(`Welcome back, ${user.name ?? 'Admin'}!`);
       router.replace('/admin');
-    } catch (error: any) {
-      const message =
-        error?.message ||
-        error?.errors?.[0]?.message ||
-        'Failed to sign in. Please try again.';
-      toast.error(message);
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error));
     } finally {
       setIsLoading(false);
     }

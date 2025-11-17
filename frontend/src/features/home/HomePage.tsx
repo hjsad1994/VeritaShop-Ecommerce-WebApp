@@ -2,13 +2,11 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
-import { products } from '@/lib/data/products';
+import { products, type Product } from '@/lib/data/products';
 
 export default function HomePage() {
-  const router = useRouter();
   const rotatingWords = [
     "gaming beast\nwith ROG Phone",
     "Samsung\nflagship",
@@ -67,7 +65,7 @@ export default function HomePage() {
                 </h1>
               </div>
               <p className="text-xl md:text-2xl text-gray-400 mb-12 leading-relaxed font-light">
-                Premium smartphones from the world's best brands. <span className="text-white font-medium">Free shipping</span> on orders over $500.
+                Premium smartphones from the world&apos;s best brands. <span className="text-white font-medium">Free shipping</span> on orders over $500.
               </p>
               <div className="flex flex-wrap gap-4">
                 <Link href="/shop" className="group bg-white text-black px-12 py-5 rounded-full text-lg font-bold hover:shadow-[0_20px_60px_rgba(255,255,255,0.3)] hover:scale-105 transition-all duration-300 flex items-center gap-2">
@@ -134,7 +132,7 @@ export default function HomePage() {
               Shop by Brand
             </h2>
             <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-              Premium smartphones from the world's leading manufacturers
+              Premium smartphones from the world&apos;s leading manufacturers
             </p>
           </div>
         </div>
@@ -257,7 +255,7 @@ export default function HomePage() {
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {products.slice(0, 8).map((product, index) => {
-              const getBadge = (product: any) => {
+              const getBadge = (product: Product) => {
                 if (product.badge) return { text: product.badge, color: 'bg-gradient-to-r from-blue-500 to-cyan-500' };
                 if (product.oldPrice && product.oldPrice > product.price) {
                   const discount = Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100);

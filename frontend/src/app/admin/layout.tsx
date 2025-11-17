@@ -28,7 +28,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       }
       setUser(currentUser);
       setIsChecking(false);
-    } catch (error) {
+    } catch {
       setUser(null);
       setIsChecking(false);
       if (!isAuthRoute) {

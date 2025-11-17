@@ -5,12 +5,38 @@ import { useSearchParams } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import Link from 'next/link';
+import Image from 'next/image';
+
+interface ProductInfo {
+  id: number;
+  name: string;
+  price: number;
+  image: string;
+}
+
+interface OrderItem {
+  product: ProductInfo;
+  quantity: number;
+  selectedColor: string;
+}
+
+interface CustomerInfo {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  zipCode: string;
+  country: string;
+  paymentMethod: string;
+}
 
 interface OrderDetails {
   id: number;
   date: string;
-  items: any[];
-  customerInfo: any;
+  items: OrderItem[];
+  customerInfo: CustomerInfo;
   subtotal: number;
   shipping: number;
   tax: number;
@@ -26,8 +52,8 @@ function OrderConfirmationContent() {
 
   useEffect(() => {
     if (orderId) {
-      const orders = JSON.parse(localStorage.getItem('veritas-orders') || '[]');
-      const foundOrder = orders.find((o: OrderDetails) => o.id === parseInt(orderId));
+      const orders = JSON.parse(localStorage.getItem('veritas-orders') || '[]') as OrderDetails[];
+      const foundOrder = orders.find((o) => o.id === parseInt(orderId, 10));
       setOrder(foundOrder || null);
     }
     setIsLoading(false);
@@ -264,7 +290,14 @@ function OrderConfirmationContent() {
             {order.items.map((item, index) => (
               <div key={index} className="flex gap-4 pb-4 border-b border-gray-200 last:border-0">
                 <div className="w-20 h-20 bg-gray-50 rounded-lg flex-shrink-0 overflow-hidden">
-                  <img src={item.product.image} alt={item.product.name} className="w-full h-full object-contain p-2" />
+                  <Image
+                    src={item.product.image}
+                    alt={item.product.name}
+                    width={64}
+                    height={64}
+                    className="w-full h-full object-contain p-2"
+                    unoptimized
+                  />
                 </div>
                 <div className="flex-1">
                   <h4 className="font-bold text-black">{item.product.name}</h4>

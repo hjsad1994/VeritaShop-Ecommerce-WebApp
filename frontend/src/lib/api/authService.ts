@@ -19,7 +19,8 @@ export const authService = {
   async register(data: RegisterRequest): Promise<ApiResponse<RegisterResponse>> {
     const response = await apiClient.post<ApiResponse<RegisterResponse>>(
       '/auth/register',
-      data
+      data,
+      { withCredentials: true } // Include HTTP-only cookies
     );
     return response.data;
   },
@@ -32,7 +33,8 @@ export const authService = {
   async login(data: LoginRequest): Promise<ApiResponse<LoginResponse>> {
     const response = await apiClient.post<ApiResponse<LoginResponse>>(
       '/auth/login',
-      data
+      data,
+      { withCredentials: true } // Include HTTP-only cookies
     );
     return response.data;
   },
@@ -42,7 +44,11 @@ export const authService = {
    * @returns Promise with success message
    */
   async logout(): Promise<ApiResponse<null>> {
-    const response = await apiClient.post<ApiResponse<null>>('/auth/logout');
+    const response = await apiClient.post<ApiResponse<null>>(
+      '/auth/logout',
+      {},
+      { withCredentials: true } // Include HTTP-only cookies
+    );
     return response.data;
   },
 
@@ -51,7 +57,23 @@ export const authService = {
    * @returns Promise with new tokens
    */
   async refreshToken(): Promise<ApiResponse<null>> {
-    const response = await apiClient.post<ApiResponse<null>>('/auth/refresh');
+    const response = await apiClient.post<ApiResponse<null>>(
+      '/auth/refresh',
+      {},
+      { withCredentials: true } // Include HTTP-only cookies
+    );
+    return response.data;
+  },
+
+  /**
+   * Get current user information
+   * @returns Promise with user data
+   */
+  async getCurrentUser(): Promise<ApiResponse<LoginResponse>> {
+    const response = await apiClient.get<ApiResponse<LoginResponse>>(
+      '/auth/me',
+      { withCredentials: true } // Include HTTP-only cookies
+    );
     return response.data;
   },
 };

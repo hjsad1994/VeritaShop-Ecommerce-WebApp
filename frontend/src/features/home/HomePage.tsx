@@ -6,9 +6,15 @@ import { useRouter } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { products } from '@/lib/data/products';
+import { useAuth } from '@/contexts/AuthContext';
+import { useCart } from '@/contexts/CartContext';
 
 export default function HomePage() {
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
+  const { addToCart, openCart } = useCart();
+  const [addingToCart, setAddingToCart] = React.useState<number | null>(null);
+  const [lastClickedTime, setLastClickedTime] = React.useState<{ [key: number]: number }>({});
   const rotatingWords = [
     "gaming beast\nwith ROG Phone",
     "Samsung\nflagship",
@@ -122,7 +128,7 @@ export default function HomePage() {
             <div className="inline-block mb-4">
               <span className="text-sm uppercase tracking-widest text-blue-400 font-semibold">Explore Brands</span>
             </div>
-            <h2 
+            <h2
               className="text-5xl md:text-6xl font-bold mb-6 tracking-tight"
               style={{
                 background: 'linear-gradient(257deg, #e2e6ea 14.04%, #909fb0 30.93%, #fff 90.58%)',
@@ -236,7 +242,7 @@ export default function HomePage() {
                   Limited Time
                 </span>
               </div>
-              <h2 
+              <h2
                 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-3 tracking-tight"
                 style={{
                   background: 'linear-gradient(257deg, #e2e6ea 14.04%, #909fb0 30.93%, #fff 90.58%)',
@@ -326,8 +332,57 @@ export default function HomePage() {
                       )}
                     </div>
 
-                    <button className="w-full bg-white text-black py-3.5 rounded-full text-sm font-bold hover:bg-gray-100 hover:scale-[1.02] transition-all duration-300 shadow-lg mt-auto">
-                      Add to Cart
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        // Prevent multiple clicks
+                        if (addingToCart === product.id) {
+                          console.log('Button disabled, ignoring click');
+                          return;
+                        }
+
+                        // Throttle clicks - prevent clicking within 500ms
+                        const now = Date.now();
+                        const lastClick = lastClickedTime[product.id] || 0;
+                        if (now - lastClick < 500) {
+                          console.log('Click throttled, ignoring');
+                          return;
+                        }
+                        setLastClickedTime({ ...lastClickedTime, [product.id]: now });
+
+                        if (!isAuthenticated) {
+                          // Save current page for redirect after login
+                          sessionStorage.setItem('redirectPath', window.location.pathname);
+                          window.location.href = '/login';
+                          return;
+                        }
+
+                        console.log('🚀 HomePage: Adding to cart -', product.name);
+
+                        // Set loading state
+                        setAddingToCart(product.id);
+
+                        // Add to cart logic
+                        const selectedColor = product.colors ? product.colors[0] : 'Default';
+                        addToCart(product, 1, selectedColor);
+
+                        // Reset loading state and open cart
+                        setTimeout(() => {
+                          setAddingToCart(null);
+                          // Clear click throttle after 1 second
+                          setTimeout(() => {
+                            setLastClickedTime((prev: typeof lastClickedTime) => ({ ...prev, [product.id]: 0 }));
+                          }, 1000);
+                          openCart();
+                        }, 300);
+                      }}
+                      disabled={addingToCart === product.id}
+                      className={`w-full bg-white text-black py-3.5 rounded-full text-sm font-bold hover:bg-gray-100 hover:scale-[1.02] transition-all duration-300 shadow-lg mt-auto ${addingToCart === product.id ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
+                    >
+                      {addingToCart === product.id ? 'Adding...' : 'Add to Cart'}
                     </button>
                   </div>
                 </div>
@@ -340,7 +395,7 @@ export default function HomePage() {
       {/* Categories Section */}
       <section className="py-32 bg-black">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-          <h2 
+          <h2
             className="text-5xl md:text-6xl font-bold text-center mb-8 tracking-tight"
             style={{
               background: 'linear-gradient(257deg, #e2e6ea 14.04%, #909fb0 30.93%, #fff 90.58%)',
@@ -516,7 +571,7 @@ export default function HomePage() {
                 Gaming
               </span>
             </div>
-            <h2 
+            <h2
               className="text-5xl md:text-6xl font-bold mb-6"
               style={{
                 background: 'linear-gradient(257deg, #e2e6ea 14.04%, #909fb0 30.93%, #fff 90.58%)',
@@ -567,7 +622,7 @@ export default function HomePage() {
       {/* Why Choose Us */}
       <section className="py-24 bg-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 
+          <h2
             className="text-4xl md:text-5xl font-bold text-center mb-16"
             style={{
               background: 'linear-gradient(257deg, #e2e6ea 14.04%, #909fb0 30.93%, #fff 90.58%)',

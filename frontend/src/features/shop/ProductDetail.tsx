@@ -5,6 +5,7 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { getProductById, type Review } from '@/lib/data/products';
 import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
 import Toast from '@/components/ui/Toast';
 
 interface ProductDetailProps {
@@ -32,6 +33,7 @@ const colorMap: { [key: string]: string } = {
 
 export default function ProductDetail({ productId }: ProductDetailProps) {
   const { addToCart, openCart } = useCart();
+  const { isAuthenticated } = useAuth();
   const [selectedImage, setSelectedImage] = React.useState(0);
   const [quantity, setQuantity] = React.useState(1);
   const [selectedColor, setSelectedColor] = React.useState(0);
@@ -71,6 +73,13 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
   const images = Array(4).fill(product.image);
 
   const handleAddToCart = () => {
+    if (!isAuthenticated) {
+      // Save current page for redirect after login
+      sessionStorage.setItem('redirectPath', window.location.pathname);
+      window.location.href = '/login';
+      return;
+    }
+    
     setIsAddingToCart(true);
     addToCart(product, quantity, product.colors[selectedColor]);
     
@@ -82,12 +91,15 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
   };
 
   const handleBuyNow = () => {
-    console.log('Buying now:', {
-      product,
-      quantity,
-      color: product.colors[selectedColor]
-    });
-    alert('Proceeding to checkout...');
+    if (!isAuthenticated) {
+      // Save checkout intent for redirect after login
+      sessionStorage.setItem('redirectPath', '/checkout');
+      window.location.href = '/login';
+      return;
+    }
+    
+    // Navigate to checkout
+    window.location.href = '/checkout';
   };
 
   const handleSubmitReview = (e: React.FormEvent) => {

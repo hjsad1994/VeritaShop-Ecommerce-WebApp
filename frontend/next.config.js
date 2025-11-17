@@ -11,6 +11,8 @@ const nextConfig = {
   experimental: {
     disableOptimizedLoading: true,
   },
+  // Disable React Strict Mode to prevent double function calls in development
+  reactStrictMode: false,
 };
 
 module.exports = nextConfig;

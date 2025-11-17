@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import Link from 'next/link';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface OrderItem {
   product: {
@@ -115,8 +116,9 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <Header theme="light" />
+    <AuthGuard>
+      <div className="min-h-screen bg-white">
+        <Header theme="light" />
 
       <div className="bg-gray-50 py-4 text-center text-sm font-medium mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -274,5 +276,6 @@ export default function OrdersPage() {
 
       <Footer />
     </div>
+    </AuthGuard>
   );
 }

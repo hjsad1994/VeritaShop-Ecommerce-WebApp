@@ -5,9 +5,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { authService } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -56,12 +58,24 @@ export default function RegisterPage() {
       });
 
       // Show success message
-      toast.success(response.message || 'Registration successful! Please login.');
+      toast.success(response.message || 'Registration successful! Logging you in...');
 
-      // Redirect to login page after a short delay
-      setTimeout(() => {
-        router.push('/login');
-      }, 1500);
+      // Automatically login after successful registration
+      try {
+        await login(formData.email, formData.password);
+        toast.success('Logged in successfully!');
+        
+        // Redirect to home page after a short delay
+        setTimeout(() => {
+          router.push('/');
+        }, 1000);
+      } catch (loginError) {
+        // If auto-login fails, redirect to login page
+        toast.error('Registration successful. Please login manually.');
+        setTimeout(() => {
+          router.push('/login');
+        }, 1500);
+      }
 
     } catch (error: any) {
       // Handle API errors

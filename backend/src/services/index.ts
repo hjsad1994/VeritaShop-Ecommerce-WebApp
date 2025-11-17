@@ -81,6 +81,8 @@ export class ServiceFactory {
       this.inventoryService = new InventoryService();
     }
     return this.inventoryService;
+  }
+
   static getWishlistService(): WishlistService {
     if (!this.wishlistService) {
       this.wishlistService = new WishlistService();

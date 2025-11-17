@@ -109,9 +109,10 @@ export default function CheckoutPage() {
       } else {
         throw new Error(response.message || 'Đặt hàng thất bại');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Order creation failed:', error);
-      const errorMessage = error.response?.data?.message || error.message || 'Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại.';
+      const typedError = error as { response?: { data?: { message?: string } }; message?: string };
+      const errorMessage = typedError.response?.data?.message || typedError.message || 'Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại.';
       toast.error(errorMessage);
     } finally {
       setIsProcessing(false);

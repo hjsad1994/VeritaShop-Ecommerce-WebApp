@@ -5,8 +5,7 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import Link from 'next/link';
 import AuthGuard from '@/components/auth/AuthGuard';
-import Image from 'next/image';
-import { orderService, Order, OrderSummary, OrderStatus } from '@/lib/api/orderService';
+import { orderService, OrderSummary, OrderStatus } from '@/lib/api/orderService';
 import toast from 'react-hot-toast';
 
 export default function OrdersPage() {
@@ -19,12 +18,12 @@ export default function OrdersPage() {
 
   useEffect(() => {
     fetchOrders();
-  }, [currentPage, filter, searchTerm]);
+  }, [currentPage, filter, searchTerm]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchOrders = async () => {
     try {
       setIsLoading(true);
-      const params: any = {
+      const params: { page: number; limit: number; sortBy: string; sortOrder: string; status?: OrderStatus; searchTerm?: string } = {
         page: currentPage,
         limit: 10,
         sortBy: 'createdAt',
@@ -44,9 +43,10 @@ export default function OrdersPage() {
         setOrderSummaries(response.data.items);
         setTotalPages(response.data.pagination.totalPages);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to fetch orders:', error);
-      toast.error(error.response?.data?.message || 'Không thể tải danh sách đơn hàng');
+      const typedError = error as { response?: { data?: { message?: string } } };
+      toast.error(typedError.response?.data?.message || 'Không thể tải danh sách đơn hàng');
     } finally {
       setIsLoading(false);
     }

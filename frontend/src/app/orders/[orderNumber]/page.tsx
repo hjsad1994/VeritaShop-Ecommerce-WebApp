@@ -34,9 +34,10 @@ export default function OrderDetailsPage() {
         } else {
           setError('Không tìm thấy đơn hàng');
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Failed to fetch order:', error);
-        setError(error.response?.data?.message || 'Không thể tải thông tin đơn hàng');
+        const typedError = error as { response?: { data?: { message?: string } } };
+        setError(typedError.response?.data?.message || 'Không thể tải thông tin đơn hàng');
         toast.error('Không thể tải thông tin đơn hàng');
       } finally {
         setIsLoading(false);
@@ -58,9 +59,10 @@ export default function OrderDetailsPage() {
         setOrder(response.data);
         toast.success('Đơn hàng đã được hủy thành công');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to cancel order:', error);
-      toast.error(error.response?.data?.message || 'Không thể hủy đơn hàng');
+      const typedError = error as { response?: { data?: { message?: string } } };
+      toast.error(typedError.response?.data?.message || 'Không thể hủy đơn hàng');
     }
   };
 
@@ -73,9 +75,10 @@ export default function OrderDetailsPage() {
         setOrder(response.data);
         toast.success('Đã xác nhận nhận hàng thành công');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to confirm delivery:', error);
-      toast.error(error.response?.data?.message || 'Không thể xác nhận nhận hàng');
+      const typedError = error as { response?: { data?: { message?: string } } };
+      toast.error(typedError.response?.data?.message || 'Không thể xác nhận nhận hàng');
     }
   };
 

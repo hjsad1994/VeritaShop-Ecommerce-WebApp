@@ -63,11 +63,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      // Skip server validation for now to avoid 404 errors and hydration issues
-      // localStorage is sufficient for session persistence
+      // Validate session with server if we have a restored user
       if (restoredUser) {
-        // Server validation disabled - uncomment when backend has /auth/me endpoint
-        /*
         try {
           const response = await authService.getCurrentUser();
           if (response.success && response.data?.user) {
@@ -76,8 +73,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         } catch (error) {
           console.warn('Server validation failed, using localStorage data:', error);
+          // If server validation fails, keep using localStorage data
         }
-        */
       }
 
       setIsLoading(false);

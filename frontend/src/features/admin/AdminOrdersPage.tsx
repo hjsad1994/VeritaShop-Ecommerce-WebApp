@@ -17,12 +17,12 @@ export default function AdminOrdersPage() {
 
   useEffect(() => {
     fetchOrders();
-  }, [currentPage, filter, searchTerm]);
+  }, [currentPage, filter, searchTerm]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchOrders = async () => {
     try {
       setIsLoading(true);
-      const params: any = {
+      const params: { page: number; limit: number; sortBy: string; sortOrder: string; status?: OrderStatus; searchTerm?: string } = {
         page: currentPage,
         limit: 10,
         sortBy: 'createdAt',
@@ -55,9 +55,10 @@ export default function AdminOrdersPage() {
         }));
         setOrderSummaries(summaries);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to fetch orders:', error);
-      toast.error(error.response?.data?.message || 'Không thể tải danh sách đơn hàng');
+      const typedError = error as { response?: { data?: { message?: string } } };
+      toast.error(typedError.response?.data?.message || 'Không thể tải danh sách đơn hàng');
     } finally {
       setIsLoading(false);
     }
@@ -74,9 +75,10 @@ export default function AdminOrdersPage() {
           setSelectedOrder(response.data);
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to update order status:', error);
-      toast.error(error.response?.data?.message || 'Không thể cập nhật trạng thái đơn hàng');
+      const typedError = error as { response?: { data?: { message?: string } } };
+      toast.error(typedError.response?.data?.message || 'Không thể cập nhật trạng thái đơn hàng');
     }
   };
 
@@ -154,9 +156,10 @@ export default function AdminOrdersPage() {
       if (response.success) {
         setSelectedOrder(response.data);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to fetch order details:', error);
-      toast.error(error.response?.data?.message || 'Không thể tải chi tiết đơn hàng');
+      const typedError = error as { response?: { data?: { message?: string } } };
+      toast.error(typedError.response?.data?.message || 'Không thể tải chi tiết đơn hàng');
     }
   };
 

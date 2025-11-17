@@ -81,9 +81,10 @@ class CartService {
     try {
       const response = await apiClient.get(this.baseUrl);
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // If user is not authenticated, fallback to guest cart
-      if (error.response?.status === 401) {
+      const typedError = error as { response?: { status?: number } };
+      if (typedError.response?.status === 401) {
         const guestCart = this.getGuestCart();
         return {
           success: true,
@@ -99,9 +100,10 @@ class CartService {
     try {
       const response = await apiClient.post(`${this.baseUrl}/items`, { variantId, quantity });
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // If user is not authenticated, add to guest cart
-      if (error.response?.status === 401) {
+      const typedError = error as { response?: { status?: number } };
+      if (typedError.response?.status === 401) {
         const guestCart = this.addToGuestCart(variantId, quantity);
         return {
           success: true,
@@ -117,9 +119,10 @@ class CartService {
     try {
       const response = await apiClient.put(`${this.baseUrl}/items/${itemId}`, { quantity });
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // If user is not authenticated, update guest cart
-      if (error.response?.status === 401) {
+      const typedError = error as { response?: { status?: number } };
+      if (typedError.response?.status === 401) {
         const guestCart = this.updateGuestCartItem(itemId, quantity);
         return {
           success: true,
@@ -135,9 +138,10 @@ class CartService {
     try {
       const response = await apiClient.delete(`${this.baseUrl}/items/${itemId}`);
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // If user is not authenticated, remove from guest cart
-      if (error.response?.status === 401) {
+      const typedError = error as { response?: { status?: number } };
+      if (typedError.response?.status === 401) {
         const guestCart = this.removeFromGuestCart(itemId);
         return {
           success: true,
@@ -153,9 +157,10 @@ class CartService {
     try {
       const response = await apiClient.delete(this.baseUrl);
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // If user is not authenticated, clear guest cart
-      if (error.response?.status === 401) {
+      const typedError = error as { response?: { status?: number } };
+      if (typedError.response?.status === 401) {
         this.clearGuestCart();
         return {
           success: true,

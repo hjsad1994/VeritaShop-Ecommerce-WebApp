@@ -58,7 +58,7 @@ export const authService = {
    */
   async refreshToken(): Promise<ApiResponse<null>> {
     const response = await apiClient.post<ApiResponse<null>>(
-      '/auth/refresh',
+      '/auth/refresh-token',
       {},
       { withCredentials: true } // Include HTTP-only cookies
     );
@@ -71,7 +71,7 @@ export const authService = {
    */
   async getCurrentUser(): Promise<ApiResponse<LoginResponse>> {
     const response = await apiClient.get<ApiResponse<LoginResponse>>(
-      '/auth/me',
+      '/users/me',
       { withCredentials: true } // Include HTTP-only cookies
     );
     return response.data;

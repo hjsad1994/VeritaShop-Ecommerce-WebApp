@@ -2,13 +2,19 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
-import { cartService, Cart as ApiCart, CartItem as ApiCartItem } from '@/lib/api/cartService';
-import { authService, userService } from '@/lib/api';
+import { cartService, CartItem as ApiCartItem } from '@/lib/api/cartService';
+import { userService } from '@/lib/api';
 import type { User } from '@/lib/api';
 
 // Legacy types for backward compatibility during transition
 export interface LegacyCartItem {
-  product: any;
+  product: {
+    id: string;
+    name: string;
+    price: number;
+    slug?: string;
+    images?: string[];
+  };
   quantity: number;
   selectedColor: string;
 }
@@ -16,7 +22,7 @@ export interface LegacyCartItem {
 interface CartContextType {
   items: ApiCartItem[];
   isLoading: boolean;
-  addToCart: (variantId: string, quantity: number, variantData?: any) => Promise<void>;
+  addToCart: (variantId: string, quantity: number, variantData?: VariantData) => Promise<void>;
   removeFromCart: (itemId: string) => Promise<void>;
   updateQuantity: (itemId: string, quantity: number) => Promise<void>;
   clearCart: () => Promise<void>;
@@ -27,7 +33,27 @@ interface CartContextType {
   openCart: () => void;
   closeCart: () => void;
   // Legacy support
-  addToCartLegacy: (product: any, quantity: number, selectedColor: string) => void;
+  addToCartLegacy: (product: LegacyCartItem['product'], quantity: number, selectedColor: string) => void;
+}
+
+interface VariantData {
+  id: string;
+  productId: string;
+  color: string;
+  storage: string | null;
+  price: number;
+  isActive: boolean;
+  product: {
+    id: string;
+    name: string;
+    slug: string;
+    basePrice: number;
+    images: Array<{
+      id: string;
+      url: string;
+      sortOrder: number;
+    }>;
+  };
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -63,7 +89,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     };
 
     initializeCart();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Listen for auth changes
   useEffect(() => {
@@ -93,7 +119,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const interval = setInterval(handleAuthChange, 30000); // Check every 30 seconds
 
     return () => clearInterval(interval);
-  }, [user]);
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const refreshCart = useCallback(async () => {
     try {
@@ -102,15 +128,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (response.success) {
         setItems(response.data.items);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to refresh cart:', error);
-      toast.error(error.response?.data?.message || 'Không thể tải giỏ hàng');
+      const typedError = error as { response?: { data?: { message?: string } } };
+      toast.error(typedError.response?.data?.message || 'Không thể tải giỏ hàng');
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  const addToCart = useCallback(async (variantId: string, quantity: number, variantData?: any) => {
+  const addToCart = useCallback(async (variantId: string, quantity: number, variantData?: VariantData) => {
     try {
       const response = await cartService.addCartItem(variantId, quantity);
 
@@ -123,9 +150,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           cartService.updateGuestCartItemVariant(variantId, variantData);
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to add to cart:', error);
-      toast.error(error.response?.data?.message || 'Không thể thêm vào giỏ hàng');
+      const typedError = error as { response?: { data?: { message?: string } } };
+      toast.error(typedError.response?.data?.message || 'Không thể thêm vào giỏ hàng');
     }
   }, [user]);
 
@@ -137,9 +165,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         setItems(response.data.items);
         toast.success('Đã xóa khỏi giỏ hàng');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to remove from cart:', error);
-      toast.error(error.response?.data?.message || 'Không thể xóa khỏi giỏ hàng');
+      const typedError = error as { response?: { data?: { message?: string } } };
+      toast.error(typedError.response?.data?.message || 'Không thể xóa khỏi giỏ hàng');
     }
   }, []);
 
@@ -156,9 +185,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         setItems(response.data.items);
         toast.success('Đã cập nhật giỏ hàng');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to update cart quantity:', error);
-      toast.error(error.response?.data?.message || 'Không thể cập nhật giỏ hàng');
+      const typedError = error as { response?: { data?: { message?: string } } };
+      toast.error(typedError.response?.data?.message || 'Không thể cập nhật giỏ hàng');
     }
   }, [removeFromCart]);
 
@@ -170,9 +200,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         setItems(response.data.items);
         toast.success('Đã xóa giỏ hàng');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to clear cart:', error);
-      toast.error(error.response?.data?.message || 'Không thể xóa giỏ hàng');
+      const typedError = error as { response?: { data?: { message?: string } } };
+      toast.error(typedError.response?.data?.message || 'Không thể xóa giỏ hàng');
     }
   }, []);
 
@@ -188,7 +219,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const closeCart = useCallback(() => setIsCartOpen(false), []);
 
   // Legacy support for existing components
-  const addToCartLegacy = useCallback((product: any, quantity: number, selectedColor: string) => {
+  const addToCartLegacy = useCallback((product: LegacyCartItem['product'], quantity: number, selectedColor: string) => {
     // For legacy support, we'll create a temporary variant object
     // In real implementation, this should be updated to use variantId
     const tempVariantId = `${product.id}-${selectedColor}`;
@@ -206,7 +237,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         name: product.name,
         slug: product.slug || '',
         basePrice: product.price,
-        images: product.images?.map((img: any, index: number) => ({
+        images: product.images?.map((img: string, index: number) => ({
           id: `img-${index}`,
           url: img,
           sortOrder: index
@@ -222,7 +253,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     try {
       const existingCart = JSON.parse(localStorage.getItem(legacyCartKey) || '[]');
       const existingItemIndex = existingCart.findIndex(
-        (item: any) => item.product.id === product.id && item.selectedColor === selectedColor
+        (item: LegacyCartItem) => item.product.id === product.id && item.selectedColor === selectedColor
       );
 
       if (existingItemIndex > -1) {

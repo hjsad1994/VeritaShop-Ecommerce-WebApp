@@ -40,9 +40,10 @@ function OrderConfirmationContent() {
             setError('Không tìm thấy đơn hàng');
           }
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Failed to fetch order:', error);
-        setError(error.response?.data?.message || 'Không thể tải thông tin đơn hàng');
+        const typedError = error as { response?: { data?: { message?: string } } };
+        setError(typedError.response?.data?.message || 'Không thể tải thông tin đơn hàng');
         toast.error('Không thể tải thông tin đơn hàng');
       } finally {
         setIsLoading(false);

@@ -63,18 +63,20 @@ export default function RegisterPage() {
         router.push('/login');
       }, 1500);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Handle API errors
       console.error('Registration error:', error);
 
-      if (error.errors && Array.isArray(error.errors)) {
+      const apiError = error as { errors?: Array<{ message: string }>; message?: string };
+      
+      if (apiError.errors && Array.isArray(apiError.errors)) {
         // Show validation errors from backend
-        error.errors.forEach((err: any) => {
+        apiError.errors.forEach((err) => {
           toast.error(err.message);
         });
       } else {
         // Show general error message
-        toast.error(error.message || 'Registration failed. Please try again.');
+        toast.error(apiError.message || 'Registration failed. Please try again.');
       }
     } finally {
       setIsLoading(false);

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { getProductById, type Review } from '@/lib/data/products';
 
 interface ProductDetailProps {
@@ -41,10 +42,10 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-4xl font-bold text-black mb-4">Product Not Found</h1>
-          <p className="text-gray-600 mb-6">The product you're looking for doesn't exist.</p>
-          <a href="/shop" className="px-6 py-3 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-all">
+          <p className="text-gray-600 mb-6">The product you&apos;re looking for doesn&apos;t exist.</p>
+          <Link href="/shop" className="px-6 py-3 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-all inline-block">
             Back to Shop
-          </a>
+          </Link>
         </div>
       </div>
     );
@@ -111,13 +112,13 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
-              <a href="/" className="text-2xl font-bold text-black hover:text-gray-700 transition-all">
+              <Link href="/" className="text-2xl font-bold text-black hover:text-gray-700 transition-all">
                 VeritaShop
-              </a>
+              </Link>
             </div>
             <nav className="hidden md:flex items-center space-x-8">
-              <a href="/" className="text-black hover:text-gray-600 transition-all font-medium">Home</a>
-              <a href="/shop" className="text-black hover:text-gray-600 transition-all font-medium">Shop</a>
+              <Link href="/" className="text-black hover:text-gray-600 transition-all font-medium">Home</Link>
+              <Link href="/shop" className="text-black hover:text-gray-600 transition-all font-medium">Shop</Link>
               
               {/* Category Dropdown */}
               <div className="relative group">
@@ -181,9 +182,9 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
       <div className="max-w-7xl mx-auto py-8">
         {/* Breadcrumb */}
         <div className="mb-6 text-sm px-4 sm:px-6 lg:px-8">
-          <a href="/" className="text-gray-600 hover:text-black font-medium">Home</a>
+          <Link href="/" className="text-gray-600 hover:text-black font-medium">Home</Link>
           <span className="mx-2 text-gray-400">/</span>
-          <a href="/shop" className="text-gray-600 hover:text-black font-medium">Shop</a>
+          <Link href="/shop" className="text-gray-600 hover:text-black font-medium">Shop</Link>
           <span className="mx-2 text-gray-400">/</span>
           <span className="text-black font-semibold">{product.name}</span>
         </div>

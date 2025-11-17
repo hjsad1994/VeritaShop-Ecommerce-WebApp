@@ -13,7 +13,6 @@ interface CategoryPageProps {
 }
 
 export default function CategoryPage({ category }: CategoryPageProps) {
-  const [isFilterOpen, setIsFilterOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [selectedBrands, setSelectedBrands] = React.useState<string[]>([]);
   const [selectedPriceRange, setSelectedPriceRange] = React.useState<string>('');

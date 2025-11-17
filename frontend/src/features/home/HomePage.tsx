@@ -2,17 +2,15 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
-import { products } from '@/lib/data/products';
+import { products, type Product } from '@/lib/data/products';
 
 export default function HomePage() {
-  const router = useRouter();
   const rotatingWords = [
     "gaming beast\nwith ROG Phone",
     "Samsung\nflagship",
-    "IPhone you've\nbeen waiting for",
+    "IPhone you've been waiting for",
     "Huawei\ninnovation"
   ];
 
@@ -67,7 +65,7 @@ export default function HomePage() {
                 </h1>
               </div>
               <p className="text-xl md:text-2xl text-gray-400 mb-12 leading-relaxed font-light">
-                Premium smartphones from the world's best brands. <span className="text-white font-medium">Free shipping</span> on orders over $500.
+                Premium smartphones from the world&apos;s best brands. <span className="text-white font-medium">Free shipping</span> on orders over $500.
               </p>
               <div className="flex flex-wrap gap-4">
                 <Link href="/shop" className="group bg-white text-black px-12 py-5 rounded-full text-lg font-bold hover:shadow-[0_20px_60px_rgba(255,255,255,0.3)] hover:scale-105 transition-all duration-300 flex items-center gap-2">
@@ -134,7 +132,7 @@ export default function HomePage() {
               Shop by Brand
             </h2>
             <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-              Premium smartphones from the world's leading manufacturers
+              Premium smartphones from the world&apos;s leading manufacturers
             </p>
           </div>
         </div>
@@ -257,7 +255,7 @@ export default function HomePage() {
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {products.slice(0, 8).map((product, index) => {
-              const getBadge = (product: any) => {
+              const getBadge = (product: Product) => {
                 if (product.badge) return { text: product.badge, color: 'bg-gradient-to-r from-blue-500 to-cyan-500' };
                 if (product.oldPrice && product.oldPrice > product.price) {
                   const discount = Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100);
@@ -411,7 +409,7 @@ export default function HomePage() {
             <div>
               <p className="text-sm text-gray-500 uppercase tracking-wider mb-3 font-medium">Apple</p>
               <h2 className="text-5xl md:text-6xl font-bold text-white mb-8">
-                The iPhone everyone's talking about
+                The iPhone everyone&apos;s talking about
               </h2>
               <p className="text-xl text-gray-300 mb-10 leading-relaxed">
                 Experience the power of the latest iPhone 15 series. A17 Pro chip, ProMotion display, and the best camera system ever.
@@ -490,7 +488,7 @@ export default function HomePage() {
                 <div className="flex items-start gap-4 p-4 rounded-xl hover:bg-gray-900 transition-all duration-300 cursor-pointer group border border-transparent hover:border-gray-800">
                   <div>
                     <h4 className="font-bold text-white text-xl mb-1 group-hover:text-blue-400 transition-colors">Dynamic AMOLED 2X</h4>
-                    <p className="text-gray-400 group-hover:text-gray-300 transition-colors">6.8" QHD+ 120Hz display</p>
+                    <p className="text-gray-400 group-hover:text-gray-300 transition-colors">6.8&quot; QHD+ 120Hz display</p>
                   </div>
                 </div>
               </div>

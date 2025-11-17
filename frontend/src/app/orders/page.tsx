@@ -16,11 +16,22 @@ interface OrderItem {
   selectedColor: string;
 }
 
+interface CustomerInfo {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  postalCode: string;
+  paymentMethod: string;
+}
+
 interface Order {
   id: number;
   date: string;
   items: OrderItem[];
-  customerInfo: any;
+  customerInfo: CustomerInfo;
   subtotal: number;
   shipping: number;
   tax: number;

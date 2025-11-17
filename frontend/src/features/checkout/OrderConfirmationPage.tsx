@@ -6,11 +6,33 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import Link from 'next/link';
 
+interface OrderItem {
+  product: {
+    id: number;
+    name: string;
+    price: number;
+    image: string;
+  };
+  quantity: number;
+  selectedColor: string;
+}
+
+interface CustomerInfo {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  postalCode: string;
+  paymentMethod: string;
+}
+
 interface OrderDetails {
   id: number;
   date: string;
-  items: any[];
-  customerInfo: any;
+  items: OrderItem[];
+  customerInfo: CustomerInfo;
   subtotal: number;
   shipping: number;
   tax: number;

@@ -3,8 +3,42 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 
+interface OrderItem {
+  product: {
+    id: number;
+    name: string;
+    price: number;
+    image: string;
+  };
+  quantity: number;
+  selectedColor: string;
+}
+
+interface CustomerInfo {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  postalCode: string;
+  paymentMethod: string;
+}
+
+interface Order {
+  id: number;
+  date: string;
+  items: OrderItem[];
+  customerInfo: CustomerInfo;
+  subtotal: number;
+  shipping: number;
+  tax: number;
+  total: number;
+  status: 'pending' | 'confirmed' | 'rejected';
+}
+
 export default function AdminDashboard() {
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [stats, setStats] = useState([
     {
       title: 'Total Revenue',
@@ -67,11 +101,11 @@ export default function AdminDashboard() {
       
       // Calculate stats
       const totalOrders = savedOrders.length;
-      const pendingOrders = savedOrders.filter((order: any) => order.status === 'pending').length;
-      const confirmedOrders = savedOrders.filter((order: any) => order.status === 'confirmed').length;
+      const pendingOrders = savedOrders.filter((order: Order) => order.status === 'pending').length;
+      const confirmedOrders = savedOrders.filter((order: Order) => order.status === 'confirmed').length;
       const totalRevenue = savedOrders
-        .filter((order: any) => order.status === 'confirmed')
-        .reduce((sum: number, order: any) => sum + order.total, 0);
+        .filter((order: Order) => order.status === 'confirmed')
+        .reduce((sum: number, order: Order) => sum + order.total, 0);
       
       setStats([
         {
@@ -161,7 +195,7 @@ export default function AdminDashboard() {
     <div className="p-4 lg:p-6 w-full">
       <div className="mb-8">
         <h2 className="text-3xl font-bold text-black mb-2">Dashboard Overview</h2>
-        <p className="text-gray-600">Welcome back! Here's what's happening with your store today.</p>
+        <p className="text-gray-600">Welcome back! Here&apos;s what&apos;s happening with your store today.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

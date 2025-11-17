@@ -44,18 +44,20 @@ export default function LoginPage() {
         router.push('/');
       }, 1000);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Handle API errors
       console.error('Login error:', error);
 
-      if (error.errors && Array.isArray(error.errors)) {
+      const apiError = error as { errors?: Array<{ message: string }>; message?: string };
+      
+      if (apiError.errors && Array.isArray(apiError.errors)) {
         // Show validation errors from backend
-        error.errors.forEach((err: any) => {
+        apiError.errors.forEach((err) => {
           toast.error(err.message);
         });
       } else {
         // Show general error message
-        toast.error(error.message || 'Login failed. Please check your credentials.');
+        toast.error(apiError.message || 'Login failed. Please check your credentials.');
       }
     } finally {
       setIsLoading(false);
@@ -231,7 +233,7 @@ export default function LoginPage() {
 
           {/* Sign Up Link */}
           <p className="mt-8 text-center text-sm text-gray-400">
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <Link href="/register" className="text-white hover:text-gray-300 font-medium transition-colors hover:underline">
               Sign up
             </Link>

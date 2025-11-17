@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { getProductById, type Review } from '@/lib/data/products';
@@ -48,10 +49,10 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-black mb-2">Product not found</h2>
-          <p className="text-gray-600 mb-6">The product you're looking for doesn't exist.</p>
-          <a href="/shop" className="bg-black text-white px-6 py-3 rounded-md hover:bg-gray-800 transition">
+          <p className="text-gray-600 mb-6">The product you&apos;re looking for doesn&apos;t exist.</p>
+          <Link href="/shop" className="bg-black text-white px-6 py-3 rounded-md hover:bg-gray-800 transition inline-block">
             Back to Shop
-          </a>
+          </Link>
         </div>
       </div>
     );
@@ -118,9 +119,9 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
         {/* Breadcrumb */}
         <div className="mb-8">
           <div className="flex items-center gap-2 text-sm text-gray-600">
-            <a href="/" className="hover:text-black transition">Home</a>
+            <Link href="/" className="hover:text-black transition">Home</Link>
             <span>/</span>
-            <a href="/shop" className="hover:text-black transition">Shop</a>
+            <Link href="/shop" className="hover:text-black transition">Shop</Link>
             <span>/</span>
             <span className="text-black font-medium">{product.name}</span>
           </div>

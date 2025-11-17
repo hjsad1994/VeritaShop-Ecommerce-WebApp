@@ -90,18 +90,23 @@ export default function LoginPage() {
         }
       }, 500); // Reduced timeout since we're not relying on localStorage
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Handle API errors
       console.error('Login error:', error);
 
-      if (error.errors && Array.isArray(error.errors)) {
+      const typedError = error as { 
+        errors?: Array<{ message: string }>; 
+        message?: string 
+      };
+
+      if (typedError.errors && Array.isArray(typedError.errors)) {
         // Show validation errors from backend
-        error.errors.forEach((err: any) => {
+        typedError.errors.forEach((err) => {
           toast.error(err.message);
         });
       } else {
         // Show general error message
-        toast.error(error.message || 'Login failed. Please check your credentials.');
+        toast.error(typedError.message || 'Login failed. Please check your credentials.');
       }
     } finally {
       setIsSubmitting(false);
@@ -233,10 +238,7 @@ export default function LoginPage() {
             <button
               type="button"
               disabled={isSubmitting}
-              onClick={(e) => {
-                e.preventDefault();
-                handleSubmit(e as any);
-              }}
+              onClick={handleSubmit}
               className="w-full bg-white text-black py-3.5 rounded-xl font-semibold hover:bg-gray-100 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
               {isSubmitting ? 'Signing in...' : 'Sign in'}
@@ -281,7 +283,7 @@ export default function LoginPage() {
 
           {/* Sign Up Link */}
           <p className="mt-8 text-center text-sm text-gray-400">
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <Link href="/register" className="text-white hover:text-gray-300 font-medium transition-colors hover:underline">
               Sign up
             </Link>

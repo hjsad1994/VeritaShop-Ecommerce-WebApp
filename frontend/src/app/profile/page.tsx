@@ -52,8 +52,9 @@ export default function ProfilePage() {
 
       toast.success('Profile updated successfully!');
       setIsEditing(false);
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to update profile');
+    } catch (error: unknown) {
+      const typedError = error as { message?: string };
+      toast.error(typedError.message || 'Failed to update profile');
     } finally {
       setIsLoading(false);
     }

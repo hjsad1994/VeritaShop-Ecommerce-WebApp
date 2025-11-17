@@ -71,24 +71,30 @@ export default function RegisterPage() {
         }, 1000);
       } catch (loginError) {
         // If auto-login fails, redirect to login page
+        console.error('Auto-login error after registration:', loginError);
         toast.error('Registration successful. Please login manually.');
         setTimeout(() => {
           router.push('/login');
         }, 1500);
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Handle API errors
       console.error('Registration error:', error);
 
-      if (error.errors && Array.isArray(error.errors)) {
+      const typedError = error as { 
+        errors?: Array<{ message: string }>; 
+        message?: string 
+      };
+
+      if (typedError.errors && Array.isArray(typedError.errors)) {
         // Show validation errors from backend
-        error.errors.forEach((err: any) => {
+        typedError.errors.forEach((err) => {
           toast.error(err.message);
         });
       } else {
         // Show general error message
-        toast.error(error.message || 'Registration failed. Please try again.');
+        toast.error(typedError.message || 'Registration failed. Please try again.');
       }
     } finally {
       setIsLoading(false);

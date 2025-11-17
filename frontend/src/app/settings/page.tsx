@@ -46,8 +46,9 @@ export default function SettingsPage() {
       
       // For now, just show success message
       toast.success('Settings saved successfully!');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to save settings');
+    } catch (error: unknown) {
+      const typedError = error as { message?: string };
+      toast.error(typedError.message || 'Failed to save settings');
     } finally {
       setIsLoading(false);
     }

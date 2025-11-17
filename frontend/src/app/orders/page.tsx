@@ -21,7 +21,12 @@ interface Order {
   id: number;
   date: string;
   items: OrderItem[];
-  customerInfo: any;
+  customerInfo: {
+    name: string;
+    email: string;
+    phone?: string;
+    address: string;
+  };
   subtotal: number;
   shipping: number;
   tax: number;

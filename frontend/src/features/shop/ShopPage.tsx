@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import Search from '@/components/ui/Search';
@@ -9,7 +10,6 @@ import ShopFilter from '@/components/ui/Filter';
 import { products } from '@/lib/data/products';
 
 export default function ShopPage() {
-  const [isFilterOpen, setIsFilterOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [selectedBrands, setSelectedBrands] = React.useState<string[]>([]);
   const [selectedPriceRange, setSelectedPriceRange] = React.useState<string>('');
@@ -129,10 +129,13 @@ export default function ShopPage() {
               {currentProducts.map(product => (
                 <Link key={product.id} href={"/shop/" + product.id} className="group cursor-pointer">
                   <div className="relative aspect-square mb-4 bg-gray-100 rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300">
-                    <img 
+                    <Image
                       src={product.image}
                       alt={product.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      unoptimized
+                      sizes="(min-width: 1024px) 200px, 50vw"
                     />
                     {product.oldPrice && (
                       <div className="absolute top-3 left-3 bg-red-500 text-white px-2 py-1 text-xs font-bold rounded">

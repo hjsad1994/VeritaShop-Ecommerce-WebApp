@@ -6,6 +6,32 @@ import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { authService } from '@/lib/api';
 
+type ApiError = {
+  message?: string;
+  errors?: Array<{ message?: string }>;
+};
+
+const getErrorMessages = (error: unknown): string[] => {
+  if (typeof error === 'string') {
+    return [error];
+  }
+  if (error && typeof error === 'object') {
+    const apiError = error as ApiError;
+    if (apiError.errors && apiError.errors.length > 0) {
+      const messages = apiError.errors
+        .map(err => err?.message)
+        .filter((msg): msg is string => Boolean(msg));
+      if (messages.length > 0) {
+        return messages;
+      }
+    }
+    if (apiError.message) {
+      return [apiError.message];
+    }
+  }
+  return ['Login failed. Please check your credentials.'];
+};
+
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -44,19 +70,13 @@ export default function LoginPage() {
         router.push('/');
       }, 1000);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Handle API errors
       console.error('Login error:', error);
 
-      if (error.errors && Array.isArray(error.errors)) {
-        // Show validation errors from backend
-        error.errors.forEach((err: any) => {
-          toast.error(err.message);
-        });
-      } else {
-        // Show general error message
-        toast.error(error.message || 'Login failed. Please check your credentials.');
-      }
+      getErrorMessages(error).forEach(message => {
+        toast.error(message);
+      });
     } finally {
       setIsLoading(false);
     }
@@ -231,7 +251,7 @@ export default function LoginPage() {
 
           {/* Sign Up Link */}
           <p className="mt-8 text-center text-sm text-gray-400">
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <Link href="/register" className="text-white hover:text-gray-300 font-medium transition-colors hover:underline">
               Sign up
             </Link>

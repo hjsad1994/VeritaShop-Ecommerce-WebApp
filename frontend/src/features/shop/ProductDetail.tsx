@@ -1,6 +1,8 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { getProductById, type Review } from '@/lib/data/products';
@@ -48,10 +50,10 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-black mb-2">Product not found</h2>
-          <p className="text-gray-600 mb-6">The product you're looking for doesn't exist.</p>
-          <a href="/shop" className="bg-black text-white px-6 py-3 rounded-md hover:bg-gray-800 transition">
+          <p className="text-gray-600 mb-6">The product you&apos;re looking for doesn&apos;t exist.</p>
+          <Link href="/shop" className="bg-black text-white px-6 py-3 rounded-md hover:bg-gray-800 transition">
             Back to Shop
-          </a>
+          </Link>
         </div>
       </div>
     );
@@ -118,9 +120,9 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
         {/* Breadcrumb */}
         <div className="mb-8">
           <div className="flex items-center gap-2 text-sm text-gray-600">
-            <a href="/" className="hover:text-black transition">Home</a>
+            <Link href="/" className="hover:text-black transition">Home</Link>
             <span>/</span>
-            <a href="/shop" className="hover:text-black transition">Shop</a>
+            <Link href="/shop" className="hover:text-black transition">Shop</Link>
             <span>/</span>
             <span className="text-black font-medium">{product.name}</span>
           </div>
@@ -128,11 +130,14 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
         <div className="grid lg:grid-cols-2 gap-12">
           {/* Left: Images */}
           <div>
-            <div className="bg-gray-50 rounded-2xl aspect-square mb-6 flex items-center justify-center overflow-hidden">
-              <img 
+            <div className="bg-gray-50 rounded-2xl aspect-square mb-6 flex items-center justify-center overflow-hidden relative">
+              <Image
                 src={images[selectedImage]}
                 alt={product.name}
-                className="w-full h-full object-contain p-8"
+                fill
+                className="object-contain p-8"
+                unoptimized
+                sizes="(min-width: 1024px) 50vw, 100vw"
               />
             </div>
             <div className="grid grid-cols-4 gap-4">
@@ -144,7 +149,14 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
                     selectedImage === idx ? 'border-black' : 'border-gray-200 hover:border-gray-400'
                   }`}
                 >
-                  <img src={img} alt={`View ${idx + 1}`} className="w-full h-full object-contain p-2 bg-gray-50" />
+                  <Image
+                    src={img}
+                    alt={`View ${idx + 1}`}
+                    fill
+                    className="object-contain p-2 bg-gray-50"
+                    unoptimized
+                    sizes="100px"
+                  />
                 </button>
               ))}
             </div>

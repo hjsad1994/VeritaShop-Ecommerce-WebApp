@@ -22,6 +22,8 @@ interface CustomerInfo {
   address: string;
   city: string;
   postalCode: string;
+  zipCode?: string;
+  country?: string;
   paymentMethod: string;
 }
 

@@ -42,7 +42,6 @@ export interface ProductDetailResponse extends ProductResponse {
     ram: string | null;
     price: string;
     comparePrice: string | null;
-    stock: number;
     sku: string;
     images: Array<{
       id: string;
@@ -147,7 +146,6 @@ export class ProductDto {
         ram: variant.ram,
         price: variant.price.toString(),
         comparePrice: variant.comparePrice ? variant.comparePrice.toString() : null,
-        stock: variant.stock,
         sku: variant.sku,
         images: variantImages,
       });

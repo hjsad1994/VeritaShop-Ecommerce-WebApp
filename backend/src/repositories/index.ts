@@ -6,6 +6,7 @@ import { CategoryRepository } from './CategoryRepository';
 import { ReviewRepository } from './ReviewRepository';
 import { CommentRepository } from './CommentRepository';
 import { CartRepository } from './CartRepository';
+import { InventoryRepository } from './InventoryRepository';
 import { OrderRepository } from './OrderRepository';
 import { WishlistRepository } from './WishlistRepository';
 
@@ -63,6 +64,20 @@ export class RepositoryFactory {
       throw new Error('RepositoryFactory not initialized. Call initialize() first.');
     }
     return new CartRepository(this.prisma);
+  }
+
+  static getInventoryRepository(): InventoryRepository {
+    if (!this.prisma) {
+      throw new Error('RepositoryFactory not initialized. Call initialize() first.');
+    }
+    return new InventoryRepository(this.prisma);
+  }
+
+  static getPrisma(): PrismaClient {
+    if (!this.prisma) {
+      throw new Error('RepositoryFactory not initialized. Call initialize() first.');
+    }
+    return this.prisma;
   }
 
   static getOrderRepository(): OrderRepository {

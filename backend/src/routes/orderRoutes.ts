@@ -99,7 +99,7 @@ export const createOrderRoutes = (): Router => {
   );
 
   /**
-   * @route   PUT /api/orders/:id/confirm-delivery
+   * @route   PUTt /api/orders/:id/confirm-delivery
    * @desc    Confirm order delivery (user confirms received order)
    * @access  Private
    */

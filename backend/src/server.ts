@@ -14,6 +14,7 @@ import { createCategoryRoutes } from './routes/categoryRoutes';
 import { createReviewRoutes } from './routes/reviewRoutes';
 import { createCommentRoutes } from './routes/commentRoutes';
 import { createCartRoutes } from './routes/cartRoutes';
+import { createInventoryRoutes } from './routes/inventoryRoutes';
 import { createOrderRoutes } from './routes/orderRoutes';
 import { createWishlistRoutes } from './routes/wishlistRoutes';
 // Initialize Express app
@@ -64,6 +65,7 @@ app.use('/api/categories', createCategoryRoutes());
 app.use('/api/reviews', createReviewRoutes());
 app.use('/api/comments', createCommentRoutes());
 app.use('/api/cart', createCartRoutes());
+app.use('/api/inventory', createInventoryRoutes());
 app.use('/api/orders', createOrderRoutes());
 app.use('/api/wishlist', createWishlistRoutes());
 // 404 handler

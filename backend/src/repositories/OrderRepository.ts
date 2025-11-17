@@ -264,15 +264,9 @@ export class OrderRepository extends BaseRepository<Order> {
         },
       });
 
-      // Update product stock and soldCount
+      // Update product soldCount
+      // Note: Stock management is now handled by InventoryService
       for (const item of orderData.items) {
-        await tx.productVariant.update({
-          where: { id: item.variantId },
-          data: {
-            stock: { decrement: item.quantity },
-          },
-        });
-
         // Get product ID from variant
         const variant = await tx.productVariant.findUnique({
           where: { id: item.variantId },
@@ -375,16 +369,10 @@ export class OrderRepository extends BaseRepository<Order> {
         },
       });
 
-      // Restore stock if order was not delivered
+      // Restore soldCount if order was not delivered
+      // Note: Stock restoration is now handled by InventoryService
       if (order.status !== OrderStatus.DELIVERED) {
         for (const item of order.items) {
-          await tx.productVariant.update({
-            where: { id: item.variantId },
-            data: {
-              stock: { increment: item.quantity },
-            },
-          });
-
           // Get product ID from variant
           const variant = await tx.productVariant.findUnique({
             where: { id: item.variantId },

@@ -76,12 +76,77 @@ export default function VouchersPage() {
   const fetchVouchers = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await voucherService.getVouchers({ limit: 200 });
-      setVouchers(response.vouchers);
       setError(null);
-    } catch (err) {
-      console.error(err);
-      setError(err instanceof Error ? err.message : 'Không thể tải danh sách voucher');
+      const response = await voucherService.getVouchers({ limit: 100 });
+      
+      // Validate response structure
+      if (!response || !Array.isArray(response.vouchers)) {
+        console.error('Invalid response structure:', response);
+        setError('Dữ liệu trả về không hợp lệ');
+        setVouchers([]);
+        return;
+      }
+      
+      setVouchers(response.vouchers || []);
+    } catch (err: unknown) {
+      console.error('Error fetching vouchers:', err);
+      
+      // Handle different error types
+      let errorMessage = 'Không thể tải danh sách voucher';
+      
+      if (err && typeof err === 'object') {
+        // Check for ApiError format from backend
+        if ('message' in err) {
+          errorMessage = String(err.message);
+          
+          // If there are validation errors, append them
+          if ('errors' in err && Array.isArray(err.errors) && err.errors.length > 0) {
+            const validationErrors = err.errors
+              .map((e: { field?: string; message?: string }) => 
+                e.field ? `${e.field}: ${e.message || ''}` : e.message || ''
+              )
+              .filter(Boolean)
+              .join(', ');
+            
+            if (validationErrors) {
+              errorMessage += ` (${validationErrors})`;
+            }
+          }
+        } else if (
+          'response' in err &&
+          err.response &&
+          typeof err.response === 'object' &&
+          'data' in err.response &&
+          err.response.data &&
+          typeof err.response.data === 'object'
+        ) {
+          const responseData = err.response.data;
+          if ('message' in responseData) {
+            errorMessage = String(responseData.message);
+          }
+          
+          // Include validation errors if present
+          if ('errors' in responseData && Array.isArray(responseData.errors) && responseData.errors.length > 0) {
+            const validationErrors = responseData.errors
+              .map((e: { field?: string; message?: string }) => 
+                e.field ? `${e.field}: ${e.message || ''}` : e.message || ''
+              )
+              .filter(Boolean)
+              .join(', ');
+            
+            if (validationErrors) {
+              errorMessage += ` (${validationErrors})`;
+            }
+          }
+        }
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      }
+      
+      setError(errorMessage);
+      setVouchers([]);
     } finally {
       setLoading(false);
     }
@@ -166,14 +231,14 @@ export default function VouchersPage() {
       const payload = buildPayload();
 
       if (formState.id) {
-        const updated = await voucherService.updateVoucher(formState.id, payload);
-        setVouchers((prev) => prev.map((voucher) => (voucher.id === updated.id ? updated : voucher)));
+        await voucherService.updateVoucher(formState.id, payload);
       } else {
-        const created = await voucherService.createVoucher(payload);
-        setVouchers((prev) => [created, ...prev]);
+        await voucherService.createVoucher(payload);
       }
 
       closeModal();
+      // Refresh the list to ensure all data is synchronized with server
+      await fetchVouchers();
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : 'Không thể lưu voucher');
@@ -297,7 +362,7 @@ export default function VouchersPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredVouchers.length === 0 && (
+              {filteredVouchers.length === 0 && !error && (
                 <tr>
                   <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
                     Không có voucher nào phù hợp

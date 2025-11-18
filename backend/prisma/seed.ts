@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, VoucherType } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -171,6 +171,47 @@ async function main() {
       console.log("Product created:", product.name);
     } else {
       console.log("Product already exists:", existingProduct.name);
+    }
+  }
+
+  // Create sample vouchers
+  const now = new Date();
+  const nextQuarter = new Date(now);
+  nextQuarter.setMonth(now.getMonth() + 3);
+
+  const vouchers = [
+    {
+      code: "WELCOME10",
+      type: VoucherType.PERCENTAGE,
+      value: 10,
+      minOrderValue: 10000000,
+      usageLimit: 500,
+      perUserLimit: 1,
+      startDate: now,
+      endDate: nextQuarter,
+    },
+    {
+      code: "FLASH500K",
+      type: VoucherType.FIXED,
+      value: 500000,
+      minOrderValue: 5000000,
+      usageLimit: 200,
+      perUserLimit: 2,
+      startDate: now,
+      endDate: nextQuarter,
+    },
+  ];
+
+  for (const voucherData of vouchers) {
+    const existingVoucher = await prisma.voucher.findUnique({
+      where: { code: voucherData.code },
+    });
+
+    if (!existingVoucher) {
+      await prisma.voucher.create({ data: voucherData });
+      console.log("Voucher created:", voucherData.code);
+    } else {
+      console.log("Voucher already exists:", voucherData.code);
     }
   }
 

@@ -1,0 +1,2 @@
+-- Voucher support is included in 20251112000000_initial_schema.
+-- This migration is intentionally left empty.

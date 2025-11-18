@@ -64,6 +64,14 @@ import { products } from '@/lib/data/products';
 import HomePage from '@/features/home/HomePage';
 ```
 
+## 🎟️ Voucher Management
+
+- **Backend API:** `POST/GET/PUT/PATCH/DELETE /api/admin/vouchers` (protected by `ADMIN`/`MANAGER` roles).
+- **Frontend UI:** Navigate to `/admin/vouchers` to manage codes (create, edit, toggle, delete) with filters for status/type.
+- **Form fields:** code, type (`PERCENTAGE` or `FIXED`), value, minimum order, total/user limits, active window, status toggle.
+- **Client helpers:** use `voucherService` + `Voucher` types from `src/lib/api`.
+- **Validation:** Admin forms enforce uppercase codes and numeric ranges before calling the API.
+
 ## 📄 Key Files
 
 - `setup-trace.js` - Predev script that disables tracing to prevent EPERM errors

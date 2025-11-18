@@ -256,15 +256,15 @@ function OrderConfirmationContent() {
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <div className="flex items-center mb-2">
-                <div className={`w-3 h-3 rounded-full ${order.status === 'PENDING' || order.status === 'CONFIRMED' || order.status === 'PREPARING' || order.status === 'SHIPPING' || order.status === 'DELIVERED' ? 'bg-green-600' :
+                <div className={`w-3 h-3 rounded-full ${order.status === 'PENDING' || order.status === 'CONFIRMED' || order.status === 'PROCESSING' || order.status === 'SHIPPING' || order.status === 'DELIVERED' ? 'bg-green-600' :
                     order.status === 'CANCELLED' ? 'bg-red-600' : 'bg-yellow-600'
                   }`}></div>
-                <div className={`flex-1 h-1 mx-2 ${order.status === 'PENDING' || order.status === 'CONFIRMED' || order.status === 'PREPARING' || order.status === 'SHIPPING' || order.status === 'DELIVERED' ? 'bg-green-600' :
+                <div className={`flex-1 h-1 mx-2 ${order.status === 'PENDING' || order.status === 'CONFIRMED' || order.status === 'PROCESSING' || order.status === 'SHIPPING' || order.status === 'DELIVERED' ? 'bg-green-600' :
                     order.status === 'CANCELLED' ? 'bg-red-600' : 'bg-yellow-600'
                   }`}></div>
-                <div className={`w-3 h-3 rounded-full ${order.status === 'CONFIRMED' || order.status === 'PREPARING' || order.status === 'SHIPPING' || order.status === 'DELIVERED' ? 'bg-green-600' : 'bg-gray-300'
+                <div className={`w-3 h-3 rounded-full ${order.status === 'CONFIRMED' || order.status === 'PROCESSING' || order.status === 'SHIPPING' || order.status === 'DELIVERED' ? 'bg-green-600' : 'bg-gray-300'
                   }`}></div>
-                <div className={`flex-1 h-1 mx-2 ${order.status === 'PREPARING' || order.status === 'SHIPPING' || order.status === 'DELIVERED' ? 'bg-green-600' : 'bg-gray-300'
+                <div className={`flex-1 h-1 mx-2 ${order.status === 'PROCESSING' || order.status === 'SHIPPING' || order.status === 'DELIVERED' ? 'bg-green-600' : 'bg-gray-300'
                   }`}></div>
                 <div className={`w-3 h-3 rounded-full ${order.status === 'SHIPPING' || order.status === 'DELIVERED' ? 'bg-green-600' : 'bg-gray-300'
                   }`}></div>

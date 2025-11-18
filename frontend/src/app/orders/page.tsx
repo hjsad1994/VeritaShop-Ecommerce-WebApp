@@ -15,6 +15,7 @@ export default function OrdersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
+  const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchOrders();
@@ -60,9 +61,9 @@ export default function OrdersPage() {
         return 'bg-blue-100 text-blue-800 border-blue-200';
       case OrderStatus.CANCELLED:
         return 'bg-red-100 text-red-800 border-red-200';
-      case OrderStatus.REFUNDED:
+      case OrderStatus.RETURNED:
         return 'bg-gray-100 text-gray-800 border-gray-200';
-      case OrderStatus.PREPARING:
+      case OrderStatus.PROCESSING:
         return 'bg-purple-100 text-purple-800 border-purple-200';
       case OrderStatus.SHIPPING:
         return 'bg-orange-100 text-orange-800 border-orange-200';
@@ -90,7 +91,7 @@ export default function OrdersPage() {
     switch (status) {
       case OrderStatus.CONFIRMED:
         return 'Đã xác nhận';
-      case OrderStatus.PREPARING:
+      case OrderStatus.PROCESSING:
         return 'Đang chuẩn bị';
       case OrderStatus.SHIPPING:
         return 'Đang giao hàng';
@@ -98,8 +99,8 @@ export default function OrdersPage() {
         return 'Đã giao hàng';
       case OrderStatus.CANCELLED:
         return 'Đã hủy';
-      case OrderStatus.REFUNDED:
-        return 'Đã hoàn tiền';
+      case OrderStatus.RETURNED:
+        return 'Đã hoàn hàng';
       case OrderStatus.PENDING:
       default:
         return 'Chờ xử lý';
@@ -130,13 +131,13 @@ export default function OrdersPage() {
           </svg>
         );
       case OrderStatus.CANCELLED:
-      case OrderStatus.REFUNDED:
+      case OrderStatus.RETURNED:
         return (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         );
-      case OrderStatus.PREPARING:
+      case OrderStatus.PROCESSING:
         return (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -164,6 +165,46 @@ export default function OrdersPage() {
       style: 'currency',
       currency: 'VND'
     }).format(amount);
+  };
+
+  // Check if order can be cancelled
+  const canCancelOrder = (status: OrderStatus) => {
+    return status === OrderStatus.PENDING || status === OrderStatus.CONFIRMED;
+  };
+
+  // Handle order cancellation
+  const handleCancelOrder = async (orderId: string, orderNumber: string) => {
+    const reason = prompt(`Vui lòng nhập lý do hủy đơn hàng ${orderNumber}:`);
+    if (!reason || reason.trim() === '') {
+      toast.error('Vui lòng nhập lý do hủy đơn hàng');
+      return;
+    }
+
+    setCancellingOrderId(orderId);
+
+    try {
+      const response = await orderService.cancelOrder(orderId, { cancelReason: reason.trim() });
+
+      if (response.success) {
+        toast.success('Đơn hàng đã được hủy thành công');
+        // Refresh orders list
+        fetchOrders();
+      } else {
+        toast.error('Không thể hủy đơn hàng');
+      }
+    } catch (error: unknown) {
+      console.error('Failed to cancel order:', error);
+
+      let errorMessage = 'Không thể hủy đơn hàng';
+      if (error && typeof error === 'object') {
+        const apiError = error as { response?: { data?: { message?: string } }; message?: string };
+        errorMessage = apiError.response?.data?.message || apiError.message || errorMessage;
+      }
+
+      toast.error(errorMessage);
+    } finally {
+      setCancellingOrderId(null);
+    }
   };
 
   if (isLoading) {
@@ -254,16 +295,16 @@ export default function OrdersPage() {
               </button>
               <button
                 onClick={() => {
-                  setFilter(OrderStatus.PREPARING);
+                  setFilter(OrderStatus.PROCESSING);
                   setCurrentPage(1);
                 }}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  filter === OrderStatus.PREPARING
+                  filter === OrderStatus.PROCESSING
                     ? 'bg-purple-600 text-white'
                     : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
                 }`}
               >
-                Đang chuẩn bị ({orderSummaries.filter(o => o.status === OrderStatus.PREPARING).length})
+                Đang chuẩn bị ({orderSummaries.filter(o => o.status === OrderStatus.PROCESSING).length})
               </button>
               <button
                 onClick={() => {
@@ -346,12 +387,6 @@ export default function OrdersPage() {
                           <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold border ${getPaymentStatusColor(order.paymentStatus)}`}>
                             {formatPaymentStatus(order.paymentStatus)}
                           </span>
-                          <Link
-                            href={`/orders/${order.orderNumber}`}
-                            className="text-black hover:text-gray-700 font-medium text-sm"
-                          >
-                            Xem chi tiết →
-                          </Link>
                         </div>
                       </div>
                     </div>
@@ -371,27 +406,60 @@ export default function OrdersPage() {
                         </div>
                       </div>
 
-                      <div className="flex justify-between items-center pt-4 border-t border-gray-200">
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 pt-4 border-t border-gray-200">
                         <div className="text-sm text-gray-600">
                           <span>Tổng cộng: </span>
                           <span className="font-bold text-black text-lg">{formatCurrency(order.total)}</span>
                         </div>
-                        {order.status === OrderStatus.PENDING && (
-                          <div className="flex items-center gap-2 text-yellow-600 text-sm">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            Đang chờ admin xác nhận
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                          {order.status === OrderStatus.PENDING && (
+                            <div className="flex items-center gap-2 text-yellow-600 text-sm">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              Đang chờ admin xác nhận
+                            </div>
+                          )}
+                          {order.status === OrderStatus.SHIPPING && (
+                            <div className="flex items-center gap-2 text-orange-600 text-sm">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              Đang được giao hàng
+                            </div>
+                          )}
+                          <div className="flex items-center gap-2">
+                            <Link
+                              href={`/orders/${order.orderNumber}`}
+                              className="text-black hover:text-gray-700 font-medium text-sm"
+                            >
+                              Xem chi tiết →
+                            </Link>
+                            {canCancelOrder(order.status) && (
+                              <button
+                                onClick={() => handleCancelOrder(order.id, order.orderNumber)}
+                                disabled={cancellingOrderId === order.id}
+                                className="text-red-600 hover:text-red-700 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                              >
+                                {cancellingOrderId === order.id ? (
+                                  <>
+                                    <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                    </svg>
+                                    Đang hủy...
+                                  </>
+                                ) : (
+                                  <>
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                    Hủy đơn
+                                  </>
+                                )}
+                              </button>
+                            )}
                           </div>
-                        )}
-                        {order.status === OrderStatus.SHIPPING && (
-                          <div className="flex items-center gap-2 text-orange-600 text-sm">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            Đang được giao hàng
-                          </div>
-                        )}
+                        </div>
                       </div>
                     </div>
                   </div>

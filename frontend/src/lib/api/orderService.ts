@@ -5,11 +5,11 @@ import { ApiResponse, PaginationMeta } from './types';
 export enum OrderStatus {
   PENDING = 'PENDING',
   CONFIRMED = 'CONFIRMED',
-  PREPARING = 'PREPARING',
+  PROCESSING = 'PROCESSING',
   SHIPPING = 'SHIPPING',
   DELIVERED = 'DELIVERED',
   CANCELLED = 'CANCELLED',
-  REFUNDED = 'REFUNDED'
+  RETURNED = 'RETURNED'
 }
 
 export enum PaymentStatus {
@@ -171,9 +171,9 @@ class OrderService {
     return response.data;
   }
 
-  // Get order by ID
-  async getOrderById(orderId: string): Promise<ApiResponse<Order>> {
-    const response = await apiClient.get(`${this.baseUrl}/${orderId}`);
+  // Get order by ID or order number
+  async getOrderById(orderIdOrNumber: string): Promise<ApiResponse<Order>> {
+    const response = await apiClient.get(`${this.baseUrl}/${orderIdOrNumber}`);
     return response.data;
   }
 

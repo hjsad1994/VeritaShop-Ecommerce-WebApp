@@ -135,7 +135,7 @@ export const SUCCESS_MESSAGES = {
 export const USER_ROLES = {
   USER: 'USER',
   ADMIN: 'ADMIN',
-  SUPER_ADMIN: 'SUPER_ADMIN',
+  MANAGER: 'MANAGER',
 } as const;
 
 export const VALIDATION_RULES = {

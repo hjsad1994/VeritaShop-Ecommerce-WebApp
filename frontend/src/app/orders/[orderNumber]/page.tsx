@@ -16,6 +16,7 @@ export default function OrderDetailsPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -36,9 +37,15 @@ export default function OrderDetailsPage() {
         }
       } catch (error: unknown) {
         console.error('Failed to fetch order:', error);
-        const typedError = error as { response?: { data?: { message?: string } } };
-        setError(typedError.response?.data?.message || 'Không thể tải thông tin đơn hàng');
-        toast.error('Không thể tải thông tin đơn hàng');
+
+        let errorMessage = 'Không thể tải thông tin đơn hàng';
+        if (error && typeof error === 'object') {
+          const apiError = error as { response?: { data?: { message?: string } }; message?: string };
+          errorMessage = apiError.response?.data?.message || apiError.message || errorMessage;
+        }
+
+        setError(errorMessage);
+        toast.error(errorMessage);
       } finally {
         setIsLoading(false);
       }
@@ -50,20 +57,40 @@ export default function OrderDetailsPage() {
   const handleCancelOrder = async () => {
     if (!order) return;
 
-    const reason = prompt('Vui lòng nhập lý do hủy đơn hàng:');
-    if (!reason) return;
+    const reason = prompt(`Vui lòng nhập lý do hủy đơn hàng ${order.orderNumber}:`);
+    if (!reason || reason.trim() === '') {
+      toast.error('Vui lòng nhập lý do hủy đơn hàng');
+      return;
+    }
+
+    setIsCancelling(true);
 
     try {
-      const response = await orderService.cancelOrder(order.id, { cancelReason: reason });
+      const response = await orderService.cancelOrder(order.id, { cancelReason: reason.trim() });
       if (response.success) {
         setOrder(response.data);
         toast.success('Đơn hàng đã được hủy thành công');
+      } else {
+        toast.error('Không thể hủy đơn hàng');
       }
     } catch (error: unknown) {
       console.error('Failed to cancel order:', error);
-      const typedError = error as { response?: { data?: { message?: string } } };
-      toast.error(typedError.response?.data?.message || 'Không thể hủy đơn hàng');
+
+      let errorMessage = 'Không thể hủy đơn hàng';
+      if (error && typeof error === 'object') {
+        const apiError = error as { response?: { data?: { message?: string } }; message?: string };
+        errorMessage = apiError.response?.data?.message || apiError.message || errorMessage;
+      }
+
+      toast.error(errorMessage);
+    } finally {
+      setIsCancelling(false);
     }
+  };
+
+  // Check if order can be cancelled
+  const canCancelOrder = () => {
+    return order && (order.status === OrderStatus.PENDING || order.status === OrderStatus.CONFIRMED);
   };
 
   const handleConfirmDelivery = async () => {
@@ -77,8 +104,14 @@ export default function OrderDetailsPage() {
       }
     } catch (error: unknown) {
       console.error('Failed to confirm delivery:', error);
-      const typedError = error as { response?: { data?: { message?: string } } };
-      toast.error(typedError.response?.data?.message || 'Không thể xác nhận nhận hàng');
+
+      let errorMessage = 'Không thể xác nhận nhận hàng';
+      if (error && typeof error === 'object') {
+        const apiError = error as { response?: { data?: { message?: string } }; message?: string };
+        errorMessage = apiError.response?.data?.message || apiError.message || errorMessage;
+      }
+
+      toast.error(errorMessage);
     }
   };
 
@@ -90,9 +123,9 @@ export default function OrderDetailsPage() {
         return 'bg-blue-100 text-blue-800 border-blue-200';
       case OrderStatus.CANCELLED:
         return 'bg-red-100 text-red-800 border-red-200';
-      case OrderStatus.REFUNDED:
+      case OrderStatus.RETURNED:
         return 'bg-gray-100 text-gray-800 border-gray-200';
-      case OrderStatus.PREPARING:
+      case OrderStatus.PROCESSING:
         return 'bg-purple-100 text-purple-800 border-purple-200';
       case OrderStatus.SHIPPING:
         return 'bg-orange-100 text-orange-800 border-orange-200';
@@ -120,7 +153,7 @@ export default function OrderDetailsPage() {
     switch (status) {
       case OrderStatus.CONFIRMED:
         return 'Đã xác nhận';
-      case OrderStatus.PREPARING:
+      case OrderStatus.PROCESSING:
         return 'Đang chuẩn bị';
       case OrderStatus.SHIPPING:
         return 'Đang giao hàng';
@@ -128,8 +161,8 @@ export default function OrderDetailsPage() {
         return 'Đã giao hàng';
       case OrderStatus.CANCELLED:
         return 'Đã hủy';
-      case OrderStatus.REFUNDED:
-        return 'Đã hoàn tiền';
+      case OrderStatus.RETURNED:
+        return 'Đã hoàn hàng';
       case OrderStatus.PENDING:
       default:
         return 'Chờ xử lý';
@@ -369,12 +402,27 @@ export default function OrderDetailsPage() {
           <div className="bg-gray-50 rounded-xl p-6">
             <h2 className="text-lg font-bold text-black mb-4">Hành động</h2>
             <div className="flex flex-wrap gap-3">
-              {order.status === OrderStatus.PENDING && (
+              {canCancelOrder() && (
                 <button
                   onClick={handleCancelOrder}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
+                  disabled={isCancelling}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
-                  Hủy đơn hàng
+                  {isCancelling ? (
+                    <>
+                      <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Đang hủy...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                      Hủy đơn hàng
+                    </>
+                  )}
                 </button>
               )}
               {order.status === OrderStatus.SHIPPING && (

@@ -77,8 +77,15 @@ export default function AdminOrdersPage() {
       }
     } catch (error: unknown) {
       console.error('Failed to update order status:', error);
-      const typedError = error as { response?: { data?: { message?: string } } };
-      toast.error(typedError.response?.data?.message || 'Không thể cập nhật trạng thái đơn hàng');
+
+      let errorMessage = 'Không thể cập nhật trạng thái đơn hàng';
+
+      if (error && typeof error === 'object') {
+        const apiError = error as { response?: { data?: { message?: string } }; message?: string };
+        errorMessage = apiError.response?.data?.message || apiError.message || errorMessage;
+      }
+
+      toast.error(errorMessage);
     }
   };
 
@@ -90,9 +97,9 @@ export default function AdminOrdersPage() {
         return 'bg-blue-100 text-blue-800 border-blue-200';
       case OrderStatus.CANCELLED:
         return 'bg-red-100 text-red-800 border-red-200';
-      case OrderStatus.REFUNDED:
+      case OrderStatus.RETURNED:
         return 'bg-gray-100 text-gray-800 border-gray-200';
-      case OrderStatus.PREPARING:
+      case OrderStatus.PROCESSING:
         return 'bg-purple-100 text-purple-800 border-purple-200';
       case OrderStatus.SHIPPING:
         return 'bg-orange-100 text-orange-800 border-orange-200';
@@ -120,7 +127,7 @@ export default function AdminOrdersPage() {
     switch (status) {
       case OrderStatus.CONFIRMED:
         return 'Đã xác nhận';
-      case OrderStatus.PREPARING:
+      case OrderStatus.PROCESSING:
         return 'Đang chuẩn bị';
       case OrderStatus.SHIPPING:
         return 'Đang giao hàng';
@@ -128,8 +135,8 @@ export default function AdminOrdersPage() {
         return 'Đã giao hàng';
       case OrderStatus.CANCELLED:
         return 'Đã hủy';
-      case OrderStatus.REFUNDED:
-        return 'Đã hoàn tiền';
+      case OrderStatus.RETURNED:
+        return 'Đã hoàn hàng';
       case OrderStatus.PENDING:
       default:
         return 'Chờ xử lý';
@@ -234,15 +241,15 @@ export default function AdminOrdersPage() {
             </button>
             <button
               onClick={() => {
-                setFilter(OrderStatus.PREPARING);
+                setFilter(OrderStatus.PROCESSING);
                 setCurrentPage(1);
               }}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${filter === OrderStatus.PREPARING
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${filter === OrderStatus.PROCESSING
                   ? 'bg-purple-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
             >
-              Đang chuẩn bị ({orders.filter(o => o.status === OrderStatus.PREPARING).length})
+              Đang chuẩn bị ({orders.filter(o => o.status === OrderStatus.PROCESSING).length})
             </button>
             <button
               onClick={() => {
@@ -582,11 +589,11 @@ export default function AdminOrdersPage() {
                       >
                         <option value={OrderStatus.PENDING}>Chờ xử lý</option>
                         <option value={OrderStatus.CONFIRMED}>Đã xác nhận</option>
-                        <option value={OrderStatus.PREPARING}>Đang chuẩn bị</option>
+                        <option value={OrderStatus.PROCESSING}>Đang chuẩn bị</option>
                         <option value={OrderStatus.SHIPPING}>Đang giao hàng</option>
                         <option value={OrderStatus.DELIVERED}>Đã giao hàng</option>
                         <option value={OrderStatus.CANCELLED}>Đã hủy</option>
-                        <option value={OrderStatus.REFUNDED}>Đã hoàn tiền</option>
+                        <option value={OrderStatus.RETURNED}>Đã hoàn hàng</option>
                       </select>
                     </div>
                   </div>
@@ -646,7 +653,7 @@ export default function AdminOrdersPage() {
                     )}
                     {selectedOrder.status === OrderStatus.CONFIRMED && (
                       <button
-                        onClick={() => updateOrderStatus(selectedOrder.id, OrderStatus.PREPARING)}
+                        onClick={() => updateOrderStatus(selectedOrder.id, OrderStatus.PROCESSING)}
                         className="px-4 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center gap-2"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -655,7 +662,7 @@ export default function AdminOrdersPage() {
                         Bắt đầu chuẩn bị
                       </button>
                     )}
-                    {selectedOrder.status === OrderStatus.PREPARING && (
+                    {selectedOrder.status === OrderStatus.PROCESSING && (
                       <button
                         onClick={() => updateOrderStatus(selectedOrder.id, OrderStatus.SHIPPING)}
                         className="px-4 py-2 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 transition-colors flex items-center gap-2"

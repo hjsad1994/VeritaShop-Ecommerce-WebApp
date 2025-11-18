@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { OrderController } from '../controllers/OrderController';
-import { authenticate } from '../middleware/auth';
+import { authenticate, authorize } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import {
   createOrderValidation,
@@ -35,6 +35,7 @@ export const createOrderRoutes = (): Router => {
   router.get(
     '/statistics',
     authenticate,
+    authorize('ADMIN', 'MANAGER'),
     orderController.getOrderStatistics
   );
 
@@ -46,6 +47,7 @@ export const createOrderRoutes = (): Router => {
   router.get(
     '/admin/all',
     authenticate,
+    authorize('ADMIN', 'MANAGER'),
     validate(getOrdersValidation),
     orderController.getAllOrdersAdmin
   );
@@ -82,6 +84,7 @@ export const createOrderRoutes = (): Router => {
   router.put(
     '/:id/status',
     authenticate,
+    authorize('ADMIN', 'MANAGER'),
     validate(updateOrderStatusValidation),
     orderController.updateOrderStatus
   );

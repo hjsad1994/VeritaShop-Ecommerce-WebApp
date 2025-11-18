@@ -7,6 +7,8 @@ export interface User {
   role: 'USER' | 'ADMIN' | 'MANAGER';
   avatar?: string;
   phone?: string;
+  address?: string | null;
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -237,3 +239,54 @@ export interface AddCartItemRequest {
 export interface UpdateCartItemRequest {
   quantity: number;
 }
+// Voucher API Types
+export type VoucherType = 'FIXED' | 'PERCENTAGE';
+export type VoucherStatus = 'active' | 'inactive' | 'scheduled' | 'expired';
+
+export interface Voucher {
+  id: string;
+  code: string;
+  type: VoucherType;
+  value: number;
+  minOrderValue?: number | null;
+  usageLimit?: number | null;
+  perUserLimit?: number | null;
+  usageCount: number;
+  isActive: boolean;
+  startDate?: string | null;
+  endDate?: string | null;
+  status: VoucherStatus;
+  isExpired: boolean;
+  isScheduled: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface VoucherListResponse {
+  vouchers: Voucher[];
+  pagination: PaginationMeta;
+}
+
+export interface VoucherQueryParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  type?: VoucherType;
+  status?: VoucherStatus;
+  sortBy?: 'createdAt' | 'value' | 'usageCount' | 'startDate' | 'endDate';
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface CreateVoucherRequest {
+  code: string;
+  type: VoucherType;
+  value: number;
+  minOrderValue?: number | null;
+  usageLimit?: number | null;
+  perUserLimit?: number | null;
+  isActive?: boolean;
+  startDate?: string | null;
+  endDate?: string | null;
+}
+
+export type UpdateVoucherRequest = Partial<CreateVoucherRequest>;

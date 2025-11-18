@@ -5,7 +5,13 @@
     "outDir": "./dist",
     "rootDir": "./",
     "strict": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "baseUrl": "./",
+    "moduleResolution": "node",
+    "paths": {
+      "@constants": ["src/constants"],
+      "@constants/*": ["src/constants/*"]
+    }
   },
   "include": ["src/**/*", "prisma/**/*"]
 }

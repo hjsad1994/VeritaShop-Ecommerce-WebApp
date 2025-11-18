@@ -1,3 +1,4 @@
+import './utils/moduleAlias';
 import { PrismaClient } from '@prisma/client';
 import express, { Application } from 'express';
 import cors from 'cors';
@@ -17,6 +18,8 @@ import { createCartRoutes } from './routes/cartRoutes';
 import { createInventoryRoutes } from './routes/inventoryRoutes';
 import { createOrderRoutes } from './routes/orderRoutes';
 import { createWishlistRoutes } from './routes/wishlistRoutes';
+import { createAdminRoutes } from './routes/adminRoutes';
+import { createVoucherRoutes } from './routes/voucherRoutes';
 // Initialize Express app
 const app: Application = express();
 
@@ -68,6 +71,8 @@ app.use('/api/cart', createCartRoutes());
 app.use('/api/inventory', createInventoryRoutes());
 app.use('/api/orders', createOrderRoutes());
 app.use('/api/wishlist', createWishlistRoutes());
+app.use('/api/admin', createAdminRoutes());
+app.use('/api/admin/vouchers', createVoucherRoutes());
 // 404 handler
 app.use(notFoundHandler);
 

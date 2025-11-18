@@ -1,3 +1,5 @@
+const path = require('path');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Configuration for Windows compatibility
@@ -13,6 +15,8 @@ const nextConfig = {
   },
   // Disable React Strict Mode to prevent double function calls in development
   reactStrictMode: false,
+  // Set output file tracing root to frontend directory to avoid lockfile detection issues
+  outputFileTracingRoot: path.resolve(__dirname),
 };
 
 module.exports = nextConfig;

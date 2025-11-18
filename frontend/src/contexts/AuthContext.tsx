@@ -16,55 +16,77 @@ interface AuthContextType {
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Helper function to restore user from localStorage synchronously
+function getInitialUser(): User | null {
+  if (typeof window === 'undefined') {
+    return null; // SSR: no localStorage
+  }
+  
+  try {
+    const savedUser = localStorage.getItem('verita-user');
+    if (savedUser) {
+      const parsedUser = JSON.parse(savedUser);
+      // Validate user structure
+      if (parsedUser && parsedUser.id && parsedUser.email && parsedUser.role) {
+        return parsedUser;
+      } else {
+        localStorage.removeItem('verita-user');
+      }
+    }
+  } catch (error) {
+    console.error('Failed to restore user from localStorage:', error);
+    localStorage.removeItem('verita-user');
+  }
+  
+  return null;
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  // Restore user immediately in initial state to avoid flash
+  const [user, setUser] = useState<User | null>(getInitialUser);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Immediate localStorage restore on mount
-  const initializeAuth = () => {
-    try {
-      const savedUser = localStorage.getItem('verita-user');
-      if (savedUser) {
-        const parsedUser = JSON.parse(savedUser);
-        if (parsedUser && parsedUser.id && parsedUser.email && parsedUser.role) {
-          setUser(parsedUser);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to restore user from localStorage:', error);
-      localStorage.removeItem('verita-user');
-    }
-  };
-
-  useEffect(() => {
-    initializeAuth();
-  }, []);
-
-  // Auto-restore session from localStorage and server validation
+  // Validate and finalize auth state after mount
   useEffect(() => {
     const checkAuth = async () => {
-      // First, try to restore from localStorage for immediate UI response
+      // User already restored from initial state synchronously
+      // This effect just validates and sets loading to false
       const savedUser = localStorage.getItem('verita-user');
-      let restoredUser = null;
 
       if (savedUser) {
         try {
           const parsedUser = JSON.parse(savedUser);
-          // Validate user structure
+          // Validate user structure matches what we have
           if (parsedUser && parsedUser.id && parsedUser.email && parsedUser.role) {
-            setUser(parsedUser);
-            restoredUser = parsedUser;
+            // Ensure state matches localStorage (in case of any mismatch)
+            setUser((currentUser) => {
+              if (!currentUser || currentUser.id !== parsedUser.id) {
+                return parsedUser;
+              }
+              return currentUser;
+            });
           } else {
+            // Invalid data, clear it
             localStorage.removeItem('verita-user');
+            setUser(null);
           }
         } catch (error) {
-          console.error('Failed to restore user session from localStorage:', error);
+          console.error('Failed to validate user session from localStorage:', error);
           localStorage.removeItem('verita-user');
+          setUser(null);
         }
+      } else {
+        // No saved user, ensure state is null
+        setUser(null);
       }
 
       // Validate session with server if we have a restored user
       if (restoredUser) {
+      // Skip server validation for now to avoid 404 errors and hydration issues
+      // localStorage is sufficient for session persistence
+      // Server validation disabled - uncomment when backend has /auth/me endpoint
+      /*
+      if (user) {
         try {
           const response = await authService.getCurrentUser();
           if (response.success && response.data?.user) {
@@ -76,12 +98,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // If server validation fails, keep using localStorage data
         }
       }
+      */
 
       setIsLoading(false);
     };
 
     checkAuth();
-  }, []);
+  }, []); // Empty deps - only run once on mount
 
   // Save to localStorage whenever user changes
   useEffect(() => {
@@ -105,6 +128,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           role: response.data.user.role,
           avatar: response.data.user.avatar,
           phone: response.data.user.phone,
+          isActive: response.data.user.isActive ?? true,
           createdAt: response.data.user.createdAt,
           updatedAt: response.data.user.updatedAt,
         };

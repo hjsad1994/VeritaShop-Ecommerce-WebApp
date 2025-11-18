@@ -67,6 +67,11 @@ export const ERROR_MESSAGES = {
   WISHLIST_NOT_FOUND: 'Không tìm thấy danh sách yêu thích',
   WISHLIST_ITEM_NOT_FOUND: 'Không tìm thấy sản phẩm trong danh sách yêu thích',
   WISHLIST_ITEM_ALREADY_EXISTS: 'Sản phẩm đã có trong danh sách yêu thích',
+  VOUCHER_NOT_FOUND: 'Không tìm thấy voucher',
+  VOUCHER_CODE_EXISTS: 'Mã voucher đã tồn tại',
+  VOUCHER_DATE_INVALID: 'Thời gian áp dụng voucher không hợp lệ',
+  VOUCHER_VALUE_INVALID: 'Giá trị voucher không hợp lệ',
+  VOUCHER_LIMIT_INVALID: 'Giới hạn sử dụng voucher không hợp lệ',
 } as const;
 
 export const SUCCESS_MESSAGES = {
@@ -74,6 +79,9 @@ export const SUCCESS_MESSAGES = {
   LOGIN_SUCCESS: 'Đăng nhập thành công',
   LOGOUT_SUCCESS: 'Đăng xuất thành công',
   TOKEN_REFRESHED: 'Làm mới token thành công',
+  GET_USERS_SUCCESS: 'Lấy danh sách người dùng thành công',
+  GET_USER_SUCCESS: 'Lấy thông tin người dùng thành công',
+  CREATE_USER_SUCCESS: 'Tạo người dùng thành công',
   GET_CURRENT_USER_SUCCESS: 'Lấy thông tin người dùng thành công',
   UPDATE_USER_SUCCESS: 'Cập nhật thông tin người dùng thành công',
   DELETE_USER_SUCCESS: 'Xóa người dùng thành công',
@@ -130,12 +138,18 @@ export const SUCCESS_MESSAGES = {
   WISHLIST_ITEM_ADDED: 'Đã thêm sản phẩm vào danh sách yêu thích',
   WISHLIST_ITEM_REMOVED: 'Đã xóa sản phẩm khỏi danh sách yêu thích',
   WISHLIST_CLEARED: 'Đã xóa tất cả sản phẩm trong danh sách yêu thích',
+  GET_VOUCHERS_SUCCESS: 'Lấy danh sách voucher thành công',
+  GET_VOUCHER_SUCCESS: 'Lấy thông tin voucher thành công',
+  CREATE_VOUCHER_SUCCESS: 'Tạo voucher thành công',
+  UPDATE_VOUCHER_SUCCESS: 'Cập nhật voucher thành công',
+  DELETE_VOUCHER_SUCCESS: 'Xóa voucher thành công',
 } as const;
 
 export const USER_ROLES = {
   USER: 'USER',
   ADMIN: 'ADMIN',
   MANAGER: 'MANAGER',
+  SUPER_ADMIN: 'SUPER_ADMIN',
 } as const;
 
 export const VALIDATION_RULES = {
@@ -146,5 +160,23 @@ export const VALIDATION_RULES = {
   NAME: {
     MIN_LENGTH: 2,
     MAX_LENGTH: 50,
+  },
+} as const;
+
+export const VOUCHER_CONSTANTS = {
+  CODE: {
+    MIN_LENGTH: 4,
+    MAX_LENGTH: 32,
+    PATTERN: /^[A-Z0-9_-]+$/,
+  },
+  VALUE: {
+    MAX_PERCENT: 100,
+    MIN_PERCENT: 1,
+    MIN_FIXED: 1000,
+    MAX_FIXED: 100000000,
+  },
+  LIMITS: {
+    MIN: 1,
+    MAX: 100000,
   },
 } as const;

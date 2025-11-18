@@ -1,5 +1,4 @@
-import { UpdateUserData } from './../repositories/UserRepository';
-import { User, Role } from '@prisma/client';
+import { User } from '@prisma/client';
 
 export class UserDto {
   id: string;
@@ -8,6 +7,10 @@ export class UserDto {
   role: string;
   createdAt: Date;
   updatedAt: Date;
+  phone?: string | null;
+  address?: string | null;
+  avatar?: string | null;
+  isActive: boolean;
 
   constructor(user: User) {
     this.id = user.id;
@@ -16,6 +19,10 @@ export class UserDto {
     this.role = user.role;
     this.createdAt = user.createdAt;
     this.updatedAt = user.updatedAt;
+    this.phone = user.phone;
+    this.address = user.address;
+    this.avatar = user.avatar;
+    this.isActive = user.isActive;
   }
 
   static fromUser(user: User): UserDto {

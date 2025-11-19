@@ -32,13 +32,9 @@ interface InventoryActionModalProps {
   onSubmit: (values: InventoryActionFormValues) => Promise<void>;
 }
 
-const numberFields: Array<keyof InventoryActionFormValues> = [
-  'quantity',
-  'initialQuantity',
-  'minStock',
-  'maxStock',
-  'newQuantity',
-];
+type NumberFieldKey = 'quantity' | 'initialQuantity' | 'minStock' | 'maxStock' | 'newQuantity';
+
+const numberFields: NumberFieldKey[] = ['quantity', 'initialQuantity', 'minStock', 'maxStock', 'newQuantity'];
 
 const defaultValuesByMode: Record<InventoryActionMode, InventoryActionFormValues> = {
   create: {

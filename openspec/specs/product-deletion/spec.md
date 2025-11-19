@@ -1,5 +1,8 @@
-## ADDED Requirements
+# product-deletion Specification
 
+## Purpose
+TBD - created by archiving change add-s3-image-upload. Update Purpose after archive.
+## Requirements
 ### Requirement: Product Deletion with S3 Cleanup
 When a product is deleted, the system SHALL automatically delete all associated images from S3, including the entire product folder (`products/[product-slug]/`).
 

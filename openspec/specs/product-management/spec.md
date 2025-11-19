@@ -1,5 +1,8 @@
-## ADDED Requirements
+# product-management Specification
 
+## Purpose
+TBD - created by archiving change add-s3-image-upload. Update Purpose after archive.
+## Requirements
 ### Requirement: Product Creation with Images
 The system SHALL support creating products with associated images. Images SHALL be uploaded using presigned URLs before product creation, and image metadata SHALL be linked to the product during creation.
 

@@ -24,16 +24,32 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     try {
       setIsChecking(true);
       const response = await userService.getCurrentUser();
-      const currentUser = response.data.user;
-      if (currentUser.role !== 'ADMIN') {
-        throw new Error('Unauthorized');
+      
+      // Check if response is valid
+      if (!response || !response.success || !response.data || !response.data.user) {
+        throw new Error('Invalid response from server');
       }
+      
+      const currentUser = response.data.user;
+      if (currentUser.role !== 'ADMIN' && currentUser.role !== 'MANAGER') {
+        console.warn('User does not have admin privileges');
+        setUser(null);
+        setIsChecking(false);
+        if (!isAuthRoute) {
+          router.replace('/admin/login');
+        }
+        return;
+      }
+      
       setUser(currentUser);
       setIsChecking(false);
-    } catch {
+    } catch (error: any) {
+      // Log error for debugging but don't throw
+      console.error('Failed to fetch current user:', error);
       setUser(null);
       setIsChecking(false);
       if (!isAuthRoute) {
+        // Use replace to avoid adding to history
         router.replace('/admin/login');
       }
     }
@@ -41,11 +57,17 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   useEffect(() => {
     if (!isAuthRoute) {
-      fetchCurrentUser();
+      // Wrap in try-catch to prevent errors from bubbling up
+      fetchCurrentUser().catch((error) => {
+        console.error('Error in fetchCurrentUser effect:', error);
+        setUser(null);
+        setIsChecking(false);
+        router.replace('/admin/login');
+      });
     } else {
       setIsChecking(false);
     }
-  }, [fetchCurrentUser, isAuthRoute]);
+  }, [fetchCurrentUser, isAuthRoute, router]);
 
   const handleLogout = useCallback(async () => {
     try {

@@ -23,6 +23,11 @@ interface Config {
     refreshTokenName: string;
     maxAge: number;
   };
+  aws: {
+    region: string;
+    s3Bucket: string;
+    cloudFrontDomain: string;
+  };
 }
 
 const config: Config = {
@@ -44,6 +49,11 @@ const config: Config = {
     accessTokenName: 'accessToken',
     refreshTokenName: 'refreshToken',
     maxAge: 7 * 24 * 60 * 60 * 1000,
+  },
+  aws: {
+    region: process.env.AWS_REGION || 'us-east-1',
+    s3Bucket: process.env.AWS_S3_BUCKET || 'verita-phone-store-assets',
+    cloudFrontDomain: process.env.AWS_CLOUDFRONT_DOMAIN || 'd1ffmiafbbgufv.cloudfront.net',
   },
 };
 

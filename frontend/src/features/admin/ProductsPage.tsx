@@ -1,15 +1,18 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import productService from '@/lib/api/productService';
 import brandService from '@/lib/api/brandService';
 import categoryService from '@/lib/api/categoryService';
+import ImageUpload, { ImageUploadRef } from '@/components/admin/ImageUpload';
+import { generateSlug } from '@/lib/utils/slug';
 import {
   Product,
   Brand,
   Category,
   CreateProductRequest,
-  UpdateProductRequest
+  UpdateProductRequest,
+  ProductImageData
 } from '@/lib/api/types';
 
 type ProductFormValues = {
@@ -49,6 +52,18 @@ export default function ProductsPage() {
     isFeatured: false,
     isActive: true
   });
+
+  // Image upload state
+  const [productImages, setProductImages] = useState<ProductImageData[]>([]);
+  const [imagesToDelete, setImagesToDelete] = useState<string[]>([]);
+  const [existingProductImages, setExistingProductImages] = useState<Array<{
+    id: string;
+    url: string;
+    altText?: string | null;
+    isPrimary: boolean;
+    sortOrder: number;
+  }>>([]);
+  const imageUploadRef = useRef<ImageUploadRef | null>(null);
 
   const getErrorMessage = (err: unknown, fallback = 'An unexpected error occurred'): string => {
     if (err instanceof Error) {
@@ -108,10 +123,30 @@ export default function ProductsPage() {
       isFeatured: false,
       isActive: true
     });
+    setProductImages([]);
+    setImagesToDelete([]);
+    setExistingProductImages([]);
     setShowModal(true);
   };
 
-  const handleEdit = (product: Product) => {
+  const handleImagesChange = (images: ProductImageData[]) => {
+    setProductImages(images);
+  };
+
+  const handleRemoveImage = (imageId: string) => {
+    // Add to deletion list
+    setImagesToDelete((prev) => {
+      if (!prev.includes(imageId)) {
+        return [...prev, imageId];
+      }
+      return prev;
+    });
+    
+    // Remove from existing images to update UI immediately
+    setExistingProductImages((prev) => prev.filter(img => img.id !== imageId));
+  };
+
+  const handleEdit = async (product: Product) => {
     setModalMode('edit');
     setSelectedProduct(product);
     setFormData({
@@ -124,6 +159,41 @@ export default function ProductsPage() {
       isFeatured: product.isFeatured,
       isActive: product.isActive
     });
+    
+    // Reset new uploads and deletions
+    setProductImages([]);
+    setImagesToDelete([]);
+    setExistingProductImages([]);
+    
+    // Fetch product detail to get images
+    try {
+      const productDetail = await productService.getProductById(product.id);
+      if (productDetail.images && productDetail.images.length > 0) {
+        // Map images to the format expected by ImageUpload component
+        const mappedImages = productDetail.images.map((img: any) => ({
+          id: img.id,
+          url: img.url,
+          altText: img.altText || null,
+          isPrimary: img.isPrimary,
+          sortOrder: img.sortOrder || 0
+        }));
+        setExistingProductImages(mappedImages);
+      }
+    } catch (error) {
+      console.error('Failed to load product images:', error);
+      // If fetch fails, try to use images from product if available
+      if (product.images && product.images.length > 0) {
+        const mappedImages = product.images.map(img => ({
+          id: img.id,
+          url: img.url,
+          altText: img.altText || null,
+          isPrimary: img.isPrimary,
+          sortOrder: img.sortOrder || 0
+        }));
+        setExistingProductImages(mappedImages);
+      }
+    }
+    
     setShowModal(true);
   };
 
@@ -170,6 +240,21 @@ export default function ProductsPage() {
       const discountValue = parseFloat(formData.discount) || 0;
 
       if (modalMode === 'add') {
+        // Generate slug for image upload
+        const productSlug = formData.name ? generateSlug(formData.name) : '';
+        
+        // Upload images to S3 first (if any selected files)
+        let uploadedImages: ProductImageData[] = [];
+        if (imageUploadRef.current) {
+          try {
+            uploadedImages = await imageUploadRef.current.uploadFiles(productSlug);
+          } catch (uploadError: any) {
+            console.error('Image upload error:', uploadError);
+            alert(`Failed to upload images: ${uploadError.message || 'Unknown error'}`);
+            return; // Stop product creation if image upload fails
+          }
+        }
+
         const newProductPayload: CreateProductRequest = {
           name: formData.name,
           brandId: formData.brandId,
@@ -184,8 +269,15 @@ export default function ProductsPage() {
           newProductPayload.description = formData.description;
         }
 
+        // Add uploaded images
+        if (uploadedImages.length > 0) {
+          newProductPayload.images = uploadedImages;
+        }
+
         const newProduct = await productService.createProduct(newProductPayload);
         setProducts([...products, newProduct]);
+        // Clear uploaded images after successful creation
+        setProductImages([]);
         alert('Product created successfully!');
       } else if (selectedProduct) {
         const productData: UpdateProductRequest = {
@@ -206,6 +298,16 @@ export default function ProductsPage() {
           productData.categoryId = formData.categoryId;
         }
 
+        // Add images if uploaded
+        if (productImages.length > 0) {
+          productData.images = productImages;
+        }
+
+        // Add images to delete
+        if (imagesToDelete.length > 0) {
+          productData.imageIdsToDelete = imagesToDelete;
+        }
+
         const updatedProduct = await productService.updateProduct(selectedProduct.id, productData);
         setProducts(products.map(p => p.id === selectedProduct.id ? updatedProduct : p));
         alert('Product updated successfully!');
@@ -214,7 +316,15 @@ export default function ProductsPage() {
       setShowModal(false);
     } catch (err: unknown) {
       console.error('Error saving product:', err);
-      setError(getErrorMessage(err, 'Failed to save product'));
+      const errorMsg = getErrorMessage(err, 'Failed to save product');
+      setError(errorMsg);
+      
+      // If product creation failed, show specific message about slug conflict
+      if (errorMsg.includes('slug') || errorMsg.includes('already exists')) {
+        alert(`Error: ${errorMsg}\n\nTip: Try using a different product name, or edit the existing product instead.`);
+      } else {
+        alert(`Error: ${errorMsg}`);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -316,10 +426,37 @@ export default function ProductsPage() {
                 <tr key={product.id} className="border-t border-gray-200 hover:bg-gray-50 transition-colors">
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                        </svg>
+                      <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden relative">
+                        {(() => {
+                          // Try to get image from multiple sources:
+                          // 1. primaryImage field (string URL)
+                          // 2. images array (primary or first)
+                          const imageUrl = 
+                            product.primaryImage || 
+                            product.images?.find(img => img.isPrimary)?.url || 
+                            product.images?.[0]?.url;
+                          
+                          return imageUrl ? (
+                            <img
+                              src={imageUrl}
+                              alt={product.name}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                // Hide image and show placeholder on error
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                              }}
+                            />
+                          ) : null;
+                        })()}
+                        {/* Placeholder icon - shown when no image or image fails to load */}
+                        {!product.primaryImage && 
+                         (!product.images || product.images.length === 0 || 
+                          !product.images.find(img => img.isPrimary)?.url && !product.images[0]?.url) && (
+                          <svg className="w-8 h-8 text-gray-400 absolute" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        )}
                       </div>
                       <div>
                         <p className="font-semibold text-black">{product.name}</p>
@@ -525,6 +662,18 @@ export default function ProductsPage() {
                     <span className="text-sm font-semibold text-black">Active</span>
                   </label>
                 </div>
+
+                {/* Image Upload */}
+                <ImageUpload
+                  ref={imageUploadRef}
+                  productSlug={formData.name ? generateSlug(formData.name) : ''}
+                  productName={formData.name}
+                  maxImages={4}
+                  existingImages={existingProductImages}
+                  onImagesChange={handleImagesChange}
+                  onRemoveImage={handleRemoveImage}
+                  disabled={submitting}
+                />
               </div>
 
               <div className="flex gap-3 mt-6">

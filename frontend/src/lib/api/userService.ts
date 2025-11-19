@@ -20,9 +20,12 @@ export const userService = {
     try {
       const response = await apiClient.get<ApiResponse<{ user: User }>>('/users/me');
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Re-throw with more context
-      const errorMessage = error?.response?.data?.message || error?.message || 'Failed to get current user';
+      const errorMessage =
+        (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        (error instanceof Error ? error.message : undefined) ||
+        'Failed to get current user';
       throw new Error(errorMessage);
     }
   },

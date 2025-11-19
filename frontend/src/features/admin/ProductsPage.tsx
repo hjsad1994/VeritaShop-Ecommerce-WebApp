@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import Image from 'next/image';
 import productService from '@/lib/api/productService';
 import brandService from '@/lib/api/brandService';
 import categoryService from '@/lib/api/categoryService';
@@ -40,6 +41,7 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [failedThumbnails, setFailedThumbnails] = useState<Record<string, boolean>>({});
 
   // Form data
   const [formData, setFormData] = useState<ProductFormValues>({
@@ -110,6 +112,13 @@ export default function ProductsPage() {
     return matchesSearch && matchesCategory;
   });
 
+  const handleThumbnailError = useCallback((productId: string) => {
+    setFailedThumbnails((prev) => ({
+      ...prev,
+      [productId]: true,
+    }));
+  }, []);
+
   const handleAdd = () => {
     setModalMode('add');
     setSelectedProduct(null);
@@ -170,7 +179,7 @@ export default function ProductsPage() {
       const productDetail = await productService.getProductById(product.id);
       if (productDetail.images && productDetail.images.length > 0) {
         // Map images to the format expected by ImageUpload component
-        const mappedImages = productDetail.images.map((img: any) => ({
+        const mappedImages = productDetail.images.map((img) => ({
           id: img.id,
           url: img.url,
           altText: img.altText || null,
@@ -183,7 +192,7 @@ export default function ProductsPage() {
       console.error('Failed to load product images:', error);
       // If fetch fails, try to use images from product if available
       if (product.images && product.images.length > 0) {
-        const mappedImages = product.images.map(img => ({
+        const mappedImages = product.images.map((img) => ({
           id: img.id,
           url: img.url,
           altText: img.altText || null,
@@ -248,9 +257,9 @@ export default function ProductsPage() {
         if (imageUploadRef.current) {
           try {
             uploadedImages = await imageUploadRef.current.uploadFiles(productSlug);
-          } catch (uploadError: any) {
+          } catch (uploadError: unknown) {
             console.error('Image upload error:', uploadError);
-            alert(`Failed to upload images: ${uploadError.message || 'Unknown error'}`);
+            alert(`Failed to upload images: ${getErrorMessage(uploadError, 'Unknown error')}`);
             return; // Stop product creation if image upload fails
           }
         }
@@ -286,9 +295,9 @@ export default function ProductsPage() {
           const slugForUpload = selectedProduct.slug || generateSlug(formData.name);
           try {
             uploadedImages = await imageUploadRef.current.uploadFiles(slugForUpload);
-          } catch (uploadError: any) {
+          } catch (uploadError: unknown) {
             console.error('Image upload error:', uploadError);
-            alert(`Failed to upload images: ${uploadError.message || 'Unknown error'}`);
+            alert(`Failed to upload images: ${getErrorMessage(uploadError, 'Unknown error')}`);
             return; // Stop update if image upload fails
           }
         }
@@ -443,35 +452,36 @@ export default function ProductsPage() {
                     <div className="flex items-center gap-4">
                       <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden relative">
                         {(() => {
-                          // Try to get image from multiple sources:
-                          // 1. primaryImage field (string URL)
-                          // 2. images array (primary or first)
-                          const imageUrl = 
-                            product.primaryImage || 
-                            product.images?.find(img => img.isPrimary)?.url || 
+                          const imageUrl =
+                            product.primaryImage ||
+                            product.images?.find((img) => img.isPrimary)?.url ||
                             product.images?.[0]?.url;
-                          
-                          return imageUrl ? (
-                            <img
+                          const shouldShowImage = Boolean(imageUrl && !failedThumbnails[product.id]);
+
+                          return shouldShowImage && imageUrl ? (
+                            <Image
                               src={imageUrl}
                               alt={product.name}
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                // Hide image and show placeholder on error
-                                const target = e.target as HTMLImageElement;
-                                target.style.display = 'none';
-                              }}
+                              fill
+                              sizes="64px"
+                              className="object-cover"
+                              onError={() => handleThumbnailError(product.id)}
                             />
                           ) : null;
                         })()}
                         {/* Placeholder icon - shown when no image or image fails to load */}
-                        {!product.primaryImage && 
-                         (!product.images || product.images.length === 0 || 
-                          !product.images.find(img => img.isPrimary)?.url && !product.images[0]?.url) && (
+                        {(() => {
+                          const imageUrl =
+                            product.primaryImage ||
+                            product.images?.find((img) => img.isPrimary)?.url ||
+                            product.images?.[0]?.url;
+                          const shouldShowImage = Boolean(imageUrl && !failedThumbnails[product.id]);
+                          return !shouldShowImage ? (
                           <svg className="w-8 h-8 text-gray-400 absolute" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
-                        )}
+                          ) : null;
+                        })()}
                       </div>
                       <div>
                         <p className="font-semibold text-black">{product.name}</p>

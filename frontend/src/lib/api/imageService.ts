@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import apiClient from './apiClient';
 
 export interface PresignedUrlRequest {
@@ -61,9 +61,12 @@ class ImageService {
         const errorText = await response.text();
         throw new Error(`S3 upload failed: ${response.status} ${response.statusText}. ${errorText}`);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // If fetch fails, try with axios as fallback
-      if (error.name === 'TypeError' || error.message.includes('Failed to fetch')) {
+      if (
+        error instanceof Error &&
+        (error.name === 'TypeError' || error.message.includes('Failed to fetch'))
+      ) {
         // CORS or network error - try with axios
         try {
           await axios.put(presignedUrl, file, {
@@ -75,15 +78,20 @@ class ImageService {
             // Increase timeout for large files
             timeout: 60000, // 60 seconds
           });
-        } catch (axiosError: any) {
+        } catch (axiosError: unknown) {
+          const status =
+            axiosError instanceof AxiosError
+              ? axiosError.response?.status ?? 'Network error'
+              : 'Network error';
           throw new Error(
-            `Failed to upload to S3: ${axiosError.response?.status || 'Network error'}. ` +
+            `Failed to upload to S3: ${status}. ` +
             `Please check your internet connection and S3 CORS configuration.`
           );
         }
       } else {
         // Re-throw with more context
-        const errorMessage = error.message || 'Unknown error during S3 upload';
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error during S3 upload';
         throw new Error(
           `S3 upload failed: ${errorMessage}. ` +
           `Please ensure S3 bucket CORS is configured correctly. ` +

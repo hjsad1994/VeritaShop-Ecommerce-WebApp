@@ -140,7 +140,7 @@ export interface Product {
 export interface ProductDetail extends Product {
   description?: string;
   specs?: Array<{ label: string; value: string }>;
-  images?: string[];
+  images?: ProductImage[];
   colors?: string[];
   inventory?: {
     quantity: number;

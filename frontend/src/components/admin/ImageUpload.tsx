@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useRef, useImperativeHandle, forwardRef, useEffect } from 'react';
+import React, { useState, useRef, useImperativeHandle, forwardRef, useEffect, useMemo } from 'react';
+import Image from 'next/image';
 import imageService, { ImageMetadata } from '@/lib/api/imageService';
 import { generateSlug } from '@/lib/utils/slug';
 
@@ -21,11 +22,22 @@ export interface ImageUploadProps {
   disabled?: boolean; // Disable upload when submitting
 }
 
+type ExistingProductImage = NonNullable<ImageUploadProps['existingImages']>[number];
+
+type ImageSlot =
+  | { type: 'existing'; data: ExistingProductImage; index: number }
+  | { type: 'new'; data: ImageMetadata; index: number }
+  | { type: 'preview'; data: { previewUrl: string }; index: number }
+  | { type: 'empty'; index: number };
+
+const filterDefinedFiles = (files: Array<File | undefined>): File[] =>
+  files.filter((file): file is File => Boolean(file));
+
 const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 export interface ImageUploadRef {
-  uploadFiles: (slug: string) => Promise<ImageMetadata[]>;
+  uploadFiles: (slug?: string) => Promise<ImageMetadata[]>;
 }
 
 const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(function ImageUpload({
@@ -42,12 +54,54 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(function ImageU
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [newImages, setNewImages] = useState<ImageMetadata[]>([]);
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]); // Store files before upload
+  const [selectedFiles, setSelectedFiles] = useState<Array<File | undefined>>([]); // Store files before upload
   const [previewUrls, setPreviewUrls] = useState<Record<number, string>>({}); // Preview URLs
   const fileInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  const totalImages = existingImages.length + newImages.length + selectedFiles.length;
+  const selectedFileCount = useMemo(
+    () => filterDefinedFiles(selectedFiles).length,
+    [selectedFiles]
+  );
+  const totalImages = existingImages.length + newImages.length + selectedFileCount;
   const availableSlots = maxImages - totalImages;
+
+  const resolvedProductSlug = useMemo(() => {
+    if (productSlug) {
+      return productSlug;
+    }
+    if (productName) {
+      return generateSlug(productName);
+    }
+    return '';
+  }, [productName, productSlug]);
+
+  const slots = useMemo<ImageSlot[]>(() => {
+    const slotList: ImageSlot[] = [];
+
+    existingImages.forEach((image, idx) => {
+      slotList.push({ type: 'existing', data: image, index: idx });
+    });
+
+    newImages.forEach((image, idx) => {
+      slotList.push({ type: 'new', data: image, index: idx });
+    });
+
+    selectedFiles.forEach((file, idx) => {
+      if (file && previewUrls[idx]) {
+        slotList.push({
+          type: 'preview',
+          data: { previewUrl: previewUrls[idx] },
+          index: idx,
+        });
+      }
+    });
+
+    while (slotList.length < maxImages) {
+      slotList.push({ type: 'empty', index: slotList.length });
+    }
+
+    return slotList.slice(0, maxImages);
+  }, [existingImages, maxImages, newImages, previewUrls, selectedFiles]);
 
   const validateFile = (file: File): string | null => {
     if (!ALLOWED_TYPES.includes(file.type)) {
@@ -78,27 +132,20 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(function ImageU
     const previewUrl = URL.createObjectURL(file);
     setPreviewUrls((prev) => ({ ...prev, [index]: previewUrl }));
 
-    // Store file for later upload (when form is submitted)
+    // Store file for later upload (when form is submitted) and notify parent
     setSelectedFiles((prev) => {
       const updated = [...prev];
       updated[index] = file;
+      if (onFilesChange) {
+        onFilesChange(filterDefinedFiles(updated));
+      }
       return updated;
     });
-
-    // Notify parent about selected files
-    if (onFilesChange) {
-      setSelectedFiles((prev) => {
-        const updated = [...prev];
-        updated[index] = file;
-        onFilesChange(updated.filter((f): f is File => f !== undefined));
-        return updated;
-      });
-    }
   };
 
   // Expose upload function for parent component to call
   useImperativeHandle(ref, () => ({
-    uploadFiles: async (slug: string): Promise<ImageMetadata[]> => {
+    uploadFiles: async (slug?: string): Promise<ImageMetadata[]> => {
       // Get all files with their indices
       const filesToUpload: Array<{ file: File; index: number }> = [];
       selectedFiles.forEach((file, index) => {
@@ -109,6 +156,11 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(function ImageU
 
       if (filesToUpload.length === 0) return [];
 
+      const targetSlug = (slug || resolvedProductSlug).trim();
+      if (!targetSlug) {
+        throw new Error('Product slug is required to upload images.');
+      }
+
       setUploading(true);
       const uploadedImages: ImageMetadata[] = [];
 
@@ -117,7 +169,7 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(function ImageU
           setUploadProgress((prev) => ({ ...prev, [index]: 0 }));
 
           try {
-            const metadata = await imageService.uploadImage(slug, file);
+            const metadata = await imageService.uploadImage(targetSlug, file);
             uploadedImages.push(metadata);
             setUploadProgress((prev) => ({ ...prev, [index]: 100 }));
 
@@ -125,11 +177,11 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(function ImageU
             if (previewUrls[index]) {
               URL.revokeObjectURL(previewUrls[index]);
             }
-          } catch (error: any) {
+          } catch (error: unknown) {
             console.error(`Upload error for file at index ${index}:`, error);
             setErrors((prev) => ({
               ...prev,
-              [index]: error.message || 'Upload failed',
+              [index]: error instanceof Error ? error.message : 'Upload failed',
             }));
             throw error; // Re-throw to stop upload process
           }
@@ -164,39 +216,53 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(function ImageU
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleRemoveNewImage = (index: number) => {
-    // Remove from uploaded images
+  const handleRemoveUploadedImage = (index: number) => {
     setNewImages((prev) => {
+      if (index < 0 || index >= prev.length) {
+        return prev;
+      }
       const updated = prev.filter((_, i) => i !== index);
       if (onImagesChange) {
         onImagesChange(updated);
       }
       return updated;
     });
+  };
 
-    // Remove from selected files (before upload)
+  const handleRemovePendingImage = (index: number) => {
     setSelectedFiles((prev) => {
-      const updated = prev.filter((_, i) => i !== index);
+      const updated = [...prev];
+      if (previewUrls[index]) {
+        URL.revokeObjectURL(previewUrls[index]);
+      }
+      updated[index] = undefined;
       if (onFilesChange) {
-        onFilesChange(updated);
+        onFilesChange(filterDefinedFiles(updated));
       }
       return updated;
     });
 
-    // Clean up preview URL
-    if (previewUrls[index]) {
-      URL.revokeObjectURL(previewUrls[index]);
-      setPreviewUrls((prev) => {
-        const newUrls = { ...prev };
-        delete newUrls[index];
-        return newUrls;
-      });
-    }
+    setPreviewUrls((prev) => {
+      if (!prev[index]) {
+        return prev;
+      }
+      const newUrls = { ...prev };
+      delete newUrls[index];
+      return newUrls;
+    });
 
-    // Reset file input
     if (fileInputRefs.current[index]) {
       fileInputRefs.current[index]!.value = '';
     }
+
+    setErrors((prev) => {
+      if (!prev[index]) {
+        return prev;
+      }
+      const updatedErrors = { ...prev };
+      delete updatedErrors[index];
+      return updatedErrors;
+    });
   };
 
   const handleRemoveExistingImage = (imageId: string) => {
@@ -206,76 +272,13 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(function ImageU
   };
 
   const renderImageSlot = (index: number, isPrimary: boolean = false) => {
-    // Find existing image at this slot position (considering removed images)
-    // We need to map slot index to actual image index
-    const existingImage = existingImages[index];
-    const newImage = newImages[index];
-    const selectedFile = selectedFiles[index];
-    const previewUrl = previewUrls[index];
     const isUploading = uploading && uploadProgress[index] !== undefined;
     const error = errors[index];
     const progress = uploadProgress[index];
 
     return (
-      <div key={index} className="relative border-2 border-dashed border-gray-300 rounded-lg p-4 min-h-[200px] flex flex-col items-center justify-center">
-        {existingImage ? (
-          <>
-            <img
-              src={existingImage.url}
-              alt={existingImage.altText || `Product image ${index + 1}`}
-              className="max-w-full max-h-[180px] object-contain rounded"
-            />
-            <div className="mt-2 flex gap-2">
-              {isPrimary && (
-                <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs font-semibold">
-                  Primary
-                </span>
-              )}
-              <button
-                type="button"
-                onClick={() => handleRemoveExistingImage(existingImage.id)}
-                className="px-3 py-1 bg-red-100 text-red-800 rounded text-xs font-semibold hover:bg-red-200"
-              >
-                Remove
-              </button>
-            </div>
-          </>
-        ) : newImage ? (
-          <>
-            <img
-              src={newImage.cloudFrontUrl}
-              alt="Uploaded"
-              className="max-w-full max-h-[180px] object-contain rounded"
-            />
-            <button
-              type="button"
-              onClick={() => handleRemoveNewImage(index)}
-              className="mt-2 px-3 py-1 bg-red-100 text-red-800 rounded text-xs font-semibold hover:bg-red-200"
-            >
-              Remove
-            </button>
-          </>
-        ) : previewUrls[index] ? (
-          <>
-            <img
-              src={previewUrls[index]}
-              alt="Preview"
-              className="max-w-full max-h-[180px] object-contain rounded"
-            />
-            <div className="mt-2 flex gap-2">
-              <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold">
-                Ready to upload
-              </span>
-              <button
-                type="button"
-                onClick={() => handleRemoveNewImage(index)}
-                className="px-3 py-1 bg-red-100 text-red-800 rounded text-xs font-semibold hover:bg-red-200"
-              >
-                Remove
-              </button>
-            </div>
-          </>
-        ) : isUploading ? (
+      <div key={`empty-slot-${index}`} className="relative border-2 border-dashed border-gray-300 rounded-lg p-4 min-h-[200px] flex flex-col items-center justify-center">
+        {isUploading ? (
           <>
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mb-4"></div>
             <p className="text-sm text-gray-600">Uploading...</p>
@@ -322,7 +325,7 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(function ImageU
                 />
               </svg>
               <span className="text-sm text-gray-600">
-                {index === 0 ? 'Primary Image' : `Image ${index + 1}`}
+                {isPrimary ? 'Primary Image' : `Image ${index + 1}`}
               </span>
               <span className="text-xs text-gray-400 mt-1">Click to upload</span>
             </label>
@@ -345,107 +348,91 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(function ImageU
           Upload up to {maxImages} images. First image will be set as primary.
         </p>
         <div className="grid grid-cols-2 gap-4">
-          {(() => {
-            // Create slots array: combine existing images, new images, and selected files
-            const slots: Array<{
-              type: 'existing' | 'new' | 'preview' | 'empty';
-              data?: any;
-              index: number;
-            }> = [];
-            
-            // Add existing images first
-            existingImages.forEach((img, idx) => {
-              slots.push({ type: 'existing', data: img, index: idx });
-            });
-            
-            // Add new uploaded images
-            newImages.forEach((img, idx) => {
-              slots.push({ type: 'new', data: img, index: existingImages.length + idx });
-            });
-            
-            // Add preview images (selected but not yet uploaded)
-            selectedFiles.forEach((file, idx) => {
-              if (file && previewUrls[idx]) {
-                slots.push({ type: 'preview', data: { file, previewUrl: previewUrls[idx] }, index: existingImages.length + newImages.length + idx });
-              }
-            });
-            
-            // Fill remaining slots up to maxImages
-            while (slots.length < maxImages) {
-              slots.push({ type: 'empty', index: slots.length });
-            }
-            
-            // Render slots
-            return slots.slice(0, maxImages).map((slot, idx) => {
-              if (slot.type === 'existing') {
-                return (
-                  <div key={`existing-${slot.data.id}`} className="relative border-2 border-dashed border-gray-300 rounded-lg p-4 min-h-[200px] flex flex-col items-center justify-center">
-                    <img
+          {slots.map((slot, slotPosition) => {
+            if (slot.type === 'existing') {
+              return (
+                <div key={`existing-${slot.data.id}`} className="relative border-2 border-dashed border-gray-300 rounded-lg p-4 min-h-[200px] flex flex-col items-center justify-center">
+                  <div className="relative w-full h-[180px]">
+                    <Image
                       src={slot.data.url}
-                      alt={slot.data.altText || `Product image ${idx + 1}`}
-                      className="max-w-full max-h-[180px] object-contain rounded"
+                      alt={slot.data.altText || `Product image ${slotPosition + 1}`}
+                      fill
+                      sizes="(max-width: 768px) 50vw, 25vw"
+                      className="object-contain rounded"
                     />
-                    <div className="mt-2 flex gap-2">
-                      {slot.data.isPrimary && idx === 0 && (
-                        <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs font-semibold">
-                          Primary
-                        </span>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveExistingImage(slot.data.id)}
-                        className="px-3 py-1 bg-red-100 text-red-800 rounded text-xs font-semibold hover:bg-red-200"
-                      >
-                        Remove
-                      </button>
-                    </div>
                   </div>
-                );
-              } else if (slot.type === 'new') {
-                return (
-                  <div key={`new-${idx}`} className="relative border-2 border-dashed border-gray-300 rounded-lg p-4 min-h-[200px] flex flex-col items-center justify-center">
-                    <img
-                      src={slot.data.cloudFrontUrl}
-                      alt="Uploaded"
-                      className="max-w-full max-h-[180px] object-contain rounded"
-                    />
+                  <div className="mt-2 flex gap-2">
+                    {slot.data.isPrimary && (
+                      <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs font-semibold">
+                        Primary
+                      </span>
+                    )}
                     <button
                       type="button"
-                      onClick={() => handleRemoveNewImage(idx)}
-                      className="mt-2 px-3 py-1 bg-red-100 text-red-800 rounded text-xs font-semibold hover:bg-red-200"
+                      onClick={() => handleRemoveExistingImage(slot.data.id)}
+                      className="px-3 py-1 bg-red-100 text-red-800 rounded text-xs font-semibold hover:bg-red-200"
                     >
                       Remove
                     </button>
                   </div>
-                );
-              } else if (slot.type === 'preview') {
-                return (
-                  <div key={`preview-${idx}`} className="relative border-2 border-dashed border-gray-300 rounded-lg p-4 min-h-[200px] flex flex-col items-center justify-center">
-                    <img
+                </div>
+              );
+            }
+
+            if (slot.type === 'new') {
+              return (
+                <div key={`new-${slotPosition}`} className="relative border-2 border-dashed border-gray-300 rounded-lg p-4 min-h-[200px] flex flex-col items-center justify-center">
+                  <div className="relative w-full h-[180px]">
+                    <Image
+                      src={slot.data.cloudFrontUrl}
+                      alt="Uploaded"
+                      fill
+                      sizes="(max-width: 768px) 50vw, 25vw"
+                      className="object-contain rounded"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveUploadedImage(slot.index)}
+                    className="mt-2 px-3 py-1 bg-red-100 text-red-800 rounded text-xs font-semibold hover:bg-red-200"
+                  >
+                    Remove
+                  </button>
+                </div>
+              );
+            }
+
+            if (slot.type === 'preview') {
+              return (
+                <div key={`preview-${slotPosition}`} className="relative border-2 border-dashed border-gray-300 rounded-lg p-4 min-h-[200px] flex flex-col items-center justify-center">
+                  <div className="relative w-full h-[180px]">
+                    <Image
                       src={slot.data.previewUrl}
                       alt="Preview"
-                      className="max-w-full max-h-[180px] object-contain rounded"
+                      fill
+                      unoptimized
+                      sizes="(max-width: 768px) 50vw, 25vw"
+                      className="object-contain rounded"
                     />
-                    <div className="mt-2 flex gap-2">
-                      <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold">
-                        Ready to upload
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveNewImage(idx)}
-                        className="px-3 py-1 bg-red-100 text-red-800 rounded text-xs font-semibold hover:bg-red-200"
-                      >
-                        Remove
-                      </button>
-                    </div>
                   </div>
-                );
-              } else {
-                // Empty slot - render upload input
-                return renderImageSlot(idx, idx === 0);
-              }
-            });
-          })()}
+                  <div className="mt-2 flex gap-2">
+                    <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold">
+                      Ready to upload
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePendingImage(slot.index)}
+                      className="px-3 py-1 bg-red-100 text-red-800 rounded text-xs font-semibold hover:bg-red-200"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              );
+            }
+
+            return renderImageSlot(slotPosition, slotPosition === 0);
+          })}
         </div>
         {availableSlots <= 0 && totalImages > 0 && (
           <p className="mt-2 text-sm text-yellow-600">

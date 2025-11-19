@@ -15,6 +15,14 @@ const nextConfig = {
   },
   // Disable React Strict Mode to prevent double function calls in development
   reactStrictMode: false,
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'd1ffmiafbbgufv.cloudfront.net',
+      },
+    ],
+  },
   // Set output file tracing root to frontend directory to avoid lockfile detection issues
   outputFileTracingRoot: path.resolve(__dirname),
 };

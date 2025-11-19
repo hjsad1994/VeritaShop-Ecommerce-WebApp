@@ -43,7 +43,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       
       setUser(currentUser);
       setIsChecking(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Log error for debugging but don't throw
       console.error('Failed to fetch current user:', error);
       setUser(null);

@@ -169,8 +169,25 @@ export class ProductService {
     }
 
     async updateProduct(id: string, data: UpdateProductData): Promise<Product> {
+        let imageKeysToDelete: string[] = [];
         try {
+            if (data.imageIdsToDelete && data.imageIdsToDelete.length > 0) {
+                imageKeysToDelete = await this.productRepository.getProductImageKeys(id, data.imageIdsToDelete);
+            }
+
             const product = await this.productRepository.update(id, data);
+
+            if (imageKeysToDelete.length > 0) {
+                await Promise.all(
+                    imageKeysToDelete.map(async (key) => {
+                        try {
+                            await this.s3Service.deleteFile(key);
+                        } catch (error) {
+                            logger.error(`Failed to delete image ${key} from S3 during product update:`, error);
+                        }
+                    })
+                );
+            }
             
             return product;
         } catch (error) {
@@ -216,7 +233,7 @@ export class ProductService {
                 throw error;
             }
             if (error instanceof Error) {
-                if (error.message.includes('Record to update not found')) {
+                if (error.message.includes('Record to update not found') || error.message.includes('Record to delete does not exist')) {
                     throw new ApiError(404, ERROR_MESSAGES.PRODUCT_NOT_FOUND);
                 }
             }

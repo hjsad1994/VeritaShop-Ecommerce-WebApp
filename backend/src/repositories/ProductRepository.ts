@@ -448,13 +448,30 @@ export class ProductRepository extends BaseRepository<Product> {
         });
     }
 
+    async getProductImageKeys(productId: string, imageIds: string[]): Promise<string[]> {
+        if (!imageIds || imageIds.length === 0) {
+            return [];
+        }
+
+        const images = await this.prisma.productImage.findMany({
+            where: {
+                id: { in: imageIds },
+                productId
+            },
+            select: {
+                url: true
+            }
+        });
+
+        return images.map((image) => image.url);
+    }
+
     /**
-     * Delete product (soft delete by setting isActive = false)
+     * Delete product permanently (cascades to related entities)
      */
     async delete(id: string): Promise<Product> {
-        return this.prisma.product.update({
+        return this.prisma.product.delete({
             where: { id },
-            data: { isActive: false },
             include: {
                 brand: true,
                 category: true,

@@ -280,6 +280,19 @@ export default function ProductsPage() {
         setProductImages([]);
         alert('Product created successfully!');
       } else if (selectedProduct) {
+        // Upload any selected images before saving changes
+        let uploadedImages: ProductImageData[] = [];
+        if (imageUploadRef.current) {
+          const slugForUpload = selectedProduct.slug || generateSlug(formData.name);
+          try {
+            uploadedImages = await imageUploadRef.current.uploadFiles(slugForUpload);
+          } catch (uploadError: any) {
+            console.error('Image upload error:', uploadError);
+            alert(`Failed to upload images: ${uploadError.message || 'Unknown error'}`);
+            return; // Stop update if image upload fails
+          }
+        }
+
         const productData: UpdateProductRequest = {
           name: formData.name,
           basePrice: basePriceVnd,
@@ -298,8 +311,10 @@ export default function ProductsPage() {
           productData.categoryId = formData.categoryId;
         }
 
-        // Add images if uploaded
-        if (productImages.length > 0) {
+        // Add newly uploaded images (from this submission)
+        if (uploadedImages.length > 0) {
+          productData.images = uploadedImages;
+        } else if (productImages.length > 0) {
           productData.images = productImages;
         }
 

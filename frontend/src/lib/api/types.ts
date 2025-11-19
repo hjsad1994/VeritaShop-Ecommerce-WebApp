@@ -102,6 +102,38 @@ export interface ProductImage {
   sortOrder: number;
 }
 
+export interface VariantInventory {
+  id: string;
+  quantity: number;
+  reserved: number;
+  available: number;
+  minStock: number;
+  maxStock: number;
+  lowStock: boolean;
+  updatedAt: string;
+}
+
+export interface ProductVariantItem {
+  id: string;
+  productId: string;
+  color: string;
+  colorCode?: string | null;
+  storage?: string | null;
+  ram?: string | null;
+  price: string;
+  comparePrice?: string | null;
+  sku: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  images: ProductImage[];
+  inventory?: VariantInventory | null;
+}
+
+export interface VariantListResponse {
+  variants: ProductVariantItem[];
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -145,6 +177,7 @@ export interface ProductDetail extends Product {
   inventory?: {
     quantity: number;
   };
+  variants?: ProductVariantItem[];
 }
 
 export interface ProductListResponse {
@@ -256,3 +289,153 @@ export interface CreateVoucherRequest {
 }
 
 export type UpdateVoucherRequest = Partial<CreateVoucherRequest>;
+
+// Inventory API Types
+export interface InventoryProductBrand {
+  id: string;
+  name: string;
+  slug?: string;
+}
+
+export interface InventoryProductSummary {
+  id: string;
+  name: string;
+  slug: string;
+  brand?: InventoryProductBrand;
+}
+
+export interface InventoryVariantSummary {
+  id: string;
+  productId: string;
+  color?: string | null;
+  storage?: string | null;
+  ram?: string | null;
+  price?: number | string | null;
+  sku?: string | null;
+  product?: InventoryProductSummary;
+}
+
+export interface InventoryRecord {
+  id: string;
+  productId: string;
+  variantId?: string;
+  quantity: number;
+  reserved: number;
+  available: number;
+  minStock: number;
+  maxStock: number;
+  isLowStock?: boolean;
+  isOutOfStock?: boolean;
+  isArchived?: boolean;
+  product?: InventoryProductSummary;
+  variant?: InventoryVariantSummary;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface InventoryPaginationMeta extends PaginationMeta {
+  totalPages: number;
+}
+
+export interface InventoryListResponse {
+  inventories: InventoryRecord[];
+  pagination: InventoryPaginationMeta;
+}
+
+export interface InventoryStats {
+  totalInventory: number;
+  totalQuantity: number;
+  totalAvailable: number;
+  totalReserved?: number;
+  lowStockCount: number;
+  outOfStockCount?: number;
+}
+
+export interface InventoryQueryParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  brandId?: string;
+  productId?: string;
+  variantId?: string;
+  minAvailable?: number;
+  maxAvailable?: number;
+  lowStock?: boolean;
+  includeArchived?: boolean;
+}
+
+export interface CreateInventoryPayload {
+  productId: string;
+  variantId?: string;
+  initialQuantity: number;
+  minStock?: number;
+  maxStock?: number;
+  reason?: string;
+}
+
+export interface StockMutationPayload {
+  productId: string;
+  variantId?: string;
+  quantity: number;
+  reason?: string;
+  referenceId?: string;
+}
+
+export interface StockAdjustmentPayload {
+  productId: string;
+  variantId?: string;
+  newQuantity: number;
+  reason: string;
+}
+
+export interface QuickQuantityUpdatePayload {
+  quantity: number;
+}
+
+export interface UpdateThresholdPayload {
+  minStock: number;
+  maxStock: number;
+}
+
+export type StockMovementType =
+  | 'stock_in'
+  | 'stock_out'
+  | 'adjustment'
+  | 'order'
+  | 'order_cancelled'
+  | 'return';
+
+export interface StockMovementUser {
+  id: string;
+  name: string | null;
+  email: string;
+}
+
+export interface StockMovement {
+  id: string;
+  inventoryId: string;
+  productId?: string;
+  variantId: string;
+  type: StockMovementType | string;
+  quantity: number;
+  previousStock: number;
+  newStock: number;
+  reason?: string | null;
+  referenceId?: string | null;
+  user?: StockMovementUser | null;
+  createdAt: string;
+}
+
+export interface StockMovementQueryParams {
+  page?: number;
+  limit?: number;
+  type?: StockMovementType | string;
+  userId?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
+export interface StockMovementListResponse {
+  movements: StockMovement[];
+  pagination: InventoryPaginationMeta;
+}

@@ -174,6 +174,66 @@ async function main() {
     }
   }
 
+  // Seed sample variants per product
+  const productRecords = await prisma.product.findMany({
+    where: { slug: { in: products.map((p) => p.slug) } },
+  });
+
+  for (const product of productRecords) {
+    const basePriceNumber = Number(product.basePrice);
+    const variantCount = await prisma.productVariant.count({
+      where: { productId: product.id },
+    });
+
+    if (variantCount > 0) {
+      continue;
+    }
+
+    const variants = [
+      {
+        productId: product.id,
+        color: "Black",
+        colorCode: "#000000",
+        storage: "256GB",
+        ram: "8GB",
+        price: basePriceNumber,
+        comparePrice: basePriceNumber,
+        sku: `${product.slug.replace(/-/g, '').toUpperCase()}-256-BLK`,
+        isActive: true,
+      },
+      {
+        productId: product.id,
+        color: "Titanium",
+        colorCode: "#B0B0B0",
+        storage: "512GB",
+        ram: "12GB",
+        price: basePriceNumber * 1.2,
+        comparePrice: basePriceNumber * 1.25,
+        sku: `${product.slug.replace(/-/g, '').toUpperCase()}-512-TIT`,
+        isActive: true,
+      },
+    ];
+
+    for (const variant of variants) {
+      const createdVariant = await prisma.productVariant.create({
+        data: variant,
+      });
+
+      await prisma.inventory.create({
+        data: {
+          variantId: createdVariant.id,
+          quantity: 20,
+          reserved: 0,
+          available: 20,
+          minStock: 5,
+          maxStock: 100,
+        },
+      });
+
+      console.log(`Variant created for ${product.name}: ${createdVariant.sku}`);
+    }
+  }
+
   // Create sample vouchers
   const now = new Date();
   const nextQuarter = new Date(now);

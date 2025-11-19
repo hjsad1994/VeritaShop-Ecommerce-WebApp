@@ -136,6 +136,20 @@ export class S3Service {
     }
   }
 
+  async deleteFiles(s3Keys: string[]): Promise<void> {
+    if (!s3Keys.length) {
+      return;
+    }
+
+    await Promise.all(
+      s3Keys.map((key) =>
+        this.deleteFile(key).catch((error) => {
+          logger.error(`Failed to delete S3 object ${key}`, error);
+        })
+      )
+    );
+  }
+
   /**
    * Convert S3 key to CloudFront URL
    * @param s3Key - S3 key

@@ -1,5 +1,5 @@
 import { Product, Brand, Category, ProductSpecs, ProductVariant, ProductImage } from '@prisma/client';
-import config from '../config';
+import { toCloudFrontUrl } from '../utils/cdn';
 
 export interface ProductResponse {
   id: string;
@@ -132,7 +132,7 @@ export class ProductDto {
       for (const img of imagesCopy) {
         variantImages.push({
           id: img.id,
-          url: this.toCloudFrontUrl(img.url),
+          url: toCloudFrontUrl(img.url),
           altText: img.altText,
           isPrimary: img.isPrimary,
           sortOrder: img.sortOrder,
@@ -159,7 +159,7 @@ export class ProductDto {
     for (const img of imagesCopy) {
       sortedImages.push({
         id: img.id,
-        url: this.toCloudFrontUrl(img.url),
+        url: toCloudFrontUrl(img.url),
         altText: img.altText,
         isPrimary: img.isPrimary,
         sortOrder: img.sortOrder,
@@ -205,43 +205,11 @@ export class ProductDto {
 
     for (const image of images) {
       if (image.isPrimary) {
-        return this.toCloudFrontUrl(image.url);
+        return toCloudFrontUrl(image.url);
       }
     }
 
-    return this.toCloudFrontUrl(images[0].url);
-  }
-
-  /**
-   * Convert S3 URL or S3 key to CloudFront URL
-   */
-  private static toCloudFrontUrl(urlOrKey: string): string {
-    // If already a CloudFront URL, return as is
-    if (urlOrKey.includes(config.aws.cloudFrontDomain)) {
-      return urlOrKey;
-    }
-
-    // If it's an S3 key (starts with 'products/'), convert to CloudFront URL
-    if (urlOrKey.startsWith('products/')) {
-      return `https://${config.aws.cloudFrontDomain}/${urlOrKey}`;
-    }
-
-    // If it's an S3 URL, extract key and convert
-    if (urlOrKey.includes('.s3.') || urlOrKey.includes('s3://')) {
-      // Extract key from S3 URL
-      const keyMatch = urlOrKey.match(/products\/[^?]+/);
-      if (keyMatch) {
-        return `https://${config.aws.cloudFrontDomain}/${keyMatch[0]}`;
-      }
-    }
-
-    // If it's already a full URL (Cloudinary, etc.), return as is
-    if (urlOrKey.startsWith('http://') || urlOrKey.startsWith('https://')) {
-      return urlOrKey;
-    }
-
-    // Default: assume it's an S3 key
-    return `https://${config.aws.cloudFrontDomain}/${urlOrKey}`;
+    return toCloudFrontUrl(images[0].url);
   }
 
   private static calculatePriceRange(variants?: ProductVariant[]): {

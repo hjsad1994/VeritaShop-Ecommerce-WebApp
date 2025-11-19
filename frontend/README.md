@@ -36,6 +36,14 @@ npm run dev         # Start again
 - **UI Library:** React 19
 - **Node:** v20.13.1
 
+## 🧩 Variant Management
+
+- Visit `/admin/products` and click `Manage Variants` on any product to open the dedicated workspace at `/admin/products/:productId/variants`.
+- Admin users can add/edit/delete variants, toggle availability, upload variant-specific images (via the S3 presigned flow), and adjust per-SKU inventory thresholds in one drawer interface.
+- The frontend uses the new `variantService` client which targets `/api/admin/products/:productId/variants` for CRUD operations secured by `ADMIN`/`MANAGER` roles.
+- Backend validation mirrors the form (SKU uppercase, positive prices, max five images). Failed submissions return structured errors surfaced via toasts.
+- Inventory records are auto-created on variant creation; manual adjustments from the UI keep quantity/minStock/maxStock synchronized.
+
 ## 📂 Project Structure
 
 ```

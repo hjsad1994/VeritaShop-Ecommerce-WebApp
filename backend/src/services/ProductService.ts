@@ -1,5 +1,14 @@
-import { ProductRepository } from '../repositories/ProductRepository';
 import { Product, Prisma } from '@prisma/client';
+import { ProductRepository } from '../repositories/ProductRepository';
+import {
+    CreateVariantData,
+    ProductVariantRepository,
+    UpdateVariantData,
+    VariantImageInput,
+    VariantImageUpdateInput,
+    VariantInventoryInput,
+} from '../repositories/ProductVariantRepository';
+import { InventoryRepository } from '../repositories/InventoryRepository';
 import { logger } from '../utils/logger';
 import { ApiError } from '../utils/ApiError';
 import { ERROR_MESSAGES } from '../constants';
@@ -29,13 +38,46 @@ export interface ProductDetailResponse extends Product {
     images: any[];
 }
 
+const MAX_VARIANT_IMAGES = 5;
+
+export interface VariantImagePayload extends VariantImageInput {}
+
+export interface VariantInventoryPayload extends VariantInventoryInput {}
+
+export interface CreateVariantPayload {
+    color: string;
+    colorCode?: string | null;
+    storage?: string | null;
+    ram?: string | null;
+    price: number;
+    comparePrice?: number | null;
+    sku: string;
+    isActive?: boolean;
+    images?: VariantImagePayload[];
+    inventory?: VariantInventoryPayload;
+}
+
+export interface UpdateVariantPayload extends Partial<CreateVariantPayload> {
+    imageIdsToDelete?: string[];
+    existingImages?: VariantImageUpdateInput[];
+}
+
 export class ProductService {
     private productRepository: ProductRepository;
+    private productVariantRepository: ProductVariantRepository;
+    private inventoryRepository: InventoryRepository;
     private s3Service: S3Service;
 
-    constructor(productRepository: ProductRepository) {
+    constructor(
+        productRepository: ProductRepository,
+        productVariantRepository: ProductVariantRepository,
+        inventoryRepository: InventoryRepository,
+        options?: { s3Service?: S3Service }
+    ) {
         this.productRepository = productRepository;
-        this.s3Service = new S3Service();
+        this.productVariantRepository = productVariantRepository;
+        this.inventoryRepository = inventoryRepository;
+        this.s3Service = options?.s3Service ?? new S3Service();
     }
     async getAllProducts(options: ProductQueryOptions): Promise<ProductListResponse> {
         try {
@@ -253,6 +295,170 @@ export class ProductService {
             }
             logger.error('Error incrementing view count:', error);
             throw new ApiError(500, ERROR_MESSAGES.INTERNAL_ERROR);
+        }
+    }
+
+    async getProductVariants(productId: string) {
+        await this.ensureProductExists(productId, { includeInactive: true });
+        return this.productVariantRepository.listByProduct(productId);
+    }
+
+    async getProductVariant(productId: string, variantId: string) {
+        await this.ensureProductExists(productId, { includeInactive: true });
+        const variant = await this.productVariantRepository.findById(productId, variantId);
+        if (!variant) {
+            throw new ApiError(404, ERROR_MESSAGES.VARIANT_NOT_FOUND);
+        }
+        return variant;
+    }
+
+    async createProductVariant(productId: string, payload: CreateVariantPayload) {
+        const product = await this.ensureProductExists(productId, { includeInactive: true });
+        await this.ensureSkuUnique(payload.sku);
+        this.validateVariantPrice(payload.price, payload.comparePrice);
+        this.assertImageLimit(payload.images?.length ?? 0);
+
+        const createData: CreateVariantData = {
+            productId: product.id,
+            color: payload.color,
+            colorCode: payload.colorCode,
+            storage: payload.storage,
+            ram: payload.ram,
+            price: payload.price,
+            comparePrice: payload.comparePrice,
+            sku: payload.sku,
+            isActive: payload.isActive ?? true,
+            images: payload.images,
+            inventory: payload.inventory,
+        };
+
+        const variant = await this.productVariantRepository.createVariant(createData);
+        if (!variant) {
+            throw new ApiError(500, ERROR_MESSAGES.INTERNAL_ERROR);
+        }
+
+        return variant;
+    }
+
+    async updateProductVariant(productId: string, variantId: string, payload: UpdateVariantPayload) {
+        const variant = await this.getProductVariant(productId, variantId);
+
+        if (payload.sku && payload.sku !== variant.sku) {
+            await this.ensureSkuUnique(payload.sku, variantId);
+        }
+
+        if (payload.price !== undefined) {
+            this.validateVariantPrice(payload.price, payload.comparePrice ?? variant.comparePrice?.toNumber());
+        }
+
+        const imageIdsToDelete = payload.imageIdsToDelete ?? [];
+        const imagesToCreate = payload.images ?? [];
+        this.assertImageLimit(
+            variant.images.length - imageIdsToDelete.length + imagesToCreate.length
+        );
+
+        if (imageIdsToDelete.length) {
+            const keys = await this.productVariantRepository.getImageKeys(imageIdsToDelete);
+            await this.productVariantRepository.deleteImages(imageIdsToDelete);
+            await this.s3Service.deleteFiles(keys);
+        }
+
+        const needsPrimaryReset =
+            (payload.existingImages?.some((img) => img.isPrimary) ?? false) ||
+            imagesToCreate.some((img) => img.isPrimary);
+
+        if (needsPrimaryReset) {
+            await this.productVariantRepository.resetPrimaryImage(variantId);
+        }
+
+        if (payload.existingImages?.length) {
+            await this.productVariantRepository.updateImages(payload.existingImages);
+        }
+
+        if (imagesToCreate.length) {
+            await this.productVariantRepository.createImages(
+                variant.productId,
+                variantId,
+                imagesToCreate
+            );
+        }
+
+        const updateData: UpdateVariantData = {
+            color: payload.color,
+            colorCode: payload.colorCode,
+            storage: payload.storage,
+            ram: payload.ram,
+            price: payload.price,
+            comparePrice: payload.comparePrice,
+            sku: payload.sku,
+            isActive: payload.isActive,
+        };
+
+        await this.productVariantRepository.updateVariant(variantId, updateData);
+
+        if (payload.inventory) {
+            await this.productVariantRepository.upsertInventory(variantId, payload.inventory);
+        }
+
+        const updatedVariant = await this.productVariantRepository.findById(productId, variantId);
+        if (!updatedVariant) {
+            throw new ApiError(404, ERROR_MESSAGES.VARIANT_NOT_FOUND);
+        }
+
+        return updatedVariant;
+    }
+
+    async deleteProductVariant(productId: string, variantId: string) {
+        const variant = await this.getProductVariant(productId, variantId);
+
+        const imageIds = variant.images.map((img) => img.id);
+        const imageKeys = variant.images.map((img) => img.url);
+
+        if (imageIds.length) {
+            await this.productVariantRepository.deleteImages(imageIds);
+            await this.s3Service.deleteFiles(imageKeys);
+        }
+
+        const inventoryRecord = await this.inventoryRepository.findByVariantId(variantId);
+        if (!inventoryRecord || (inventoryRecord.quantity <= 0 && inventoryRecord.reserved <= 0)) {
+            await this.productVariantRepository.deleteInventory(variantId);
+        }
+
+        await this.productVariantRepository.softDeleteVariant(variantId);
+    }
+
+    private async ensureProductExists(productId: string, options?: { includeInactive?: boolean }) {
+        const product = options?.includeInactive
+            ? await this.productRepository.findByIdForAdmin(productId)
+            : await this.productRepository.findById(productId);
+
+        if (!product) {
+            throw new ApiError(404, ERROR_MESSAGES.PRODUCT_NOT_FOUND);
+        }
+
+        return product;
+    }
+
+    private async ensureSkuUnique(sku: string, excludeVariantId?: string) {
+        const existing = await this.productVariantRepository.findBySku(sku, excludeVariantId);
+        if (existing) {
+            throw new ApiError(409, ERROR_MESSAGES.VARIANT_SKU_EXISTS);
+        }
+    }
+
+    private validateVariantPrice(price: number, comparePrice?: number | null) {
+        if (price <= 0) {
+            throw ApiError.badRequest(ERROR_MESSAGES.VARIANT_PRICE_INVALID);
+        }
+
+        if (comparePrice !== undefined && comparePrice !== null && comparePrice < price) {
+            throw ApiError.badRequest(ERROR_MESSAGES.VARIANT_COMPARE_PRICE_INVALID);
+        }
+    }
+
+    private assertImageLimit(totalImages: number) {
+        if (totalImages > MAX_VARIANT_IMAGES) {
+            throw ApiError.badRequest(`Mỗi phiên bản chỉ được tối đa ${MAX_VARIANT_IMAGES} ảnh`);
         }
     }
 }

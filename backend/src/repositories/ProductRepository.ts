@@ -1,6 +1,14 @@
 import { PrismaClient, Product } from '@prisma/client';
 import { BaseRepository } from './BaseRepository';
 
+export interface ProductImageData {
+    s3Key: string;
+    cloudFrontUrl?: string;
+    altText?: string;
+    isPrimary?: boolean;
+    sortOrder?: number;
+}
+
 export interface CreateProductData {
     name: string;
     slug?: string;
@@ -11,6 +19,7 @@ export interface CreateProductData {
     discount?: number;
     isFeatured?: boolean;
     isActive?: boolean;
+    images?: ProductImageData[];
 }
 
 export interface UpdateProductData {
@@ -23,6 +32,8 @@ export interface UpdateProductData {
     discount?: number;
     isFeatured?: boolean;
     isActive?: boolean;
+    images?: ProductImageData[];
+    imageIdsToDelete?: string[];
 }
 
 export interface ProductFilters {
@@ -272,6 +283,47 @@ export class ProductRepository extends BaseRepository<Product> {
                 }
             });
 
+            // 6. Create images if provided
+            if (data.images && data.images.length > 0) {
+                // Validate max 4 images
+                if (data.images.length > 4) {
+                    throw new Error('Maximum 4 images allowed per product');
+                }
+
+                const imageData = data.images.map((img, index) => ({
+                    productId: product.id,
+                    url: img.s3Key, // Store S3 key in database
+                    altText: img.altText || null,
+                    isPrimary: index === 0 || img.isPrimary || false, // First image is primary by default
+                    sortOrder: img.sortOrder !== undefined ? img.sortOrder : index,
+                }));
+
+                // Ensure only one primary image
+                if (imageData.filter(img => img.isPrimary).length > 1) {
+                    // Keep only first as primary
+                    imageData.forEach((img, idx) => {
+                        img.isPrimary = idx === 0;
+                    });
+                }
+
+                await tx.productImage.createMany({
+                    data: imageData,
+                });
+
+                // Reload product with images
+                return await tx.product.findUnique({
+                    where: { id: product.id },
+                    include: {
+                        brand: true,
+                        category: true,
+                        variants: true,
+                        images: true,
+                        reviews: true,
+                        specs: true
+                    }
+                }) as Product;
+            }
+
             return product;
         });
     }
@@ -337,17 +389,89 @@ export class ProductRepository extends BaseRepository<Product> {
                 }
             });
 
-            return product;
+            // 6. Handle image deletions
+            if (data.imageIdsToDelete && data.imageIdsToDelete.length > 0) {
+                await tx.productImage.deleteMany({
+                    where: {
+                        id: { in: data.imageIdsToDelete },
+                        productId: id,
+                    },
+                });
+            }
+
+            // 7. Handle image additions
+            if (data.images && data.images.length > 0) {
+                // Get current image count
+                const currentImageCount = await tx.productImage.count({
+                    where: { productId: id },
+                });
+
+                // Calculate how many images we can add (max 4 total)
+                const remainingSlots = 4 - currentImageCount;
+                if (data.images.length > remainingSlots) {
+                    throw new Error(`Maximum 4 images allowed per product. Can only add ${remainingSlots} more.`);
+                }
+
+                const imageData = data.images.map((img, index) => ({
+                    productId: id,
+                    url: img.s3Key, // Store S3 key in database
+                    altText: img.altText || null,
+                    isPrimary: img.isPrimary || false,
+                    sortOrder: img.sortOrder !== undefined ? img.sortOrder : currentImageCount + index,
+                }));
+
+                // If setting a new primary image, unset others
+                if (imageData.some(img => img.isPrimary)) {
+                    await tx.productImage.updateMany({
+                        where: { productId: id },
+                        data: { isPrimary: false },
+                    });
+                }
+
+                await tx.productImage.createMany({
+                    data: imageData,
+                });
+            }
+
+            // 8. Reload product with updated images
+            return await tx.product.findUnique({
+                where: { id },
+                include: {
+                    brand: true,
+                    category: true,
+                    variants: true,
+                    images: true,
+                    reviews: true,
+                    specs: true
+                }
+            }) as Product;
         });
     }
 
+    async getProductImageKeys(productId: string, imageIds: string[]): Promise<string[]> {
+        if (!imageIds || imageIds.length === 0) {
+            return [];
+        }
+
+        const images = await this.prisma.productImage.findMany({
+            where: {
+                id: { in: imageIds },
+                productId
+            },
+            select: {
+                url: true
+            }
+        });
+
+        return images.map((image) => image.url);
+    }
+
     /**
-     * Delete product (soft delete by setting isActive = false)
+     * Delete product permanently (cascades to related entities)
      */
     async delete(id: string): Promise<Product> {
-        return this.prisma.product.update({
+        return this.prisma.product.delete({
             where: { id },
-            data: { isActive: false },
             include: {
                 brand: true,
                 category: true,

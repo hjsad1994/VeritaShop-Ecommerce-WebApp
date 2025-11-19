@@ -59,14 +59,24 @@ const AuthErrorFallback: React.FC<{
           </ul>
 
           {error && (
-            <details className="mb-6 text-left">
-              <summary className="text-sm text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300">
-                Technical Details
+            <details className="mb-6 text-left" open>
+              <summary className="text-sm text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 font-semibold">
+                Technical Details (Click to expand)
               </summary>
-              <pre className="mt-2 p-3 bg-gray-100 dark:bg-gray-700 rounded text-xs overflow-auto text-red-600 dark:text-red-400">
-                {error.message}
-                {error.stack && `\n\n${error.stack}`}
+              <pre className="mt-2 p-3 bg-gray-100 dark:bg-gray-700 rounded text-xs overflow-auto text-red-600 dark:text-red-400 max-h-60">
+                <strong>Error Message:</strong> {error.message}
+                {error.stack && (
+                  <>
+                    <br /><br />
+                    <strong>Stack Trace:</strong>
+                    <br />
+                    {error.stack}
+                  </>
+                )}
               </pre>
+              <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                <p>Check the browser console (F12) for more details.</p>
+              </div>
             </details>
           )}
 
@@ -113,22 +123,48 @@ class AuthErrorBoundaryInner extends Component<Props, State> {
   }
 
   static getDerivedStateFromError(error: Error): State {
+    // Check if this is an auth-related error
+    const isAuthError = 
+      error.message?.includes('Auth') ||
+      error.message?.includes('authentication') ||
+      error.message?.includes('useAuth') ||
+      error.message?.includes('AuthProvider') ||
+      error.message?.includes('Unauthorized') ||
+      error.message?.includes('401') ||
+      error.message?.includes('403') ||
+      error.message?.includes('Session expired') ||
+      error.message?.includes('Invalid authentication');
+    
+    // Only catch auth errors, let others bubble up
+    if (!isAuthError) {
+      // Return no error state so we don't catch it
+      return { hasError: false };
+    }
+    
+    // Log auth errors for debugging
+    console.error('Auth Error Boundary caught auth error:', error.message, error.stack);
+    
     // Update state so the next render will show the fallback UI
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Log the error to console
-    console.error('Auth Error Boundary caught an error:', error, errorInfo);
-    
-    // Update state with error info
-    this.setState({
-      error,
-      errorInfo,
-    });
+    // Only log if we're actually handling this error
+    if (this.state.hasError) {
+      console.error('Auth Error Boundary handling error:', error, errorInfo);
+      
+      // Update state with error info
+      this.setState({
+        error,
+        errorInfo,
+      });
 
-    // You could also log to an error reporting service here
-    // logErrorToService(error, errorInfo, 'auth');
+      // You could also log to an error reporting service here
+      // logErrorToService(error, errorInfo, 'auth');
+    } else {
+      // Not an auth error, let it bubble up by not setting state
+      console.warn('Auth Error Boundary ignoring non-auth error:', error.message);
+    }
   }
 
   resetError = () => {
@@ -136,7 +172,7 @@ class AuthErrorBoundaryInner extends Component<Props, State> {
   };
 
   render() {
-    if (this.state.hasError) {
+    if (this.state.hasError && this.state.error) {
       if (this.props.fallback) {
         return this.props.fallback;
       }

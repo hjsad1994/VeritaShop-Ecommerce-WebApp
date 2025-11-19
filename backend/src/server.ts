@@ -20,6 +20,7 @@ import { createOrderRoutes } from './routes/orderRoutes';
 import { createWishlistRoutes } from './routes/wishlistRoutes';
 import { createAdminRoutes } from './routes/adminRoutes';
 import { createVoucherRoutes } from './routes/voucherRoutes';
+import { createImageRoutes } from './routes/imageRoutes';
 // Initialize Express app
 const app: Application = express();
 
@@ -73,6 +74,7 @@ app.use('/api/orders', createOrderRoutes());
 app.use('/api/wishlist', createWishlistRoutes());
 app.use('/api/admin', createAdminRoutes());
 app.use('/api/admin/vouchers', createVoucherRoutes());
+app.use('/api/images', createImageRoutes());
 // 404 handler
 app.use(notFoundHandler);
 

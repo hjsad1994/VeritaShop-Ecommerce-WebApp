@@ -94,6 +94,14 @@ export interface UpdateCategoryRequest extends Partial<CreateCategoryRequest> {
 }
 
 // Product API Types
+export interface ProductImage {
+  id: string;
+  url: string;
+  altText?: string | null;
+  isPrimary: boolean;
+  sortOrder: number;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -120,6 +128,7 @@ export interface Product {
   averageRating: string;
   reviewCount: number;
   primaryImage?: string | null;
+  images?: ProductImage[]; // Product images array
   minPrice?: number | null;
   maxPrice?: number | null;
   categoryId: string;
@@ -131,7 +140,7 @@ export interface Product {
 export interface ProductDetail extends Product {
   description?: string;
   specs?: Array<{ label: string; value: string }>;
-  images?: string[];
+  images?: ProductImage[];
   colors?: string[];
   inventory?: {
     quantity: number;
@@ -168,6 +177,14 @@ export interface Brand {
   updatedAt: string;
 }
 
+export interface ProductImageData {
+  s3Key: string;
+  cloudFrontUrl?: string;
+  altText?: string;
+  isPrimary?: boolean;
+  sortOrder?: number;
+}
+
 export interface CreateProductRequest {
   name: string;
   description?: string;
@@ -178,11 +195,14 @@ export interface CreateProductRequest {
   isFeatured?: boolean;
   isActive?: boolean;
   slug?: string;
+  images?: ProductImageData[];
 }
 
 export type UpdateProductRequest = Partial<Omit<CreateProductRequest, 'brandId' | 'categoryId'>> & {
   brandId?: string;
   categoryId?: string;
+  images?: ProductImageData[];
+  imageIdsToDelete?: string[];
 };
 
 // Voucher API Types

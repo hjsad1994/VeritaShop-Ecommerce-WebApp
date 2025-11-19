@@ -14,9 +14,14 @@ const apiClient: AxiosInstance = axios.create({
 // Request interceptor (can be used for adding auth tokens, logging, etc.)
 apiClient.interceptors.request.use(
   (config) => {
-    // You can add common headers here if needed
-    // For example, if you want to add a custom header:
-    // config.headers['X-Custom-Header'] = 'value';
+    // Add Bearer token from localStorage if available (for compatibility)
+    // Backend also supports cookies via withCredentials
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('accessToken');
+      if (token && !config.headers.Authorization) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    }
     return config;
   },
   (error) => {

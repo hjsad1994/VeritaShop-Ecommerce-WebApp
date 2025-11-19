@@ -2,10 +2,14 @@ import apiClient from './apiClient';
 import type {
   ApiResponse,
   CreateInventoryPayload,
+  InventoryCatalogQueryParams,
+  InventoryCatalogProduct,
+  InventoryCatalogResult,
   InventoryListResponse,
   InventoryQueryParams,
   InventoryRecord,
   InventoryStats,
+  PaginationMeta,
   StockAdjustmentPayload,
   StockMovement,
   StockMovementListResponse,
@@ -43,6 +47,36 @@ class InventoryService {
     const url = queryString ? `${this.basePath}?${queryString}` : this.basePath;
     const response = await apiClient.get<ApiResponse<InventoryListResponse>>(url);
     return response.data.data;
+  }
+
+  async getCatalog(params: InventoryCatalogQueryParams = {}): Promise<InventoryCatalogResult> {
+    const queryString = this.buildQuery({
+      page: params.page,
+      limit: params.limit,
+      search: params.search,
+      brandId: params.brandId,
+      includeArchived: params.includeArchived,
+    });
+
+    const url = queryString ? `${this.basePath}/catalog?${queryString}` : `${this.basePath}/catalog`;
+    const response = await apiClient.get<
+      ApiResponse<InventoryCatalogProduct[]>
+    >(url);
+
+    const payload = response.data;
+    const pagination =
+      (payload as unknown as { pagination?: PaginationMeta }).pagination ??
+      {
+        page: params.page ?? 1,
+        limit: params.limit ?? payload.data.length ?? 0,
+        total: payload.data.length ?? 0,
+        totalPages: 1,
+      };
+
+    return {
+      catalog: payload.data,
+      pagination,
+    };
   }
 
   async getInventoryStats(): Promise<InventoryStats> {

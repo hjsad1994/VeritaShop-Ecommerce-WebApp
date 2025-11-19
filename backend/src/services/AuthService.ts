@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
+import type { StringValue } from 'ms';
 import { User } from '@prisma/client';
 import { UserRepository } from '../repositories/UserRepository';
 import { ApiError } from '../utils/ApiError';
@@ -114,7 +115,7 @@ export class AuthService {
         role: payload.role
       },
       config.jwt.secret,
-      { expiresIn: '15m' }
+      { expiresIn: config.jwt.accessTokenExpiry as StringValue | number }
     );
 
     const refreshToken = uuidv4();

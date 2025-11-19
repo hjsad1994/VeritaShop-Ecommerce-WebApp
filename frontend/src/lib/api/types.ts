@@ -333,6 +333,43 @@ export interface InventoryRecord {
   updatedAt?: string;
 }
 
+export interface InventoryCatalogVariant {
+  id: string;
+  sku: string;
+  color?: string | null;
+  storage?: string | null;
+  ram?: string | null;
+  optionLabels: string[];
+  quantity: number;
+  reserved: number;
+  available: number;
+  minStock: number;
+  maxStock: number;
+  isLowStock: boolean;
+  isActive: boolean;
+}
+
+export interface InventoryCatalogProduct {
+  id: string;
+  name: string;
+  slug: string;
+  brand?: InventoryProductBrand;
+  variants: InventoryCatalogVariant[];
+}
+
+export interface InventoryCatalogQueryParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  brandId?: string;
+  includeArchived?: boolean;
+}
+
+export interface InventoryCatalogResult {
+  catalog: InventoryCatalogProduct[];
+  pagination: PaginationMeta;
+}
+
 export interface InventoryPaginationMeta extends PaginationMeta {
   totalPages: number;
 }

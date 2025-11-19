@@ -21,12 +21,21 @@ export default function InventoryMovementDrawer({
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
+  const resolveVariantId = (record?: InventoryRecord) =>
+    record?.variant?.id ?? record?.variantId ?? record?.productId ?? '';
+
   const loadMovements = useCallback(async (pageNum: number = 1, append = false) => {
     if (!inventory) return;
 
+    const variantId = resolveVariantId(inventory);
+    if (!variantId) {
+      toast.error('Variant ID is missing for this inventory record');
+      return;
+    }
+
     setLoading(true);
     try {
-      const response = await inventoryService.getStockMovements(inventory.productId, {
+      const response = await inventoryService.getStockMovements(variantId, {
         page: pageNum,
         limit: 20,
       });

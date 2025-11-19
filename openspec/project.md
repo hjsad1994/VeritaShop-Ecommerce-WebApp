@@ -1,155 +1,65 @@
 # Project Context
 
 ## Purpose
-VeritaShop is a modern full-stack e-commerce web application designed for selling products online. The platform supports product catalog management, shopping cart functionality, order processing, inventory management, user reviews, wishlists, and voucher/discount systems. The application focuses on providing a seamless shopping experience with features like product variants (color, storage, RAM), detailed product specifications, and comprehensive inventory tracking.
+VeritaShop is a full-stack e-commerce platform focused on premium consumer electronics. The goal is to provide a fast shopping experience for end users, while giving store operators an opinionated admin workspace to manage catalog content, vouchers, orders, inventory, and customer accounts without touching the database manually.
 
 ## Tech Stack
-
-### Backend
-- **Runtime**: Node.js
-- **Framework**: Express.js
-- **Language**: TypeScript (strict mode enabled)
-- **ORM**: Prisma 5.15.0
-- **Database**: PostgreSQL 13
-- **Authentication**: JWT (jsonwebtoken, jose) with refresh tokens
-- **File Upload**: Multer, Cloudinary
-- **Validation**: express-validator
-- **Other**: bcryptjs, cookie-parser, cors, nodemailer, axios, lodash, uuid
-
-### Frontend
-- **Framework**: Next.js 15 (App Router)
-- **UI Library**: React 19
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS 3.4.1
-- **State Management**: React Context API (AuthContext, CartContext, UserContext)
-- **Notifications**: react-hot-toast
-- **HTTP Client**: Axios
-
-### Infrastructure
-- **Containerization**: Docker Compose
-- **Database**: PostgreSQL (via Docker)
+- Frontend: Next.js 15 App Router, React 19, TypeScript, Tailwind CSS, Axios, react-hot-toast.
+- Backend: Node.js 20, Express 4, TypeScript, Prisma ORM, PostgreSQL 13 (Docker), AWS SDK v3, Cloudinary SDK, Nodemailer.
+- Tooling: ESLint (frontend), ts-node + tsc builds, Prisma Migrate/Seed, Docker Compose for local data stores.
 
 ## Project Conventions
 
 ### Code Style
-- **TypeScript**: Strict mode enabled in both frontend and backend
-- **Naming Conventions**:
-  - Files: PascalCase for components/classes (e.g., `ProductController.ts`), camelCase for utilities
-  - Classes: PascalCase (e.g., `ProductService`, `BaseRepository`)
-  - Variables/Functions: camelCase (e.g., `getAllProducts`, `productService`)
-  - Constants: UPPER_SNAKE_CASE (e.g., `ERROR_MESSAGES`, `SUCCESS_MESSAGES`)
-- **Formatting**: ESLint with Next.js core-web-vitals and TypeScript configs
-- **Indentation**: 4 spaces (backend), 2 spaces (frontend - Next.js default)
-- **File Organization**: Feature-based structure with clear separation of concerns
+- TypeScript everywhere; avoid `any` unless interacting with third-party SDK responses.
+- Frontend uses Next.js ESLint config (`npm run lint`); formatting follows Prettier defaults (2-space indent).
+- Backend favors explicit return types on exported functions, PascalCase for classes, camelCase for variables/functions, and keeps files ASCII-only.
+- API routes, DTOs, and Prisma models use singular PascalCase names; REST paths use kebab-case plural nouns (e.g., `/api/products`).
+- Environment variables live in `.env` files but must also be documented in READMEs or `.env.example` before use.
 
 ### Architecture Patterns
-
-#### Backend Architecture (Layered Architecture)
-1. **Routes Layer** (`routes/`): Define API endpoints and middleware chains
-2. **Controllers Layer** (`controllers/`): Handle HTTP requests/responses, input validation, error handling
-3. **Services Layer** (`services/`): Business logic, orchestration, data transformation
-4. **Repositories Layer** (`repositories/`): Data access abstraction using Prisma
-5. **DTOs Layer** (`dtos/`): Data Transfer Objects for API responses
-6. **Validations Layer** (`validations/`): Request validation schemas using express-validator
-7. **Middleware** (`middleware/`): Authentication, error handling, request logging, validation
-
-**Key Patterns**:
-- Repository Pattern: Abstract data access through repositories
-- Service Factory Pattern: Centralized service instantiation
-- Repository Factory Pattern: Centralized repository instantiation
-- DTO Pattern: Separate API contracts from domain models
-- Dependency Injection: Services receive repositories via constructor
-
-#### Frontend Architecture (Next.js App Router)
-1. **App Directory** (`app/`): Next.js 15 App Router pages and layouts
-2. **Components** (`components/`): Reusable UI components organized by feature/type
-   - `layout/`: Layout components (Header, Footer, Cart, etc.)
-   - `ui/`: Generic UI components
-   - `auth/`: Authentication-related components
-   - `admin/`: Admin-specific components
-3. **Features** (`features/`): Feature-specific components and logic
-4. **Contexts** (`contexts/`): React Context providers for global state
-5. **Lib** (`lib/`): Utilities and API clients
-   - `api/`: API client functions organized by resource
-   - `data/`: Data utilities
-
-**Key Patterns**:
-- Server Components by default, Client Components when needed
-- Context API for global state (auth, cart, user)
-- Feature-based organization
-- API client abstraction layer
+- Backend follows layered architecture:
+  - Routes wire Express handlers and attach middleware (auth, validation, file upload).
+  - Controllers perform request/response orchestration and translate validation errors into `ApiError`.
+  - Services hold business logic, coordinate repositories, and enforce invariants (stock checks, voucher windows, role gates).
+  - Repositories wrap Prisma queries; no service should reach Prisma directly.
+  - Shared DTOs/validations ensure consistent payload shapes between layers.
+- Frontend uses the App Router with co-located layouts; feature directories (`features/*`) encapsulate UI + hooks per domain.
+- State is shared via React Contexts (`AuthContext`, `CartContext`, `UserContext`) plus server components where possible.
+- Image uploads use a presigned URL flow (`/images/presigned-url` → direct S3 upload). Keep all media helpers inside `S3Service` on the backend and `imageService` on the frontend.
 
 ### Testing Strategy
-- **Current Status**: No automated tests implemented (test script returns "No tests specified")
-- **Future Considerations**: 
-  - Unit tests for services and utilities
-  - Integration tests for API endpoints
-  - Component tests for React components
-  - E2E tests for critical user flows
+- Run `npm run lint` in `frontend/` before every commit; treat warnings as errors.
+- Backend currently lacks formal automated tests; when adding coverage prefer Jest + Supertest for routes and Prisma test transactions for repositories.
+- Critical flows (auth, checkout, admin CRUD) must be verified end-to-end via manual smoke tests using seeded data (`npm run prisma:seed`).
+- When fixing bugs, add at least a regression test (service-level or component) or document manual steps in PR description until the automated suite exists.
 
 ### Git Workflow
-- **Branching Strategy**: Feature branches (e.g., `main#Feature-UploadImgToS3`)
-- **Main Branch**: `main`
-- **Naming Convention**: Feature branches follow pattern `main#Feature-<FeatureName>`
-- **Commit Conventions**: Not explicitly documented, but descriptive commit messages recommended
+- Work happens on short-lived feature branches (`feature/<summary>` or `fix/<summary>`). Keep `main` deployable.
+- Rebase on top of `main` before opening a PR; resolve conflicts locally.
+- Commit messages follow `<type>: <imperative summary>` where `type ∈ {feat, fix, chore, docs, refactor, test}`.
+- For spec-driven work, create an OpenSpec change (`openspec/changes/<change-id>/`) and get the proposal approved before merging implementation code.
+- Every PR must mention how to test the change (lint/test commands or manual steps) and call out migrations or env var changes.
 
 ## Domain Context
-
-### Core Entities
-- **Products**: Main catalog items with variants (color, storage, RAM), specifications, images, and pricing
-- **Product Variants**: Specific configurations of products (e.g., iPhone 15 Pro - Black - 256GB)
-- **Brands**: Product manufacturers (e.g., Apple, Samsung, OnePlus)
-- **Categories**: Hierarchical product categorization (supports parent-child relationships)
-- **Inventory**: Stock management with quantity, reserved, and available counts per variant
-- **Stock Movements**: Audit trail for inventory changes (STOCK_IN, STOCK_OUT, ADJUSTMENT, ORDER, etc.)
-- **Users**: Customer accounts with roles (USER, ADMIN, MANAGER)
-- **Cart**: Shopping cart with items linked to product variants
-- **Orders**: Purchase orders with status tracking (PENDING, CONFIRMED, PROCESSING, SHIPPING, DELIVERED, CANCELLED, RETURNED)
-- **Order Items**: Individual line items in orders
-- **Reviews**: Product reviews with ratings, images, and verified purchase status
-- **Comments**: Product discussion threads with nested replies
-- **Wishlist**: User's saved products
-- **Vouchers**: Discount codes (FIXED or PERCENTAGE) with usage limits and date ranges
-
-### Business Rules
-- Products can have multiple variants with different prices and stock levels
-- Inventory tracks available quantity (total - reserved)
-- Orders automatically update inventory when confirmed/cancelled
-- Reviews can be verified (purchase verification)
-- Vouchers have minimum order values and usage limits
-- Categories support hierarchical structure (parent-child)
-- Users have role-based access (USER, ADMIN, MANAGER)
-
-### Key Workflows
-1. **Product Management**: Create products → Add variants → Set inventory → Upload images
-2. **Shopping Flow**: Browse → Add to cart → Apply voucher → Checkout → Order confirmation
-3. **Order Processing**: Pending → Confirmed (inventory reserved) → Processing → Shipping → Delivered
-4. **Inventory Management**: Stock movements tracked with reasons and references
-5. **Review System**: Users can review purchased products with ratings and images
+- The storefront sells high-end phones and accessories. Catalog entries belong to both brands and nested categories; slugs must be unique.
+- Customers can browse, search, manage carts/wishlists, and place orders. Authentication uses JWT access tokens (15 min) plus UUID refresh tokens persisted in the user table.
+- The admin portal (under `/admin/*`) exposes dashboards for users, products (with variants), inventory thresholds, vouchers, and orders. Access requires `ADMIN` or `MANAGER` roles.
+- Inventory is tracked separately from products; adjustments propagate through services to prevent overselling.
+- Voucher management enforces uppercase codes, numeric bounds, and active windows as validated in `VoucherValidation.ts`. Frontend mirrors these rules to fail fast.
+- Error messages and copy are primarily Vietnamese; keep localization consistent when adding new API responses or UI text.
 
 ## Important Constraints
-- **Database**: PostgreSQL required (via Docker Compose)
-- **Environment Variables**: Required variables include `DATABASE_URL`, `JWT_SECRET`, `JWT_REFRESH_SECRET`
-- **CORS**: Configured for specific origin (default: `http://localhost:3000`)
-- **Authentication**: Currently using JWT with refresh tokens stored in database
-- **File Upload**: Cloudinary integration for image storage
-- **TypeScript**: Strict mode enforced in both frontend and backend
-- **Next.js**: Using App Router (not Pages Router)
+- Target Node.js 20+ and Next.js 15; do not introduce dependencies that lack support.
+- PostgreSQL is the single source of truth; all schema updates must go through Prisma migrations checked into source control.
+- JWT secrets, database URLs, mail credentials, and S3 keys must never be hard-coded. Use `.env` + `config/index.ts` accessors.
+- Direct S3 uploads rely on the CORS policy documented in `backend/S3_CORS_CONFIG.md`; changing the flow requires updating that doc.
+- Backend responses standardize on `{ success, message, data }`. New controllers should stick to this contract so the frontend error handling remains consistent.
+- Image metadata and large payloads are stored in S3/CloudFront; avoid persisting base64 blobs in the database.
 
 ## External Dependencies
-
-### Services
-- **Cloudinary**: Image upload and management service
-- **PostgreSQL**: Primary database (via Docker)
-- **Nodemailer**: Email service (configured but usage not visible in current codebase)
-
-### APIs
-- Backend API runs on configurable port (default: 3000)
-- Frontend runs on Next.js default port (typically 3000, may conflict with backend)
-- CORS configured for frontend-backend communication
-
-### Development Tools
-- **Docker Compose**: Local PostgreSQL database
-- **Prisma**: Database migrations and schema management
-- **Nodemon**: Development server auto-reload (backend)
-- **TypeScript**: Type checking and compilation
+- PostgreSQL 13 (local via Docker, managed in production).
+- AWS S3 + optional CloudFront distribution for product media (presigned upload + CDN delivery).
+- Cloudinary (legacy asset host) — keep credentials valid until all assets migrate to S3.
+- Nodemailer SMTP account for transactional email (order confirmations, password flows).
+- Any client consuming the backend must provide `NEXT_PUBLIC_API_URL` or equivalent base URL; CORS is configured to allow the Next.js host plus admin domain.

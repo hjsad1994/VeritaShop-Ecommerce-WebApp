@@ -10,6 +10,7 @@ import { InventoryRepository } from './InventoryRepository';
 import { OrderRepository } from './OrderRepository';
 import { WishlistRepository } from './WishlistRepository';
 import { VoucherRepository } from './VoucherRepository';
+import { ProductVariantRepository } from './ProductVariantRepository';
 
 export class RepositoryFactory {
   private static prisma: PrismaClient;
@@ -30,6 +31,13 @@ export class RepositoryFactory {
       throw new Error('RepositoryFactory not initialized. Call initialize() first.');
     }
     return new ProductRepository(this.prisma);
+  }
+
+  static getProductVariantRepository(): ProductVariantRepository {
+    if (!this.prisma) {
+      throw new Error('RepositoryFactory not initialized. Call initialize() first.');
+    }
+    return new ProductVariantRepository(this.prisma);
   }
 
   static getBrandRepository(): BrandRepository {

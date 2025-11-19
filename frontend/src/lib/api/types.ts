@@ -102,6 +102,38 @@ export interface ProductImage {
   sortOrder: number;
 }
 
+export interface VariantInventory {
+  id: string;
+  quantity: number;
+  reserved: number;
+  available: number;
+  minStock: number;
+  maxStock: number;
+  lowStock: boolean;
+  updatedAt: string;
+}
+
+export interface ProductVariantItem {
+  id: string;
+  productId: string;
+  color: string;
+  colorCode?: string | null;
+  storage?: string | null;
+  ram?: string | null;
+  price: string;
+  comparePrice?: string | null;
+  sku: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  images: ProductImage[];
+  inventory?: VariantInventory | null;
+}
+
+export interface VariantListResponse {
+  variants: ProductVariantItem[];
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -145,6 +177,7 @@ export interface ProductDetail extends Product {
   inventory?: {
     quantity: number;
   };
+  variants?: ProductVariantItem[];
 }
 
 export interface ProductListResponse {

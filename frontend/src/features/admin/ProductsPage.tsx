@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import productService from '@/lib/api/productService';
 import brandService from '@/lib/api/brandService';
 import categoryService from '@/lib/api/categoryService';
@@ -517,7 +518,13 @@ export default function ProductsPage() {
                     </div>
                   </td>
                   <td className="py-4 px-6">
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Link
+                        href={`/admin/products/${product.id}/variants`}
+                        className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg text-black hover:bg-gray-100 transition-colors"
+                      >
+                        Manage Variants
+                      </Link>
                       <button
                         onClick={() => handleEdit(product)}
                         className="p-2 text-black hover:bg-gray-100 rounded-lg transition-colors border border-gray-300"

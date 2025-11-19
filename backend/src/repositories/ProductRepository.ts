@@ -187,6 +187,23 @@ export class ProductRepository extends BaseRepository<Product> {
             }
         });
     }
+
+    async findByIdForAdmin(id: string): Promise<Product | null> {
+        return this.prisma.product.findUnique({
+            where: { id },
+            include: {
+                brand: true,
+                category: true,
+                specs: true,
+                variants: {
+                    include: {
+                        images: true,
+                    },
+                },
+                images: true,
+            },
+        });
+    }
     /**
      * Find featured products
      */

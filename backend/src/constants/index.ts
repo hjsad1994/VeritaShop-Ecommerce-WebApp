@@ -55,6 +55,9 @@ export const ERROR_MESSAGES = {
   INVALID_QUANTITY: 'Số lượng không hợp lệ',
   VARIANT_NOT_FOUND: 'Không tìm thấy phiên bản sản phẩm',
   VARIANT_OUT_OF_STOCK: 'Sản phẩm không đủ số lượng trong kho',
+  VARIANT_SKU_EXISTS: 'Mã SKU đã tồn tại',
+  VARIANT_PRICE_INVALID: 'Giá phiên bản phải lớn hơn 0',
+  VARIANT_COMPARE_PRICE_INVALID: 'Giá so sánh phải lớn hơn hoặc bằng giá bán',
   // Inventory messages
   INVENTORY_NOT_FOUND: 'Không tìm thấy thông tin tồn kho',
   ORDER_NOT_FOUND: 'Không tìm thấy đơn hàng',

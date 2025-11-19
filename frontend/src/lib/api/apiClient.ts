@@ -1,9 +1,15 @@
 import axios, { AxiosError, AxiosInstance } from 'axios';
 import type { ApiError } from './types';
 
+const baseURL = process.env.NEXT_PUBLIC_API_URL;
+
+if (!baseURL) {
+  throw new Error('NEXT_PUBLIC_API_URL is not defined. Please set it in your frontend .env file.');
+}
+
 // Create axios instance with default configuration
 const apiClient: AxiosInstance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
+  baseURL,
   headers: {
     'Content-Type': 'application/json',
   },

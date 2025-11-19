@@ -294,7 +294,9 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(function ImageU
         ) : (
           <>
             <input
-              ref={(el) => (fileInputRefs.current[index] = el)}
+              ref={(el) => {
+                fileInputRefs.current[index] = el;
+              }}
               type="file"
               accept="image/jpeg,image/jpg,image/png,image/webp"
               onChange={(e) => {

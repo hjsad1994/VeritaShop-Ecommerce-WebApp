@@ -42,8 +42,8 @@ const config: Config = {
   jwt: {
     secret: process.env.JWT_SECRET || 'fallback-secret-key',
     refreshSecret: process.env.JWT_REFRESH_SECRET || 'fallback-refresh-secret',
-    accessTokenExpiry: '15m',
-    refreshTokenExpiry: '7d',
+    accessTokenExpiry: process.env.JWT_ACCESS_TOKEN_EXPIRY || '24h',
+    refreshTokenExpiry: process.env.JWT_REFRESH_TOKEN_EXPIRY || '7d',
   },
   cookie: {
     accessTokenName: 'accessToken',

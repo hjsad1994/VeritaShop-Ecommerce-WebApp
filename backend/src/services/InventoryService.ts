@@ -1,9 +1,15 @@
 import { StockMovementType } from '@prisma/client';
-import { InventoryRepository, InventoryFilter, StockMovementFilter } from '../repositories/InventoryRepository';
+import {
+  InventoryRepository,
+  InventoryFilter,
+  StockMovementFilter,
+  InventoryCatalogFilter,
+} from '../repositories/InventoryRepository';
 import { RepositoryFactory } from '../repositories';
 import { ApiError } from '../utils/ApiError';
 import { HTTP_STATUS, ERROR_MESSAGES } from '../constants';
 import { PrismaClient } from '@prisma/client';
+import { InventoryCatalogProductDto } from '../dtos/InventoryDto';
 
 export interface StockInData {
   variantId: string;
@@ -25,6 +31,15 @@ export interface StockAdjustmentData {
   variantId: string;
   newQuantity: number;
   reason: string;
+  userId: string;
+}
+
+export interface CreateInventoryData {
+  variantId: string;
+  initialQuantity: number;
+  minStock?: number;
+  maxStock?: number;
+  reason?: string;
   userId: string;
 }
 
@@ -54,6 +69,119 @@ export class InventoryService {
         totalPages: result.totalPages,
       },
     };
+  }
+
+  /**
+   * Get catalog summary for admin picker
+   */
+  async getInventoryCatalog(filter: InventoryCatalogFilter) {
+    const result = await this.inventoryRepository.getCatalogSummary(filter);
+
+    return {
+      catalog: result.products.map((product) => new InventoryCatalogProductDto(product)),
+      pagination: {
+        page: result.page,
+        limit: result.limit,
+        total: result.total,
+        totalPages: result.totalPages,
+      },
+    };
+  }
+
+  /**
+   * Create or seed inventory record manually
+   */
+  async createInventoryRecord(data: CreateInventoryData) {
+    const { variantId, initialQuantity, minStock = 0, maxStock = 0, reason, userId } = data;
+
+    if (!variantId) {
+      throw new ApiError(HTTP_STATUS.BAD_REQUEST, ERROR_MESSAGES.VARIANT_NOT_FOUND);
+    }
+
+    if (initialQuantity < 0) {
+      throw new ApiError(HTTP_STATUS.BAD_REQUEST, ERROR_MESSAGES.INVALID_QUANTITY);
+    }
+
+    if (minStock < 0 || maxStock < 0) {
+      throw new ApiError(HTTP_STATUS.BAD_REQUEST, ERROR_MESSAGES.INVALID_QUANTITY);
+    }
+
+    const variant = await this.productRepository.findVariantById(variantId);
+    if (!variant) {
+      throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.VARIANT_NOT_FOUND);
+    }
+
+    const result = await this.prisma.$transaction(async (tx) => {
+      let inventory = await tx.inventory.findUnique({
+        where: { variantId },
+      });
+
+      if (!inventory) {
+        inventory = await tx.inventory.create({
+          data: {
+            variantId,
+            quantity: 0,
+            reserved: 0,
+            available: 0,
+            minStock: 0,
+            maxStock: 0,
+          },
+        });
+      }
+
+      const previousStock = inventory.quantity;
+      const updatedInventory = await tx.inventory.update({
+        where: { id: inventory.id },
+        data: {
+          quantity: initialQuantity,
+          available: Math.max(initialQuantity - inventory.reserved, 0),
+          minStock,
+          maxStock,
+        },
+        include: {
+          variant: {
+            include: {
+              product: {
+                select: {
+                  id: true,
+                  name: true,
+                  slug: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      let movement = null;
+      if (initialQuantity !== previousStock) {
+        movement = await tx.stockMovement.create({
+          data: {
+            inventoryId: inventory.id,
+            variantId,
+            type: StockMovementType.ADJUSTMENT,
+            quantity: initialQuantity - previousStock,
+            previousStock,
+            newStock: initialQuantity,
+            reason: reason || 'Khởi tạo tồn kho',
+            userId,
+          },
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+        });
+      }
+
+      return { inventory: updatedInventory, movement };
+    });
+
+    return result;
   }
 
   /**

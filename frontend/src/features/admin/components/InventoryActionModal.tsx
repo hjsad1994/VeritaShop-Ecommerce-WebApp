@@ -30,6 +30,8 @@ interface InventoryActionModalProps {
   inventory?: InventoryRecord;
   onClose: () => void;
   onSubmit: (values: InventoryActionFormValues) => Promise<void>;
+  initialVariantId?: string;
+  variantOptions?: Array<{ id: string; label: string }>;
 }
 
 type NumberFieldKey = 'quantity' | 'initialQuantity' | 'minStock' | 'maxStock' | 'newQuantity';
@@ -93,7 +95,8 @@ const getTitle = (mode: InventoryActionMode) => {
 
 const getDefaultValues = (
   mode: InventoryActionMode,
-  inventory?: InventoryRecord
+  inventory?: InventoryRecord,
+  presetVariantId?: string
 ): InventoryActionFormValues => {
   const base = { ...defaultValuesByMode[mode] };
 
@@ -105,6 +108,10 @@ const getDefaultValues = (
       base.minStock = inventory.minStock;
       base.maxStock = inventory.maxStock;
     }
+  } else if (presetVariantId && mode === 'create') {
+    base.productId = presetVariantId;
+  } else if (mode === 'create' && !base.productId) {
+    base.productId = presetVariantId ?? '';
   }
 
   return base;
@@ -178,22 +185,28 @@ export function InventoryActionModal({
   inventory,
   onClose,
   onSubmit,
+  initialVariantId,
+  variantOptions = [],
 }: InventoryActionModalProps) {
   const [formValues, setFormValues] = useState<InventoryActionFormValues>(
-    getDefaultValues(mode, inventory)
+    getDefaultValues(mode, inventory, initialVariantId)
   );
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
-      setFormValues(getDefaultValues(mode, inventory));
+      setFormValues(getDefaultValues(mode, inventory, initialVariantId));
       setError(null);
       setSubmitting(false);
     }
-  }, [isOpen, mode, inventory]);
+  }, [isOpen, mode, inventory, initialVariantId]);
 
   const title = useMemo(() => getTitle(mode), [mode]);
+  const selectedVariantLabel = useMemo(() => {
+    if (!formValues.productId) return null;
+    return variantOptions.find((option) => option.id === formValues.productId)?.label ?? null;
+  }, [formValues.productId, variantOptions]);
 
   if (!isOpen) {
     return null;
@@ -269,15 +282,32 @@ export function InventoryActionModal({
         return (
           <>
             <label className="text-sm font-medium text-gray-700">
-              Product ID
+              Product Variant
               <input
                 name="productId"
                 value={formValues.productId}
                 onChange={handleChange}
+                list="inventory-variant-options"
                 className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
-                placeholder="Enter product ID"
+                placeholder="Type SKU or paste variant ID"
               />
+              {variantOptions.length > 0 && (
+                <datalist id="inventory-variant-options">
+                  {variantOptions.map((option) => (
+                    <option key={option.id} value={option.id} label={option.label} />
+                  ))}
+                </datalist>
+              )}
+              <p className="mt-1 text-xs text-gray-500">
+                Use the picker list or start typing to search by SKU, product name, or variant ID.
+              </p>
             </label>
+            {selectedVariantLabel && (
+              <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700">
+                <p className="text-xs font-semibold uppercase text-gray-500">Selected variant</p>
+                <p className="text-sm text-gray-900">{selectedVariantLabel}</p>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-4">
               <label className="text-sm font-medium text-gray-700">
                 Initial Quantity

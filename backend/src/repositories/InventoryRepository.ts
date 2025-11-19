@@ -25,6 +25,14 @@ export interface InventoryFilter {
   limit?: number;
 }
 
+export interface InventoryCatalogFilter {
+  search?: string;
+  brandId?: string;
+  includeArchived?: boolean;
+  page?: number;
+  limit?: number;
+}
+
 export interface StockMovementFilter {
   variantId?: string;
   type?: StockMovementType;
@@ -181,6 +189,90 @@ export class InventoryRepository extends BaseRepository<any> {
       page,
       limit,
       totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  /**
+   * Fetch catalog summary combining products, variants, and inventory stats
+   */
+  async getCatalogSummary(filter: InventoryCatalogFilter) {
+    const {
+      search,
+      brandId,
+      includeArchived = false,
+      page = 1,
+      limit = 12,
+    } = filter;
+
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.ProductWhereInput = {};
+
+    if (!includeArchived) {
+      where.isActive = true;
+    }
+
+    if (brandId) {
+      where.brandId = brandId;
+    }
+
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { slug: { contains: search, mode: 'insensitive' } },
+        {
+          variants: {
+            some: {
+              OR: [
+                { sku: { contains: search, mode: 'insensitive' } },
+                { color: { contains: search, mode: 'insensitive' } },
+                { storage: { contains: search, mode: 'insensitive' } },
+                { ram: { contains: search, mode: 'insensitive' } },
+              ],
+            },
+          },
+        },
+      ];
+    }
+
+    const [total, products] = await this.prisma.$transaction([
+      this.prisma.product.count({ where }),
+      this.prisma.product.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { updatedAt: 'desc' },
+        include: {
+          brand: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+            },
+          },
+          variants: {
+            orderBy: { createdAt: 'desc' },
+            include: {
+              inventory: true,
+            },
+          },
+        },
+      }),
+    ]);
+
+    const filteredProducts = products.map((product) => ({
+      ...product,
+      variants: includeArchived
+        ? product.variants
+        : product.variants.filter((variant) => variant.isActive),
+    }));
+
+    return {
+      products: filteredProducts,
+      page,
+      limit,
+      total,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
     };
   }
 

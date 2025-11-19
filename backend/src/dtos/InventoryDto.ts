@@ -79,6 +79,73 @@ export class InventoryDto {
   }
 }
 
+export class InventoryCatalogVariantDto {
+  id: string;
+  productId: string;
+  sku: string;
+  color?: string | null;
+  storage?: string | null;
+  ram?: string | null;
+  optionLabels: string[];
+  quantity: number;
+  reserved: number;
+  available: number;
+  minStock: number;
+  maxStock: number;
+  isLowStock: boolean;
+  isActive: boolean;
+
+  constructor(data: any) {
+    this.id = data.id;
+    this.productId = data.productId;
+    this.sku = data.sku;
+    this.color = data.color ?? null;
+    this.storage = data.storage ?? null;
+    this.ram = data.ram ?? null;
+    this.isActive = Boolean(data.isActive);
+    this.optionLabels = [data.color, data.storage, data.ram].filter(Boolean);
+
+    const inventory = data.inventory ?? {};
+    this.quantity = inventory.quantity ?? 0;
+    this.reserved = inventory.reserved ?? 0;
+    this.available = inventory.available ?? 0;
+    this.minStock = inventory.minStock ?? 0;
+    this.maxStock = inventory.maxStock ?? 0;
+    this.isLowStock =
+      this.minStock > 0 && this.available < this.minStock;
+  }
+}
+
+export class InventoryCatalogProductDto {
+  id: string;
+  name: string;
+  slug: string;
+  brand?: {
+    id: string;
+    name: string;
+    slug?: string | null;
+  };
+  variants: InventoryCatalogVariantDto[];
+
+  constructor(data: any) {
+    this.id = data.id;
+    this.name = data.name;
+    this.slug = data.slug;
+
+    if (data.brand) {
+      this.brand = {
+        id: data.brand.id,
+        name: data.brand.name,
+        slug: data.brand.slug,
+      };
+    }
+
+    this.variants = Array.isArray(data.variants)
+      ? data.variants.map((variant: any) => new InventoryCatalogVariantDto(variant))
+      : [];
+  }
+}
+
 export class UserDto {
   id: string;
   name: string | null;

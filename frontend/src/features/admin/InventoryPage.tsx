@@ -6,6 +6,8 @@ import { brandService, inventoryService } from '@/lib/api';
 import type {
   Brand,
   CreateInventoryPayload,
+  InventoryCatalogProduct,
+  InventoryCatalogVariant,
   InventoryRecord,
   InventoryStats,
   PaginationMeta,
@@ -29,6 +31,7 @@ interface InventoryFilters {
 }
 
 const PAGE_SIZE = 10;
+const CATALOG_PAGE_SIZE = 8;
 
 const initialFilters: InventoryFilters = {
   search: '',
@@ -38,11 +41,26 @@ const initialFilters: InventoryFilters = {
   page: 1,
 };
 
+interface CatalogFilters {
+  search: string;
+  brandId: string;
+  includeArchived: boolean;
+  page: number;
+}
+
+const initialCatalogFilters: CatalogFilters = {
+  search: '',
+  brandId: 'all',
+  includeArchived: false,
+  page: 1,
+};
+
 type ModalState =
   | null
   | {
       mode: InventoryActionMode;
       inventory?: InventoryRecord;
+      initialVariantId?: string;
     };
 
 const getErrorMessage = (err: unknown, fallback = 'Something went wrong'): string => {
@@ -54,6 +72,46 @@ const getErrorMessage = (err: unknown, fallback = 'Something went wrong'): strin
   }
   return fallback;
 };
+
+const resolveVariantId = (record?: InventoryRecord): string =>
+  record?.variant?.id ?? record?.variantId ?? record?.productId ?? '';
+
+const buildInventoryRecordFromCatalog = (
+  product: InventoryCatalogProduct,
+  variant: InventoryCatalogVariant
+): InventoryRecord => ({
+  id: variant.id,
+  productId: variant.id,
+  variantId: variant.id,
+  quantity: variant.quantity,
+  reserved: variant.reserved,
+  available: variant.available,
+  minStock: variant.minStock,
+  maxStock: variant.maxStock,
+  isLowStock: variant.isLowStock,
+  isOutOfStock: variant.available <= 0,
+  isArchived: !variant.isActive,
+  product: {
+    id: product.id,
+    name: product.name,
+    slug: product.slug,
+    brand: product.brand,
+  },
+  variant: {
+    id: variant.id,
+    productId: product.id,
+    color: variant.color ?? null,
+    storage: variant.storage ?? null,
+    ram: variant.ram ?? null,
+    sku: variant.sku,
+    product: {
+      id: product.id,
+      name: product.name,
+      slug: product.slug,
+      brand: product.brand,
+    },
+  },
+});
 
 export default function InventoryPage() {
   const [inventory, setInventory] = useState<InventoryRecord[] | null>([]);
@@ -67,6 +125,11 @@ export default function InventoryPage() {
     open: boolean;
     inventory?: InventoryRecord;
   }>({ open: false });
+  const [catalog, setCatalog] = useState<InventoryCatalogProduct[]>([]);
+  const [catalogPagination, setCatalogPagination] = useState<PaginationMeta | null>(null);
+  const [catalogFilters, setCatalogFilters] = useState<CatalogFilters>(initialCatalogFilters);
+  const [catalogLoading, setCatalogLoading] = useState(true);
+  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
 
   useEffect(() => {
     brandService
@@ -112,6 +175,30 @@ export default function InventoryPage() {
     loadInventory();
   }, [loadInventory]);
 
+  const loadCatalog = useCallback(async () => {
+    setCatalogLoading(true);
+    try {
+      const result = await inventoryService.getCatalog({
+        page: catalogFilters.page,
+        limit: CATALOG_PAGE_SIZE,
+        search: catalogFilters.search || undefined,
+        brandId: catalogFilters.brandId !== 'all' ? catalogFilters.brandId : undefined,
+        includeArchived: catalogFilters.includeArchived || undefined,
+      });
+      setCatalog(result.catalog);
+      setCatalogPagination(result.pagination);
+    } catch (error) {
+      console.error(error);
+      toast.error(getErrorMessage(error, 'Failed to load catalog picker'));
+    } finally {
+      setCatalogLoading(false);
+    }
+  }, [catalogFilters]);
+
+  useEffect(() => {
+    loadCatalog();
+  }, [loadCatalog]);
+
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setFilters((prev) => ({
       ...prev,
@@ -136,6 +223,30 @@ export default function InventoryPage() {
     }));
   };
 
+  const handleCatalogSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setCatalogFilters((prev) => ({
+      ...prev,
+      search: event.target.value,
+      page: 1,
+    }));
+  };
+
+  const handleCatalogBrandChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setCatalogFilters((prev) => ({
+      ...prev,
+      brandId: event.target.value,
+      page: 1,
+    }));
+  };
+
+  const handleCatalogToggle = () => {
+    setCatalogFilters((prev) => ({
+      ...prev,
+      includeArchived: !prev.includeArchived,
+      page: 1,
+    }));
+  };
+
   const handlePageChange = (direction: 'prev' | 'next') => {
     if (!pagination) return;
     setFilters((prev) => ({
@@ -144,6 +255,20 @@ export default function InventoryPage() {
         1,
         Math.min(
           pagination.totalPages,
+          direction === 'prev' ? prev.page - 1 : prev.page + 1
+        )
+      ),
+    }));
+  };
+
+  const handleCatalogPageChange = (direction: 'prev' | 'next') => {
+    if (!catalogPagination) return;
+    setCatalogFilters((prev) => ({
+      ...prev,
+      page: Math.max(
+        1,
+        Math.min(
+          catalogPagination.totalPages,
           direction === 'prev' ? prev.page - 1 : prev.page + 1
         )
       ),
@@ -162,14 +287,78 @@ export default function InventoryPage() {
 
   const closeMovementDrawer = () => setMovementState({ open: false });
 
+  const handleVariantSelect = (variantId: string) => {
+    setSelectedVariantId(variantId);
+    toast.success('Variant selected for inventory actions');
+  };
+
+  const handleVariantCopy = async (variantId: string) => {
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(variantId);
+        toast.success('Copied variant ID to clipboard');
+      } else {
+        throw new Error('Clipboard unavailable');
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Unable to copy variant ID');
+    }
+  };
+
+  const handleCatalogAction = (
+    mode: Exclude<InventoryActionMode, 'create' | 'archive'>
+  ) => {
+    if (!selectedCatalogSummary) {
+      toast.error('Select a product variant first');
+      return;
+    }
+
+    const syntheticRecord = buildInventoryRecordFromCatalog(
+      selectedCatalogSummary.product,
+      selectedCatalogSummary.variant
+    );
+    setModalState({ mode, inventory: syntheticRecord });
+  };
+
+  const handleCatalogActionFromRow = (
+    mode: Exclude<InventoryActionMode, 'create' | 'archive'>,
+    product: InventoryCatalogProduct,
+    variant: InventoryCatalogVariant
+  ) => {
+    const syntheticRecord = buildInventoryRecordFromCatalog(product, variant);
+    setModalState({ mode, inventory: syntheticRecord });
+  };
+
+  const handleOpenCreateModal = () => {
+    if (!selectedCatalogSummary) {
+      toast.error('Select a product variant from the catalog first');
+      return;
+    }
+    setModalState({
+      mode: 'create',
+      initialVariantId: selectedCatalogSummary.variant.id,
+    });
+  };
+
   const handleModalSubmit = async (values: InventoryActionFormValues) => {
     if (!modalState) return;
+
+    const targetVariantId =
+      values.productId ||
+      modalState.initialVariantId ||
+      resolveVariantId(modalState.inventory);
+
+    if (!targetVariantId) {
+      toast.error('Please select a product variant before continuing');
+      return;
+    }
 
     try {
       switch (modalState.mode) {
         case 'create': {
           const payload: CreateInventoryPayload = {
-            productId: values.productId || '',
+            productId: targetVariantId,
             initialQuantity: Number(values.initialQuantity ?? 0),
             minStock: Number(values.minStock ?? 0),
             maxStock: Number(values.maxStock ?? 0),
@@ -181,9 +370,8 @@ export default function InventoryPage() {
         }
         case 'stock-in':
         case 'stock-out': {
-          if (!modalState.inventory) return;
           const payload: StockMutationPayload = {
-            productId: modalState.inventory.productId,
+            productId: targetVariantId,
             quantity: Number(values.quantity ?? 0),
             reason: values.reason || undefined,
             referenceId: values.referenceId || undefined,
@@ -198,9 +386,8 @@ export default function InventoryPage() {
           break;
         }
         case 'adjust': {
-          if (!modalState.inventory) return;
           const payload: StockAdjustmentPayload = {
-            productId: modalState.inventory.productId,
+            productId: targetVariantId,
             newQuantity: Number(values.newQuantity ?? 0),
             reason: values.reason || '',
           };
@@ -209,35 +396,32 @@ export default function InventoryPage() {
           break;
         }
         case 'quick-update': {
-          if (!modalState.inventory) return;
           const payload: QuickQuantityUpdatePayload = {
             quantity: Number(
-              values.newQuantity ?? modalState.inventory.quantity ?? 0
+              values.newQuantity ?? modalState.inventory?.quantity ?? 0
             ),
           };
           await inventoryService.quickUpdateQuantity(
-            modalState.inventory.productId,
+            targetVariantId,
             payload
           );
           toast.success('Quantity updated');
           break;
         }
         case 'thresholds': {
-          if (!modalState.inventory) return;
           const payload: UpdateThresholdPayload = {
             minStock: Number(values.minStock ?? 0),
             maxStock: Number(values.maxStock ?? 0),
           };
           await inventoryService.updateThresholds(
-            modalState.inventory.productId,
+            targetVariantId,
             payload
           );
           toast.success('Thresholds updated');
           break;
         }
         case 'archive': {
-          if (!modalState.inventory) return;
-          await inventoryService.archiveInventory(modalState.inventory.productId);
+          await inventoryService.archiveInventory(targetVariantId);
           toast.success('Inventory archived');
           break;
         }
@@ -280,6 +464,29 @@ export default function InventoryPage() {
   }, [stats]);
 
   const inventoryItems = Array.isArray(inventory) ? inventory : [];
+  const catalogVariantOptions = useMemo(
+    () =>
+      catalog.flatMap((product) =>
+        product.variants.map((variant) => ({
+          id: variant.id,
+          label: `${product.name} • ${
+            variant.optionLabels.length > 0 ? variant.optionLabels.join(' / ') : 'Default'
+          } • ${variant.sku}`,
+        }))
+      ),
+    [catalog]
+  );
+
+  const selectedCatalogSummary = useMemo(() => {
+    if (!selectedVariantId) return null;
+    for (const product of catalog) {
+      const variant = product.variants.find((item) => item.id === selectedVariantId);
+      if (variant) {
+        return { product, variant };
+      }
+    }
+    return null;
+  }, [catalog, selectedVariantId]);
 
   return (
     <div className="space-y-6 p-6">
@@ -292,10 +499,16 @@ export default function InventoryPage() {
         </div>
         <div className="flex gap-3">
           <button
-            onClick={() => openModal('create')}
+            onClick={handleOpenCreateModal}
             className="rounded-lg bg-black px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-900"
           >
             Create Inventory
+          </button>
+          <button
+            onClick={() => handleCatalogAction('stock-in')}
+            className="rounded-lg border border-gray-300 px-4 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+          >
+            Stock In Selected
           </button>
           <button
             onClick={() => setFilters(initialFilters)}
@@ -322,41 +535,30 @@ export default function InventoryPage() {
         </div>
       )}
 
-      <div className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-        <div className="grid gap-4 md:grid-cols-4">
-          <div className="md:col-span-2">
-            <label className="text-sm font-semibold text-gray-700">
-              Search by product name or slug
-              <div className="relative mt-1">
-                <input
-                  type="text"
-                  value={filters.search}
-                  onChange={handleSearchChange}
-                  placeholder="e.g., iPhone 15 Pro Max or iphone-15-pro-max"
-                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
-                />
-                <svg
-                  className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-              </div>
-            </label>
-          </div>
+      <div className="grid gap-6 lg:grid-cols-[360px,1fr]">
+        <section className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
           <div>
+            <h2 className="text-xl font-semibold text-gray-900">Product & Variant Picker</h2>
+            <p className="text-sm text-gray-600">
+              Search the catalog and grab the exact variant ID before performing stock actions.
+            </p>
+          </div>
+          <div className="space-y-3">
+            <label className="text-sm font-semibold text-gray-700">
+              Search products, SKUs, or options
+              <input
+                type="text"
+                value={catalogFilters.search}
+                onChange={handleCatalogSearchChange}
+                placeholder="e.g., iPhone 15, SKU-001, Titanium"
+                className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
+              />
+            </label>
             <label className="text-sm font-semibold text-gray-700">
               Brand
               <select
-                value={filters.brandId}
-                onChange={handleBrandChange}
+                value={catalogFilters.brandId}
+                onChange={handleCatalogBrandChange}
                 className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
               >
                 <option value="all">All brands</option>
@@ -367,213 +569,433 @@ export default function InventoryPage() {
                 ))}
               </select>
             </label>
-          </div>
-          <div className="flex items-center gap-4">
             <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
               <input
                 type="checkbox"
-                checked={filters.lowStockOnly}
-                onChange={() => handleToggle('lowStockOnly')}
+                checked={catalogFilters.includeArchived}
+                onChange={handleCatalogToggle}
                 className="h-4 w-4 rounded border-gray-300 text-black focus:ring-black"
               />
-              Low stock only
-            </label>
-            <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-              <input
-                type="checkbox"
-                checked={filters.includeArchived}
-                onChange={() => handleToggle('includeArchived')}
-                className="h-4 w-4 rounded border-gray-300 text-black focus:ring-black"
-              />
-              Include archived
+              Include archived variants
             </label>
           </div>
-        </div>
-      </div>
-
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                  Product
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                  Brand
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                  Stock
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                  Thresholds
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 bg-white">
-              {loading ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-sm text-gray-600">
-                    Loading inventory...
-                  </td>
-                </tr>
-              ) : inventoryItems.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-sm text-gray-600">
-                    No inventory records match the current filters.
-                  </td>
-                </tr>
-              ) : (
-                inventoryItems.map((item) => {
-                  const productName = item.product?.name ?? 'Unknown product';
-                  const productSlug = item.product?.slug ?? 'unknown-slug';
-                  const brandName =
-                    item.product?.brand?.name ?? 'Unassigned brand';
-
-                  const statusBadges = [
-                    item.isLowStock && (
-                      <span
-                        key="low"
-                        className="rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-semibold text-yellow-800"
-                      >
-                        Low stock
-                      </span>
-                    ),
-                    item.isOutOfStock && (
-                      <span
-                        key="out"
-                        className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700"
-                      >
-                        Out of stock
-                      </span>
-                    ),
-                    item.isArchived && (
-                      <span
-                        key="archived"
-                        className="rounded-full bg-gray-200 px-2 py-0.5 text-xs font-semibold text-gray-700"
-                      >
-                        Archived
-                      </span>
-                    ),
-                  ].filter(Boolean);
-
-                  return (
-                    <tr key={item.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">
-                        <p className="text-sm font-semibold text-gray-900">{productName}</p>
-                        <p className="text-xs text-gray-500">{productSlug}</p>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-700">{brandName}</td>
-                      <td className="px-6 py-4">
-                        <p className="text-sm font-semibold text-gray-900">
-                          {item.available} available
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          Total {item.quantity} • Reserved {item.reserved}
-                        </p>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-700">
-                        Min {item.minStock} / Max {item.maxStock}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-wrap gap-2">
-                          {statusBadges.length > 0 ? (
-                            statusBadges
-                          ) : (
-                            <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700">
-                              Healthy
+          {selectedCatalogSummary && (
+            <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+              <p className="text-xs font-semibold uppercase text-gray-500">Selected variant</p>
+              <p className="text-sm font-semibold text-gray-900">
+                {selectedCatalogSummary.product.name}
+              </p>
+              <p className="text-xs text-gray-600">
+                {selectedCatalogSummary.variant.optionLabels.length > 0
+                  ? selectedCatalogSummary.variant.optionLabels.join(' / ')
+                  : 'Default configuration'}{' '}
+                • SKU {selectedCatalogSummary.variant.sku}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  onClick={() => handleVariantCopy(selectedCatalogSummary.variant.id)}
+                  className="rounded-lg border border-gray-300 px-3 py-1 text-xs font-semibold text-gray-700 transition hover:bg-gray-100"
+                >
+                  Copy Variant ID
+                </button>
+                <button
+                  onClick={() => handleCatalogAction('stock-in')}
+                  className="rounded-lg border border-gray-300 px-3 py-1 text-xs font-semibold text-gray-700 transition hover:bg-gray-100"
+                >
+                  Stock In
+                </button>
+                <button
+                  onClick={() => handleCatalogAction('stock-out')}
+                  className="rounded-lg border border-gray-300 px-3 py-1 text-xs font-semibold text-gray-700 transition hover:bg-gray-100"
+                >
+                  Stock Out
+                </button>
+                <button
+                  onClick={() => handleCatalogAction('adjust')}
+                  className="rounded-lg border border-gray-300 px-3 py-1 text-xs font-semibold text-gray-700 transition hover:bg-gray-100"
+                >
+                  Adjust
+                </button>
+              </div>
+            </div>
+          )}
+          <div className="space-y-4">
+            {catalogLoading ? (
+              <div className="py-8 text-center text-sm text-gray-500">Loading catalog...</div>
+            ) : catalog.length === 0 ? (
+              <div className="py-8 text-center text-sm text-gray-500">
+                No products match the current picker filters.
+              </div>
+            ) : (
+              catalog.map((product) => (
+                <div key={product.id} className="rounded-xl border border-gray-200 p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">{product.name}</p>
+                      <p className="text-xs text-gray-500">
+                        {product.brand?.name ?? 'Unassigned brand'}
+                      </p>
+                    </div>
+                    <span className="text-xs font-medium uppercase text-gray-400">
+                      {product.variants.length} variants
+                    </span>
+                  </div>
+                  <div className="mt-3 space-y-3">
+                    {product.variants.length === 0 ? (
+                      <p className="text-xs text-gray-500">No active variants.</p>
+                    ) : (
+                      product.variants.map((variant) => (
+                        <div
+                          key={variant.id}
+                          className="rounded-lg border border-gray-100 bg-gray-50 p-3"
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-semibold text-gray-900">
+                                {variant.optionLabels.length > 0
+                                  ? variant.optionLabels.join(' / ')
+                                  : 'Default Variant'}
+                              </p>
+                              <p className="text-xs text-gray-500">SKU {variant.sku}</p>
+                            </div>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleVariantSelect(variant.id)}
+                                className="rounded-lg border border-gray-300 px-3 py-1 text-xs font-semibold text-gray-700 transition hover:bg-gray-100"
+                              >
+                                Select
+                              </button>
+                              <button
+                                onClick={() => handleVariantCopy(variant.id)}
+                                className="rounded-lg border border-gray-300 px-3 py-1 text-xs font-semibold text-gray-700 transition hover:bg-gray-100"
+                              >
+                                Copy ID
+                              </button>
+                            </div>
+                          </div>
+                          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-600">
+                            <span className="rounded-full bg-white px-2 py-0.5 font-semibold text-gray-700">
+                              {variant.available} available
                             </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-wrap gap-2">
-                          <button
-                            onClick={() => openModal('quick-update', item)}
-                            disabled={item.isArchived}
-                            className="rounded-lg border border-blue-200 px-3 py-1 text-xs font-semibold text-blue-700 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            Quick Update
-                          </button>
-                          <button
-                            onClick={() => openModal('stock-in', item)}
-                            disabled={item.isArchived}
-                            className="rounded-lg border border-gray-300 px-3 py-1 text-xs font-semibold text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            Stock In
-                          </button>
-                          <button
-                            onClick={() => openModal('stock-out', item)}
-                            disabled={item.isArchived}
-                            className="rounded-lg border border-gray-300 px-3 py-1 text-xs font-semibold text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            Stock Out
-                          </button>
-                          <button
-                            onClick={() => openModal('adjust', item)}
-                            disabled={item.isArchived}
-                            className="rounded-lg border border-gray-300 px-3 py-1 text-xs font-semibold text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            Adjust
-                          </button>
-                          <button
-                            onClick={() => openModal('thresholds', item)}
-                            disabled={item.isArchived}
-                            className="rounded-lg border border-gray-300 px-3 py-1 text-xs font-semibold text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            Thresholds
-                          </button>
-                          <button
-                            onClick={() => handleMovementDrawer(item)}
-                            className="rounded-lg border border-gray-300 px-3 py-1 text-xs font-semibold text-gray-700 transition hover:bg-gray-100"
-                          >
-                            Movements
-                          </button>
-                          {!item.isArchived && (
+                            <span className="rounded-full bg-white px-2 py-0.5 font-semibold text-gray-700">
+                              Min {variant.minStock} / Max {variant.maxStock}
+                            </span>
+                            {variant.isLowStock && (
+                              <span className="rounded-full bg-yellow-100 px-2 py-0.5 font-semibold text-yellow-800">
+                                Low stock
+                              </span>
+                            )}
+                            {!variant.isActive && (
+                              <span className="rounded-full bg-gray-200 px-2 py-0.5 font-semibold text-gray-700">
+                                Archived
+                              </span>
+                            )}
+                          </div>
+                          <div className="mt-3 flex flex-wrap gap-2">
                             <button
-                              onClick={() => openModal('archive', item)}
-                              className="rounded-lg border border-red-200 px-3 py-1 text-xs font-semibold text-red-600 transition hover:bg-red-50"
+                              onClick={() => handleCatalogActionFromRow('stock-in', product, variant)}
+                              className="rounded-lg border border-gray-300 px-3 py-1 text-xs font-semibold text-gray-700 transition hover:bg-gray-100"
                             >
-                              Archive
+                              Stock In
                             </button>
-                          )}
+                            <button
+                              onClick={() => handleCatalogActionFromRow('stock-out', product, variant)}
+                              className="rounded-lg border border-gray-300 px-3 py-1 text-xs font-semibold text-gray-700 transition hover:bg-gray-100"
+                            >
+                              Stock Out
+                            </button>
+                            <button
+                              onClick={() => handleCatalogActionFromRow('adjust', product, variant)}
+                              className="rounded-lg border border-gray-300 px-3 py-1 text-xs font-semibold text-gray-700 transition hover:bg-gray-100"
+                            >
+                              Adjust
+                            </button>
+                          </div>
                         </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+          {catalogPagination && (
+            <div className="flex items-center justify-between text-sm text-gray-600">
+              <button
+                onClick={() => handleCatalogPageChange('prev')}
+                disabled={catalogFilters.page === 1}
+                className="rounded-lg border border-gray-300 px-4 py-2 font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Previous
+              </button>
+              <span>
+                Page {catalogPagination.page} of {catalogPagination.totalPages}
+              </span>
+              <button
+                onClick={() => handleCatalogPageChange('next')}
+                disabled={catalogPagination.page === catalogPagination.totalPages}
+                className="rounded-lg border border-gray-300 px-4 py-2 font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+          )}
+        </section>
+
+        <section className="space-y-6">
+          <div className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <div className="grid gap-4 md:grid-cols-4">
+              <div className="md:col-span-2">
+                <label className="text-sm font-semibold text-gray-700">
+                  Search by product name or slug
+                  <div className="relative mt-1">
+                    <input
+                      type="text"
+                      value={filters.search}
+                      onChange={handleSearchChange}
+                      placeholder="e.g., iPhone 15 Pro Max or iphone-15-pro-max"
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
+                    />
+                    <svg
+                      className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
+                    </svg>
+                  </div>
+                </label>
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-gray-700">
+                  Brand
+                  <select
+                    value={filters.brandId}
+                    onChange={handleBrandChange}
+                    className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
+                  >
+                    <option value="all">All brands</option>
+                    {brands.map((brand) => (
+                      <option key={brand.id} value={brand.id}>
+                        {brand.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={filters.lowStockOnly}
+                    onChange={() => handleToggle('lowStockOnly')}
+                    className="h-4 w-4 rounded border-gray-300 text-black focus:ring-black"
+                  />
+                  Low stock only
+                </label>
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={filters.includeArchived}
+                    onChange={() => handleToggle('includeArchived')}
+                    className="h-4 w-4 rounded border-gray-300 text-black focus:ring-black"
+                  />
+                  Include archived
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      Product
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      Brand
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      Stock
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      Thresholds
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 bg-white">
+                  {loading ? (
+                    <tr>
+                      <td colSpan={6} className="px-6 py-12 text-center text-sm text-gray-600">
+                        Loading inventory...
                       </td>
                     </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                  ) : inventoryItems.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="px-6 py-12 text-center text-sm text-gray-600">
+                        No inventory records match the current filters.
+                      </td>
+                    </tr>
+                  ) : (
+                    inventoryItems.map((item) => {
+                      const productName = item.product?.name ?? 'Unknown product';
+                      const productSlug = item.product?.slug ?? 'unknown-slug';
+                      const brandName = item.product?.brand?.name ?? 'Unassigned brand';
 
-        {pagination && (
-          <div className="flex items-center justify-between border-t border-gray-200 px-6 py-4 text-sm text-gray-600">
-            <button
-              onClick={() => handlePageChange('prev')}
-              disabled={filters.page === 1}
-              className="rounded-lg border border-gray-300 px-4 py-2 font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Previous
-            </button>
-            <span>
-              Page {pagination.page} of {pagination.totalPages}
-            </span>
-            <button
-              onClick={() => handlePageChange('next')}
-              disabled={pagination.page === pagination.totalPages}
-              className="rounded-lg border border-gray-300 px-4 py-2 font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Next
-            </button>
+                      const statusBadges = [
+                        item.isLowStock && (
+                          <span
+                            key="low"
+                            className="rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-semibold text-yellow-800"
+                          >
+                            Low stock
+                          </span>
+                        ),
+                        item.isOutOfStock && (
+                          <span
+                            key="out"
+                            className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700"
+                          >
+                            Out of stock
+                          </span>
+                        ),
+                        item.isArchived && (
+                          <span
+                            key="archived"
+                            className="rounded-full bg-gray-200 px-2 py-0.5 text-xs font-semibold text-gray-700"
+                          >
+                            Archived
+                          </span>
+                        ),
+                      ].filter(Boolean);
+
+                      return (
+                        <tr key={item.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4">
+                            <p className="text-sm font-semibold text-gray-900">{productName}</p>
+                            <p className="text-xs text-gray-500">{productSlug}</p>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-700">{brandName}</td>
+                          <td className="px-6 py-4">
+                            <p className="text-sm font-semibold text-gray-900">
+                              {item.available} available
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              Total {item.quantity} • Reserved {item.reserved}
+                            </p>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-700">
+                            Min {item.minStock} / Max {item.maxStock}
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex flex-wrap gap-2">
+                              {statusBadges.length > 0 ? (
+                                statusBadges
+                              ) : (
+                                <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700">
+                                  Healthy
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex flex-wrap gap-2">
+                              <button
+                                onClick={() => openModal('quick-update', item)}
+                                disabled={item.isArchived}
+                                className="rounded-lg border border-blue-200 px-3 py-1 text-xs font-semibold text-blue-700 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
+                              >
+                                Quick Update
+                              </button>
+                              <button
+                                onClick={() => openModal('stock-in', item)}
+                                disabled={item.isArchived}
+                                className="rounded-lg border border-gray-300 px-3 py-1 text-xs font-semibold text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+                              >
+                                Stock In
+                              </button>
+                              <button
+                                onClick={() => openModal('stock-out', item)}
+                                disabled={item.isArchived}
+                                className="rounded-lg border border-gray-300 px-3 py-1 text-xs font-semibold text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+                              >
+                                Stock Out
+                              </button>
+                              <button
+                                onClick={() => openModal('adjust', item)}
+                                disabled={item.isArchived}
+                                className="rounded-lg border border-gray-300 px-3 py-1 text-xs font-semibold text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+                              >
+                                Adjust
+                              </button>
+                              <button
+                                onClick={() => openModal('thresholds', item)}
+                                disabled={item.isArchived}
+                                className="rounded-lg border border-gray-300 px-3 py-1 text-xs font-semibold text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+                              >
+                                Thresholds
+                              </button>
+                              <button
+                                onClick={() => handleMovementDrawer(item)}
+                                className="rounded-lg border border-gray-300 px-3 py-1 text-xs font-semibold text-gray-700 transition hover:bg-gray-100"
+                              >
+                                Movements
+                              </button>
+                              {!item.isArchived && (
+                                <button
+                                  onClick={() => openModal('archive', item)}
+                                  className="rounded-lg border border-red-200 px-3 py-1 text-xs font-semibold text-red-600 transition hover:bg-red-50"
+                                >
+                                  Archive
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {pagination && (
+              <div className="flex items-center justify-between border-t border-gray-200 px-6 py-4 text-sm text-gray-600">
+                <button
+                  onClick={() => handlePageChange('prev')}
+                  disabled={filters.page === 1}
+                  className="rounded-lg border border-gray-300 px-4 py-2 font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Previous
+                </button>
+                <span>
+                  Page {pagination.page} of {pagination.totalPages}
+                </span>
+                <button
+                  onClick={() => handlePageChange('next')}
+                  disabled={pagination.page === pagination.totalPages}
+                  className="rounded-lg border border-gray-300 px-4 py-2 font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+            )}
           </div>
-        )}
+        </section>
       </div>
 
       {modalState && (
@@ -583,6 +1005,8 @@ export default function InventoryPage() {
           inventory={modalState.inventory}
           onClose={closeModal}
           onSubmit={handleModalSubmit}
+          initialVariantId={modalState.initialVariantId}
+          variantOptions={catalogVariantOptions}
         />
       )}
 

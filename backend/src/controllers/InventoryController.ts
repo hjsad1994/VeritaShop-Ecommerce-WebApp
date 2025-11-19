@@ -11,6 +11,79 @@ export class InventoryController {
   }
 
   /**
+   * Create inventory record manually
+   * POST /api/inventory
+   * Auth: Required (ADMIN, MANAGER)
+   */
+  createInventory = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user!.userId;
+      const {
+        productId,
+        variantId,
+        initialQuantity,
+        minStock,
+        maxStock,
+        reason,
+      } = req.body;
+
+      const result = await this.inventoryService.createInventoryRecord({
+        variantId: variantId || productId,
+        initialQuantity,
+        minStock,
+        maxStock,
+        reason,
+        userId,
+      });
+
+      res.status(HTTP_STATUS.CREATED).json({
+        success: true,
+        message: SUCCESS_MESSAGES.CREATE_INVENTORY_SUCCESS,
+        data: {
+          inventory: new InventoryDto(result.inventory),
+          movement: result.movement ? new StockMovementDto(result.movement) : null,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * Get inventory catalog summary for picker
+   * GET /api/inventory/catalog
+   * Auth: Required (ADMIN, MANAGER)
+   */
+  getInventoryCatalog = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const {
+        search,
+        brandId,
+        includeArchived,
+        page = '1',
+        limit = '12',
+      } = req.query;
+
+      const result = await this.inventoryService.getInventoryCatalog({
+        search: (search as string) || undefined,
+        brandId: (brandId as string) || undefined,
+        includeArchived: includeArchived === 'true',
+        page: parseInt(page as string, 10) || 1,
+        limit: Math.min(parseInt(limit as string, 10) || 12, 50),
+      });
+
+      res.status(HTTP_STATUS.OK).json({
+        success: true,
+        message: SUCCESS_MESSAGES.GET_INVENTORY_CATALOG_SUCCESS,
+        data: result.catalog,
+        pagination: result.pagination,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
    * Get all inventory with filters and pagination
    * GET /api/inventory
    * Auth: Required (ADMIN, MANAGER)

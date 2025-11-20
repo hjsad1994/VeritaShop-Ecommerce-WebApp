@@ -11,7 +11,7 @@ import { useCart } from '@/contexts/CartContext';
 
 export default function HomePage() {
   const { isAuthenticated } = useAuth();
-  const { addToCart, openCart } = useCart();
+  const { addToCartLegacy, openCart } = useCart();
   const [addingToCart, setAddingToCart] = React.useState<number | null>(null);
   const [lastClickedTime, setLastClickedTime] = React.useState<{ [key: number]: number }>({});
 
@@ -379,7 +379,16 @@ export default function HomePage() {
 
                         // Add to cart logic
                         const selectedColor = product.colors ? product.colors[0] : 'Default';
-                        addToCart(product, 1, selectedColor);
+
+                        // Map Product to LegacyCartItem format
+                        const legacyProduct = {
+                          id: product.id.toString(),
+                          name: product.name,
+                          price: product.price,
+                          slug: '', // Not available in this Product type
+                          images: product.images || [product.image]
+                        };
+                        addToCartLegacy(legacyProduct, 1, selectedColor);
 
                         // Reset loading state and open cart
                         setTimeout(() => {

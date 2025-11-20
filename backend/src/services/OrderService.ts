@@ -146,10 +146,15 @@ export class OrderService {
   }
 
   /**
-   * 3. Get order by ID with authorization check
+   * 3. Get order by ID or order number with authorization check
    */
-  async getOrderById(orderId: string, userId: string, userRole: string) {
-    const order = await this.orderRepository.findById(orderId);
+  async getOrderById(orderIdOrNumber: string, userId: string, userRole: string) {
+    let order = await this.orderRepository.findById(orderIdOrNumber);
+
+    // If not found by ID, try to find by order number
+    if (!order) {
+      order = await this.orderRepository.findByOrderNumber(orderIdOrNumber);
+    }
 
     if (!order) {
       throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.ORDER_NOT_FOUND);
@@ -161,7 +166,7 @@ export class OrderService {
       throw new ApiError(HTTP_STATUS.FORBIDDEN, ERROR_MESSAGES.ORDER_UNAUTHORIZED);
     }
 
-    logger.info(`Order ${orderId} retrieved by ${isAdmin ? 'admin' : `user ${userId}`}`);
+    logger.info(`Order ${order.id} (${order.orderNumber}) retrieved by ${isAdmin ? 'admin' : `user ${userId}`}`);
 
     return order;
   }
@@ -229,8 +234,18 @@ export class OrderService {
       throw new ApiError(HTTP_STATUS.FORBIDDEN, ERROR_MESSAGES.ORDER_UNAUTHORIZED);
     }
 
-    // User can only cancel PENDING orders
-    if (!isAdmin && order.status !== OrderStatus.PENDING) {
+    // User can cancel PENDING and CONFIRMED orders
+    if (!isAdmin && (order.status !== OrderStatus.PENDING && order.status !== OrderStatus.CONFIRMED)) {
+      throw new ApiError(HTTP_STATUS.BAD_REQUEST, ERROR_MESSAGES.ORDER_CANNOT_CANCEL);
+    }
+
+    // Admin can cancel PENDING and CONFIRMED orders
+    if (isAdmin && order.status !== OrderStatus.PENDING && order.status !== OrderStatus.CONFIRMED) {
+      throw new ApiError(HTTP_STATUS.BAD_REQUEST, ERROR_MESSAGES.ORDER_CANNOT_CANCEL);
+    }
+
+    // Cannot cancel orders that are already in progress
+    if (order.status === OrderStatus.PROCESSING || order.status === OrderStatus.SHIPPING) {
       throw new ApiError(HTTP_STATUS.BAD_REQUEST, ERROR_MESSAGES.ORDER_CANNOT_CANCEL);
     }
 

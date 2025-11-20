@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function DebugAuthPage() {
@@ -59,9 +60,9 @@ export default function DebugAuthPage() {
           </div>
           
           <div className="flex space-x-4">
-            <a href="/orders" className="text-blue-600 hover:underline">Go to Orders</a>
-            <a href="/profile" className="text-blue-600 hover:underline">Go to Profile</a>
-            <a href="/settings" className="text-blue-600 hover:underline">Go to Settings</a>
+            <Link href="/orders" className="text-blue-600 hover:underline">Go to Orders</Link>
+            <Link href="/profile" className="text-blue-600 hover:underline">Go to Profile</Link>
+            <Link href="/settings" className="text-blue-600 hover:underline">Go to Settings</Link>
           </div>
         </div>
       </div>

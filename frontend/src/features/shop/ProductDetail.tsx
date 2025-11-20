@@ -34,7 +34,7 @@ const colorMap: { [key: string]: string } = {
 };
 
 export default function ProductDetail({ productId }: ProductDetailProps) {
-  const { addToCart, openCart } = useCart();
+  const { addToCartLegacy, openCart } = useCart();
   const { isAuthenticated } = useAuth();
   const [selectedImage, setSelectedImage] = React.useState(0);
   const [quantity, setQuantity] = React.useState(1);
@@ -83,8 +83,17 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
     }
     
     setIsAddingToCart(true);
-    addToCart(product, quantity, product.colors[selectedColor]);
-    
+
+    // Map Product to LegacyCartItem format
+    const legacyProduct = {
+      id: product.id.toString(),
+      name: product.name,
+      price: product.price,
+      slug: '', // Not available in this Product type
+      images: product.images || [product.image]
+    };
+    addToCartLegacy(legacyProduct, quantity, product.colors[selectedColor]);
+
     setTimeout(() => {
       setIsAddingToCart(false);
       setShowToast(true);

@@ -21,6 +21,18 @@ export interface InventoryFilter {
   maxAvailable?: number;
   lowStock?: boolean; // available < minStock
   search?: string; // Search by product name, SKU
+  brandId?: string; // Filter by brand
+  includeArchived?: boolean; // Include archived variants
+  status?: 'low' | 'out' | 'archived'; // Filter by status
+  sort?: 'available' | 'updatedAt'; // Sort field
+  page?: number;
+  limit?: number;
+}
+
+export interface InventoryCatalogFilter {
+  search?: string;
+  brandId?: string;
+  includeArchived?: boolean;
   page?: number;
   limit?: number;
 }
@@ -107,6 +119,10 @@ export class InventoryRepository extends BaseRepository<any> {
       maxAvailable,
       lowStock,
       search,
+      brandId,
+      includeArchived = false,
+      status,
+      sort = 'updatedAt',
       page = 1,
       limit = 20,
     } = filter;
@@ -130,50 +146,117 @@ export class InventoryRepository extends BaseRepository<any> {
       }
     }
 
-    // Note: lowStock filter will be applied post-query since Prisma doesn't support
-    // comparing two columns in where clause directly
+    // Build variant filter object
+    const variantFilter: Prisma.ProductVariantWhereInput = {};
 
-    if (search) {
-      where.variant = {
-        OR: [
-          { sku: { contains: search, mode: 'insensitive' } },
-          { product: { name: { contains: search, mode: 'insensitive' } } },
-        ],
+    // Archived filter
+    if (!includeArchived) {
+      variantFilter.isActive = true;
+    }
+
+    // Brand filter
+    if (brandId) {
+      variantFilter.product = {
+        brandId,
       };
     }
 
-    // Get inventory records (may need post-filtering for lowStock)
+    // Search filter - can search in variant SKU or product name
+    // If both brand and search are provided, combine them with AND
+    if (search) {
+      const searchCondition = {
+        OR: [
+          { sku: { contains: search, mode: Prisma.QueryMode.insensitive } },
+          { product: { name: { contains: search, mode: Prisma.QueryMode.insensitive } } },
+        ],
+      };
+
+      if (brandId) {
+        // Both brand and search: use AND to combine
+        variantFilter.AND = [
+          { product: { brandId } },
+          searchCondition,
+        ];
+        // Remove the product filter since we're using AND now
+        delete variantFilter.product;
+      } else {
+        // Only search
+        variantFilter.OR = searchCondition.OR;
+      }
+    }
+
+    // Only add variant filter if we have any conditions
+    if (Object.keys(variantFilter).length > 0) {
+      where.variant = variantFilter;
+    }
+
+    // Get inventory records with enriched data
     let inventories = await this.prisma.inventory.findMany({
       where,
       include: {
         variant: {
           include: {
             product: {
-              select: {
-                id: true,
-                name: true,
-                slug: true,
-                brandId: true,
+              include: {
+                brand: {
+                  select: {
+                    id: true,
+                    name: true,
+                    slug: true,
+                  },
+                },
               },
             },
           },
         },
       },
-      orderBy: {
-        updatedAt: 'desc',
-      },
+      orderBy: sort === 'available' ? { available: 'asc' } : { updatedAt: 'desc' },
     });
 
-    // Apply lowStock filter post-query if needed
-    if (lowStock) {
+    // Apply post-query filters that require column comparison
+    if (lowStock || status === 'low') {
       inventories = inventories.filter(
         (inv) => inv.minStock > 0 && inv.available < inv.minStock
       );
     }
 
+    if (status === 'out') {
+      inventories = inventories.filter((inv) => inv.available <= 0);
+    }
+
+    if (status === 'archived') {
+      inventories = inventories.filter((inv) => !inv.variant.isActive);
+    }
+
+    // Get last movement timestamps for each inventory
+    const inventoryIds = inventories.map((inv) => inv.id);
+    const lastMovements = await this.prisma.stockMovement.findMany({
+      where: {
+        inventoryId: { in: inventoryIds },
+      },
+      select: {
+        inventoryId: true,
+        createdAt: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      distinct: ['inventoryId'],
+    });
+
+    const lastMovementMap = new Map(
+      lastMovements.map((m) => [m.inventoryId, m.createdAt])
+    );
+
+    // Enrich inventories with lastMovementAt
+    const enrichedInventories = inventories.map((inv) => ({
+      ...inv,
+      lastMovementAt: lastMovementMap.get(inv.id) || null,
+    }));
+
     // Calculate total and apply pagination
-    const total = inventories.length;
-    const paginatedInventories = inventories.slice(skip, skip + limit);
+    const total = enrichedInventories.length;
+    const paginatedInventories = enrichedInventories.slice(skip, skip + limit);
 
     return {
       inventories: paginatedInventories,
@@ -181,6 +264,241 @@ export class InventoryRepository extends BaseRepository<any> {
       page,
       limit,
       totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  /**
+   * Get all variants with inventory (including those without inventory records)
+   */
+  async findAllVariants(filter: InventoryFilter) {
+    const {
+      variantId,
+      minAvailable,
+      maxAvailable,
+      lowStock,
+      status,
+      search,
+      brandId,
+      includeArchived = false,
+      sort = 'updatedAt',
+      page = 1,
+      limit = 20,
+    } = filter;
+
+    const skip = (page - 1) * limit;
+
+    // Build where clause for ProductVariant
+    const where: Prisma.ProductVariantWhereInput = {};
+
+    if (!includeArchived) {
+      where.isActive = true;
+    }
+
+    // Brand filter (via Product)
+    if (brandId) {
+      where.product = {
+        brandId,
+      };
+    }
+
+    // Search filter (SKU or Product Name)
+    if (search) {
+      const searchCondition: Prisma.ProductVariantWhereInput = {
+        OR: [
+          { sku: { contains: search, mode: Prisma.QueryMode.insensitive } },
+          { product: { name: { contains: search, mode: Prisma.QueryMode.insensitive } } },
+        ],
+      };
+
+      if (brandId) {
+        where.AND = [
+          { product: { brandId } },
+          searchCondition,
+        ];
+        delete where.product;
+      } else {
+        where.OR = searchCondition.OR;
+      }
+    }
+
+    // Variant ID filter
+    if (variantId) {
+      where.id = variantId;
+    }
+
+    // Get all variants matching the base criteria
+    // We fetch ALL to perform in-memory filtering for inventory status
+    const variants = await this.prisma.productVariant.findMany({
+      where,
+      include: {
+        product: {
+          include: {
+            brand: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+              },
+            },
+          },
+        },
+        inventory: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Map variants to "Inventory-like" structure
+    let enrichedInventories = variants.map((variant) => {
+      const inventory = variant.inventory || {
+        id: `virtual-${variant.id}`, // Virtual ID
+        variantId: variant.id,
+        quantity: 0,
+        reserved: 0,
+        available: 0,
+        minStock: 0,
+        maxStock: 0,
+        createdAt: variant.createdAt,
+        updatedAt: variant.updatedAt,
+      };
+
+      return {
+        ...inventory,
+        variant: {
+          ...variant,
+          inventory: undefined 
+        },
+      };
+    });
+
+    // Apply post-query filters
+    if (minAvailable !== undefined) {
+      enrichedInventories = enrichedInventories.filter(inv => inv.available >= minAvailable);
+    }
+
+    if (maxAvailable !== undefined) {
+      enrichedInventories = enrichedInventories.filter(inv => inv.available <= maxAvailable);
+    }
+
+    if (lowStock || status === 'low') {
+      enrichedInventories = enrichedInventories.filter(
+        (inv) => inv.minStock > 0 && inv.available < inv.minStock
+      );
+    }
+
+    if (status === 'out') {
+      enrichedInventories = enrichedInventories.filter((inv) => inv.available <= 0);
+    }
+
+    if (status === 'archived') {
+      enrichedInventories = enrichedInventories.filter((inv) => !inv.variant.isActive);
+    }
+
+    // Apply sorting
+    if (sort === 'available') {
+      enrichedInventories.sort((a, b) => a.available - b.available);
+    } else {
+      // Default sort by updatedAt desc (already roughly sorted by query, but let's ensure)
+      enrichedInventories.sort((a, b) => {
+        const dateA = new Date(a.updatedAt || 0).getTime();
+        const dateB = new Date(b.updatedAt || 0).getTime();
+        return dateB - dateA;
+      });
+    }
+
+    // Pagination
+    const total = enrichedInventories.length;
+    const paginatedInventories = enrichedInventories.slice(skip, skip + limit);
+
+    return {
+      inventories: paginatedInventories,
+      total,
+      page,
+      limit,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
+    };
+  }
+
+  /**
+   * Fetch catalog summary combining products, variants, and inventory stats
+   */
+  async getCatalogSummary(filter: InventoryCatalogFilter) {
+    const {
+      search,
+      brandId,
+      includeArchived = false,
+      page = 1,
+      limit = 12,
+    } = filter;
+
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.ProductWhereInput = {};
+
+    if (!includeArchived) {
+      where.isActive = true;
+    }
+
+    if (brandId) {
+      where.brandId = brandId;
+    }
+
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: Prisma.QueryMode.insensitive } },
+        { slug: { contains: search, mode: Prisma.QueryMode.insensitive } },
+        {
+          variants: {
+            some: {
+              OR: [
+                { sku: { contains: search, mode: Prisma.QueryMode.insensitive } },
+                { color: { contains: search, mode: Prisma.QueryMode.insensitive } },
+                { storage: { contains: search, mode: Prisma.QueryMode.insensitive } },
+                { ram: { contains: search, mode: Prisma.QueryMode.insensitive } },
+              ],
+            },
+          },
+        },
+      ];
+    }
+
+    const [total, products] = await this.prisma.$transaction([
+      this.prisma.product.count({ where }),
+      this.prisma.product.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { updatedAt: 'desc' },
+        include: {
+          brand: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+            },
+          },
+          variants: {
+            orderBy: { createdAt: 'desc' },
+            include: {
+              inventory: true,
+            },
+          },
+        },
+      }),
+    ]);
+
+    const filteredProducts = products.map((product) => ({
+      ...product,
+      variants: includeArchived
+        ? product.variants
+        : product.variants.filter((variant) => variant.isActive),
+    }));
+
+    return {
+      products: filteredProducts,
+      page,
+      limit,
+      total,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
     };
   }
 

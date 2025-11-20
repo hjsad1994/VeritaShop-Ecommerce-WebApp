@@ -9,9 +9,11 @@ interface AdminAuthGuardProps {
 }
 
 export default function AdminAuthGuard({ children }: AdminAuthGuardProps) {
-  const { user, isAuthenticated, isLoading, isAdmin } = useAuth();
   const router = useRouter();
   const [isChecking, setIsChecking] = useState(true);
+  
+  // useAuth now returns safe defaults instead of throwing
+  const { user, isAuthenticated, isLoading, isAdmin } = useAuth();
 
   useEffect(() => {
     if (!isLoading) {
@@ -19,7 +21,7 @@ export default function AdminAuthGuard({ children }: AdminAuthGuardProps) {
       
       // Check if user is authenticated
       if (!isAuthenticated || !user) {
-        router.push('/login');
+        router.push('/admin/login');
         return;
       }
 

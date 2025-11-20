@@ -1,9 +1,15 @@
 import { StockMovementType } from '@prisma/client';
-import { InventoryRepository, InventoryFilter, StockMovementFilter } from '../repositories/InventoryRepository';
+import {
+  InventoryRepository,
+  InventoryFilter,
+  StockMovementFilter,
+  InventoryCatalogFilter,
+} from '../repositories/InventoryRepository';
 import { RepositoryFactory } from '../repositories';
 import { ApiError } from '../utils/ApiError';
 import { HTTP_STATUS, ERROR_MESSAGES } from '../constants';
 import { PrismaClient } from '@prisma/client';
+import { InventoryCatalogProductDto } from '../dtos/InventoryDto';
 
 export interface StockInData {
   variantId: string;
@@ -28,6 +34,15 @@ export interface StockAdjustmentData {
   userId: string;
 }
 
+export interface CreateInventoryData {
+  variantId: string;
+  initialQuantity: number;
+  minStock?: number;
+  maxStock?: number;
+  reason?: string;
+  userId: string;
+}
+
 export class InventoryService {
   private inventoryRepository: InventoryRepository;
   private productRepository: any;
@@ -43,10 +58,25 @@ export class InventoryService {
    * Get all inventory with filters and pagination
    */
   async getAllInventory(filter: InventoryFilter) {
-    const result = await this.inventoryRepository.findAll(filter);
+    // Use findAllVariants to include variants that don't have inventory records yet
+    const result = await this.inventoryRepository.findAllVariants(filter);
+
+    // Enrich inventories with status flags
+    const enrichedInventories = result.inventories.map((inv: any) => {
+      const isLowStock = inv.minStock > 0 && inv.available < inv.minStock;
+      const isOutOfStock = inv.available <= 0;
+      const isArchived = !inv.variant?.isActive;
+
+      return {
+        ...inv,
+        isLowStock,
+        isOutOfStock,
+        isArchived,
+      };
+    });
 
     return {
-      inventories: result.inventories,
+      inventories: enrichedInventories,
       pagination: {
         page: result.page,
         limit: result.limit,
@@ -54,6 +84,119 @@ export class InventoryService {
         totalPages: result.totalPages,
       },
     };
+  }
+
+  /**
+   * Get catalog summary for admin picker
+   */
+  async getInventoryCatalog(filter: InventoryCatalogFilter) {
+    const result = await this.inventoryRepository.getCatalogSummary(filter);
+
+    return {
+      catalog: result.products.map((product) => new InventoryCatalogProductDto(product)),
+      pagination: {
+        page: result.page,
+        limit: result.limit,
+        total: result.total,
+        totalPages: result.totalPages,
+      },
+    };
+  }
+
+  /**
+   * Create or seed inventory record manually
+   */
+  async createInventoryRecord(data: CreateInventoryData) {
+    const { variantId, initialQuantity, minStock = 0, maxStock = 0, reason, userId } = data;
+
+    if (!variantId) {
+      throw new ApiError(HTTP_STATUS.BAD_REQUEST, ERROR_MESSAGES.VARIANT_NOT_FOUND);
+    }
+
+    if (initialQuantity < 0) {
+      throw new ApiError(HTTP_STATUS.BAD_REQUEST, ERROR_MESSAGES.INVALID_QUANTITY);
+    }
+
+    if (minStock < 0 || maxStock < 0) {
+      throw new ApiError(HTTP_STATUS.BAD_REQUEST, ERROR_MESSAGES.INVALID_QUANTITY);
+    }
+
+    const variant = await this.productRepository.findVariantById(variantId);
+    if (!variant) {
+      throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.VARIANT_NOT_FOUND);
+    }
+
+    const result = await this.prisma.$transaction(async (tx) => {
+      let inventory = await tx.inventory.findUnique({
+        where: { variantId },
+      });
+
+      if (!inventory) {
+        inventory = await tx.inventory.create({
+          data: {
+            variantId,
+            quantity: 0,
+            reserved: 0,
+            available: 0,
+            minStock: 0,
+            maxStock: 0,
+          },
+        });
+      }
+
+      const previousStock = inventory.quantity;
+      const updatedInventory = await tx.inventory.update({
+        where: { id: inventory.id },
+        data: {
+          quantity: initialQuantity,
+          available: Math.max(initialQuantity - inventory.reserved, 0),
+          minStock,
+          maxStock,
+        },
+        include: {
+          variant: {
+            include: {
+              product: {
+                select: {
+                  id: true,
+                  name: true,
+                  slug: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      let movement = null;
+      if (initialQuantity !== previousStock) {
+        movement = await tx.stockMovement.create({
+          data: {
+            inventoryId: inventory.id,
+            variantId,
+            type: StockMovementType.ADJUSTMENT,
+            quantity: initialQuantity - previousStock,
+            previousStock,
+            newStock: initialQuantity,
+            reason: reason || 'Khởi tạo tồn kho',
+            userId,
+          },
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+        });
+      }
+
+      return { inventory: updatedInventory, movement };
+    });
+
+    return result;
   }
 
   /**

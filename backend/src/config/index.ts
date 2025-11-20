@@ -23,6 +23,11 @@ interface Config {
     refreshTokenName: string;
     maxAge: number;
   };
+  aws: {
+    region: string;
+    s3Bucket: string;
+    cloudFrontDomain: string;
+  };
 }
 
 const config: Config = {
@@ -37,13 +42,18 @@ const config: Config = {
   jwt: {
     secret: process.env.JWT_SECRET || 'fallback-secret-key',
     refreshSecret: process.env.JWT_REFRESH_SECRET || 'fallback-refresh-secret',
-    accessTokenExpiry: '15m',
-    refreshTokenExpiry: '7d',
+    accessTokenExpiry: process.env.JWT_ACCESS_TOKEN_EXPIRY || '24h',
+    refreshTokenExpiry: process.env.JWT_REFRESH_TOKEN_EXPIRY || '7d',
   },
   cookie: {
     accessTokenName: 'accessToken',
     refreshTokenName: 'refreshToken',
     maxAge: 7 * 24 * 60 * 60 * 1000,
+  },
+  aws: {
+    region: process.env.AWS_REGION || 'us-east-1',
+    s3Bucket: process.env.AWS_S3_BUCKET || 'verita-phone-store-assets',
+    cloudFrontDomain: process.env.AWS_CLOUDFRONT_DOMAIN || 'd1ffmiafbbgufv.cloudfront.net',
   },
 };
 

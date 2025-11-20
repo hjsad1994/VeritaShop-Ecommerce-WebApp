@@ -2,9 +2,15 @@ import axios, { AxiosError, AxiosInstance } from 'axios';
 import type { ApiError } from './types';
 import { authService } from './authService';
 
+const baseURL = process.env.NEXT_PUBLIC_API_URL;
+
+if (!baseURL) {
+  throw new Error('NEXT_PUBLIC_API_URL is not defined. Please set it in your frontend .env file.');
+}
+
 // Create axios instance with default configuration
 const apiClient: AxiosInstance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
+  baseURL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -15,9 +21,14 @@ const apiClient: AxiosInstance = axios.create({
 // Request interceptor (can be used for adding auth tokens, logging, etc.)
 apiClient.interceptors.request.use(
   (config) => {
-    // You can add common headers here if needed
-    // For example, if you want to add a custom header:
-    // config.headers['X-Custom-Header'] = 'value';
+    // Add Bearer token from localStorage if available (for compatibility)
+    // Backend also supports cookies via withCredentials
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('accessToken');
+      if (token && !config.headers.Authorization) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    }
     return config;
   },
   (error) => {

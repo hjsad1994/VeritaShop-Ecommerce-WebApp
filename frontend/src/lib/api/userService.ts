@@ -17,8 +17,17 @@ export const userService = {
    * @returns Promise with user data
    */
   async getCurrentUser(): Promise<ApiResponse<{ user: User }>> {
-    const response = await apiClient.get<ApiResponse<{ user: User }>>('/users/me');
-    return response.data;
+    try {
+      const response = await apiClient.get<ApiResponse<{ user: User }>>('/users/me');
+      return response.data;
+    } catch (error: unknown) {
+      // Re-throw with more context
+      const errorMessage =
+        (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        (error instanceof Error ? error.message : undefined) ||
+        'Failed to get current user';
+      throw new Error(errorMessage);
+    }
   },
 
   /**

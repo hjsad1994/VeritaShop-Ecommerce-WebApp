@@ -1,87 +1,67 @@
 import apiClient from './apiClient';
-import { Brand, ApiResponse } from './types';
+import type { ApiResponse, Brand, PaginationMeta } from './types';
+
+interface BrandListResponse {
+  brands: Brand[];
+  pagination: PaginationMeta;
+}
+
+interface BrandQueryParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  isActive?: boolean;
+}
 
 class BrandService {
-  private basePath = '/brands';
+  async getBrands(params: BrandQueryParams = {}): Promise<BrandListResponse> {
+    const searchParams = new URLSearchParams();
+    
+    if (params.page) searchParams.append('page', params.page.toString());
+    if (params.limit) searchParams.append('limit', params.limit.toString());
+    if (params.search) searchParams.append('search', params.search);
+    if (params.isActive !== undefined) searchParams.append('isActive', params.isActive.toString());
 
-  /**
-   * Get all brands
-   */
-  async getBrands(params: { page?: number; limit?: number; isActive?: boolean } = {}): Promise<{
-    brands: Brand[];
-    pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      totalPages: number;
-    };
-  }> {
-    const queryParams = new URLSearchParams();
-
-    if (params.page) queryParams.append('page', params.page.toString());
-    if (params.limit) queryParams.append('limit', params.limit.toString());
-    if (params.isActive !== undefined) queryParams.append('isActive', params.isActive.toString());
-
-    const url = queryParams.toString() ? `${this.basePath}?${queryParams}` : this.basePath;
-
-    const response = await apiClient.get<ApiResponse<{
-      brands: Brand[];
-      pagination: {
-        page: number;
-        limit: number;
-        total: number;
-        totalPages: number;
-      };
-    }>>(url);
-
+    const queryString = searchParams.toString();
+    const url = queryString ? `/brands?${queryString}` : '/brands';
+    
+    const response = await apiClient.get<ApiResponse<BrandListResponse>>(url);
     return response.data.data;
   }
 
-  /**
-   * Get brand by ID
-   */
   async getBrandById(id: string): Promise<Brand> {
-    const response = await apiClient.get<ApiResponse<Brand>>(`${this.basePath}/${id}`);
+    const response = await apiClient.get<ApiResponse<Brand>>(`/brands/${id}`);
     return response.data.data;
   }
 
-  /**
-   * Create a new brand (Admin only)
-   */
-  async createBrand(brandData: {
+  async createBrand(data: {
     name: string;
+    slug?: string;
     description?: string;
     logo?: string;
-    slug?: string;
+    isActive?: boolean;
   }): Promise<Brand> {
-    const response = await apiClient.post<ApiResponse<Brand>>(this.basePath, brandData);
+    const response = await apiClient.post<ApiResponse<Brand>>('/brands', data);
     return response.data.data;
   }
 
-  /**
-   * Update a brand (Admin/Manager only)
-   */
-  async updateBrand(
-    id: string,
-    updateData: {
-      name?: string;
-      description?: string;
-      logo?: string;
-      isActive?: boolean;
-      slug?: string;
-    }
-  ): Promise<Brand> {
-    const response = await apiClient.put<ApiResponse<Brand>>(`${this.basePath}/${id}`, updateData);
+  async updateBrand(id: string, data: {
+    name?: string;
+    slug?: string;
+    description?: string;
+    logo?: string;
+    isActive?: boolean;
+  }): Promise<Brand> {
+    const response = await apiClient.put<ApiResponse<Brand>>(`/brands/${id}`, data);
     return response.data.data;
   }
 
-  /**
-   * Delete a brand (Admin only)
-   */
   async deleteBrand(id: string): Promise<void> {
-    await apiClient.delete(`${this.basePath}/${id}`);
+    await apiClient.delete(`/brands/${id}`);
   }
 }
 
 const brandService = new BrandService();
+
+export { BrandService };
 export default brandService;

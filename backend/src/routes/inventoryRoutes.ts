@@ -10,13 +10,28 @@ import {
   getInventoryByVariantIdValidation,
   getStockMovementsValidation,
   getAllInventoryValidation,
+  getInventoryCatalogValidation,
   updateStockThresholdsValidation,
   checkAvailabilityValidation,
+  createInventoryValidation,
 } from '../validations/InventoryValidation';
 
 export const createInventoryRoutes = (): Router => {
   const router = Router();
   const inventoryController = new InventoryController();
+
+  /**
+   * @route   POST /api/inventory
+   * @desc    Create or seed inventory record
+   * @access  Private (ADMIN, MANAGER)
+   */
+  router.post(
+    '/',
+    authenticate,
+    authorize(Role.ADMIN, Role.MANAGER),
+    validate(createInventoryValidation),
+    inventoryController.createInventory
+  );
 
   /**
    * @route   GET /api/inventory
@@ -29,6 +44,19 @@ export const createInventoryRoutes = (): Router => {
     authorize(Role.ADMIN, Role.MANAGER),
     validate(getAllInventoryValidation),
     inventoryController.getAllInventory
+  );
+
+  /**
+   * @route   GET /api/inventory/catalog
+   * @desc    Get catalog summary for picker
+   * @access  Private (ADMIN, MANAGER)
+   */
+  router.get(
+    '/catalog',
+    authenticate,
+    authorize(Role.ADMIN, Role.MANAGER),
+    validate(getInventoryCatalogValidation),
+    inventoryController.getInventoryCatalog
   );
 
   /**

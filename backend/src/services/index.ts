@@ -9,6 +9,7 @@ import { CommentService } from './CommentService';
 import { InventoryService } from './InventoryService';
 import { WishlistService } from './WishlistService';
 import { VoucherService } from './VoucherService';
+import { ProductVariantRepository } from '../repositories/ProductVariantRepository';
 
 export class ServiceFactory {
   private static authService: AuthService;
@@ -41,7 +42,9 @@ export class ServiceFactory {
   static getProductService(): ProductService {
     if (!this.productService) {
       const productRepository = RepositoryFactory.getProductRepository();
-      this.productService = new ProductService(productRepository);
+      const productVariantRepository = RepositoryFactory.getProductVariantRepository();
+      const inventoryRepository = RepositoryFactory.getInventoryRepository();
+      this.productService = new ProductService(productRepository, productVariantRepository, inventoryRepository);
     }
     return this.productService;
   }

@@ -1,4 +1,5 @@
 import { Product, Brand, Category, ProductSpecs, ProductVariant, ProductImage } from '@prisma/client';
+import { toCloudFrontUrl } from '../utils/cdn';
 
 export interface ProductResponse {
   id: string;
@@ -131,7 +132,7 @@ export class ProductDto {
       for (const img of imagesCopy) {
         variantImages.push({
           id: img.id,
-          url: img.url,
+          url: toCloudFrontUrl(img.url),
           altText: img.altText,
           isPrimary: img.isPrimary,
           sortOrder: img.sortOrder,
@@ -158,7 +159,7 @@ export class ProductDto {
     for (const img of imagesCopy) {
       sortedImages.push({
         id: img.id,
-        url: img.url,
+        url: toCloudFrontUrl(img.url),
         altText: img.altText,
         isPrimary: img.isPrimary,
         sortOrder: img.sortOrder,
@@ -204,11 +205,11 @@ export class ProductDto {
 
     for (const image of images) {
       if (image.isPrimary) {
-        return image.url;
+        return toCloudFrontUrl(image.url);
       }
     }
 
-    return images[0].url;
+    return toCloudFrontUrl(images[0].url);
   }
 
   private static calculatePriceRange(variants?: ProductVariant[]): {

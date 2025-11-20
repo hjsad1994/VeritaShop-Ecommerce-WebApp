@@ -149,6 +149,27 @@ export const getAllInventoryValidation = [
     .withMessage('Từ khóa tìm kiếm phải là chuỗi')
     .trim(),
 
+  query('brandId')
+    .optional()
+    .isString()
+    .withMessage('Brand ID phải là chuỗi')
+    .trim(),
+
+  query('includeArchived')
+    .optional()
+    .isBoolean()
+    .withMessage('includeArchived phải là boolean (true/false)'),
+
+  query('status')
+    .optional()
+    .isIn(['low', 'out', 'archived'])
+    .withMessage('Status phải là một trong: low, out, archived'),
+
+  query('sort')
+    .optional()
+    .isIn(['available', 'updatedAt'])
+    .withMessage('Sort phải là một trong: available, updatedAt'),
+
   query('page')
     .optional()
     .isInt({ min: 1 })
@@ -158,6 +179,34 @@ export const getAllInventoryValidation = [
     .optional()
     .isInt({ min: 1, max: 100 })
     .withMessage('Số lượng bản ghi phải từ 1 đến 100'),
+];
+
+/**
+ * Validation for getting inventory catalog summary
+ */
+export const getInventoryCatalogValidation = [
+  query('search').optional().isString().withMessage('Từ khóa tìm kiếm phải là chuỗi').trim(),
+
+  query('brandId')
+    .optional()
+    .isString()
+    .withMessage('Brand ID phải là chuỗi')
+    .trim(),
+
+  query('includeArchived')
+    .optional()
+    .isBoolean()
+    .withMessage('includeArchived phải là boolean'),
+
+  query('page')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Số trang phải là số nguyên dương'),
+
+  query('limit')
+    .optional()
+    .isInt({ min: 1, max: 50 })
+    .withMessage('Số lượng bản ghi phải từ 1 đến 50'),
 ];
 
 /**
@@ -192,4 +241,50 @@ export const checkAvailabilityValidation = [
     .withMessage('Variant ID là bắt buộc')
     .isString()
     .withMessage('Variant ID phải là chuỗi'),
+];
+
+/**
+ * Validation for creating inventory record
+ */
+export const createInventoryValidation = [
+  body('productId')
+    .optional()
+    .isString()
+    .withMessage('Product ID phải là chuỗi')
+    .trim(),
+
+  body('variantId')
+    .optional()
+    .isString()
+    .withMessage('Variant ID phải là chuỗi')
+    .trim(),
+
+  body('initialQuantity')
+    .notEmpty()
+    .withMessage('Số lượng khởi tạo là bắt buộc')
+    .isInt({ min: 0 })
+    .withMessage('Số lượng khởi tạo phải là số nguyên không âm'),
+
+  body('minStock')
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage('Min stock phải là số nguyên không âm'),
+
+  body('maxStock')
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage('Max stock phải là số nguyên không âm'),
+
+  body('reason')
+    .optional()
+    .isString()
+    .withMessage('Reason phải là chuỗi')
+    .trim(),
+
+  body().custom((value, { req }) => {
+    if (!req.body.variantId && !req.body.productId) {
+      throw new Error('Variant ID là bắt buộc');
+    }
+    return true;
+  }),
 ];

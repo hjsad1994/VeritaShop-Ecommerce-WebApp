@@ -22,7 +22,6 @@ export default function AccountsPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState<PaginationMeta | null>(null);
-  const [currentFilters, setCurrentFilters] = useState<GetAllUsersParams>({});
   const filtersRef = useRef<GetAllUsersParams>({});
   const [isMutating, setIsMutating] = useState(false);
 
@@ -52,7 +51,6 @@ export default function AccountsPage() {
         setUsers(response.data.users.map(normalizeUserDates));
         setPagination(response.data.pagination ?? null);
         filtersRef.current = requestParams;
-        setCurrentFilters(requestParams);
       } else {
         throw new Error(response.message || 'Failed to load users');
       }
@@ -229,6 +227,11 @@ export default function AccountsPage() {
         <div>
           <h2 className="text-3xl font-bold text-black mb-2">User Management</h2>
           <p className="text-sm text-gray-600">Manage user accounts and permissions</p>
+          {pagination && (
+            <p className="text-xs text-gray-500 mt-1">
+              Showing {users.length} of {pagination.total} users
+            </p>
+          )}
         </div>
         <button
           onClick={handleAdd}

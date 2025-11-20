@@ -149,6 +149,27 @@ export const getAllInventoryValidation = [
     .withMessage('Từ khóa tìm kiếm phải là chuỗi')
     .trim(),
 
+  query('brandId')
+    .optional()
+    .isString()
+    .withMessage('Brand ID phải là chuỗi')
+    .trim(),
+
+  query('includeArchived')
+    .optional()
+    .isBoolean()
+    .withMessage('includeArchived phải là boolean (true/false)'),
+
+  query('status')
+    .optional()
+    .isIn(['low', 'out', 'archived'])
+    .withMessage('Status phải là một trong: low, out, archived'),
+
+  query('sort')
+    .optional()
+    .isIn(['available', 'updatedAt'])
+    .withMessage('Sort phải là một trong: available, updatedAt'),
+
   query('page')
     .optional()
     .isInt({ min: 1 })

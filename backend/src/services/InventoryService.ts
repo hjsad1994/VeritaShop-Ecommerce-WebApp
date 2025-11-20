@@ -58,10 +58,25 @@ export class InventoryService {
    * Get all inventory with filters and pagination
    */
   async getAllInventory(filter: InventoryFilter) {
-    const result = await this.inventoryRepository.findAll(filter);
+    // Use findAllVariants to include variants that don't have inventory records yet
+    const result = await this.inventoryRepository.findAllVariants(filter);
+
+    // Enrich inventories with status flags
+    const enrichedInventories = result.inventories.map((inv: any) => {
+      const isLowStock = inv.minStock > 0 && inv.available < inv.minStock;
+      const isOutOfStock = inv.available <= 0;
+      const isArchived = !inv.variant?.isActive;
+
+      return {
+        ...inv,
+        isLowStock,
+        isOutOfStock,
+        isArchived,
+      };
+    });
 
     return {
-      inventories: result.inventories,
+      inventories: enrichedInventories,
       pagination: {
         page: result.page,
         limit: result.limit,

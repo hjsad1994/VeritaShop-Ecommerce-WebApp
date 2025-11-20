@@ -327,6 +327,7 @@ export interface InventoryRecord {
   isLowStock?: boolean;
   isOutOfStock?: boolean;
   isArchived?: boolean;
+  lastMovementAt?: string | null;
   product?: InventoryProductSummary;
   variant?: InventoryVariantSummary;
   createdAt?: string;
@@ -399,6 +400,8 @@ export interface InventoryQueryParams {
   maxAvailable?: number;
   lowStock?: boolean;
   includeArchived?: boolean;
+  status?: 'low' | 'out' | 'archived';
+  sort?: 'available' | 'updatedAt';
 }
 
 export interface CreateInventoryPayload {

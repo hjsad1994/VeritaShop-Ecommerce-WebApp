@@ -459,8 +459,8 @@ export interface InventoryQueryParams {
 }
 
 export interface CreateInventoryPayload {
-  productId: string;
-  variantId?: string;
+  productId?: string;
+  variantId: string;
   initialQuantity: number;
   minStock?: number;
   maxStock?: number;
@@ -468,16 +468,16 @@ export interface CreateInventoryPayload {
 }
 
 export interface StockMutationPayload {
-  productId: string;
-  variantId?: string;
+  productId?: string;
+  variantId: string;
   quantity: number;
   reason?: string;
   referenceId?: string;
 }
 
 export interface StockAdjustmentPayload {
-  productId: string;
-  variantId?: string;
+  productId?: string;
+  variantId: string;
   newQuantity: number;
   reason: string;
 }

@@ -185,7 +185,7 @@ export default function InventoryPage() {
       switch (modalState.mode) {
         case 'create': {
           const payload: CreateInventoryPayload = {
-            productId: targetVariantId,
+            variantId: targetVariantId,
             initialQuantity: Number(values.initialQuantity ?? 0),
             minStock: Number(values.minStock ?? 0),
             maxStock: Number(values.maxStock ?? 0),
@@ -198,7 +198,7 @@ export default function InventoryPage() {
         case 'stock-in':
         case 'stock-out': {
           const payload: StockMutationPayload = {
-            productId: targetVariantId,
+            variantId: targetVariantId,
             quantity: Number(values.quantity ?? 0),
             reason: values.reason || undefined,
             referenceId: values.referenceId || undefined,
@@ -214,7 +214,7 @@ export default function InventoryPage() {
         }
         case 'adjust': {
           const payload: StockAdjustmentPayload = {
-            productId: targetVariantId,
+            variantId: targetVariantId,
             newQuantity: Number(values.newQuantity ?? 0),
             reason: values.reason || '',
           };

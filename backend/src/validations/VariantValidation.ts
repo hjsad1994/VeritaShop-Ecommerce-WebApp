@@ -42,8 +42,11 @@ const sharedRules = (options?: { optional?: boolean }): ValidationChain[] => {
       .withMessage('Compare price must be greater than 0'),
 
     skuRule
-      .matches(SKU_PATTERN)
-      .withMessage('SKU must be uppercase and can only include letters, numbers, hyphen, underscore'),
+      // .matches(SKU_PATTERN)
+      // .withMessage('SKU must be uppercase and can only include letters, numbers, hyphen, underscore')
+      .trim()
+      .isLength({ min: 1, max: 100 })
+      .withMessage('SKU must be between 1 and 100 characters'),
 
     body('isActive')
       .optional()

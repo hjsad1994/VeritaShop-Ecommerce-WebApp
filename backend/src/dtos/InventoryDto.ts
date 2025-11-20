@@ -4,11 +4,24 @@ export class InventoryProductDto {
   id: string;
   name: string;
   slug: string;
+  brand?: {
+    id: string;
+    name: string;
+    slug?: string | null;
+  };
 
   constructor(data: any) {
     this.id = data.id;
     this.name = data.name;
     this.slug = data.slug;
+
+    if (data.brand) {
+      this.brand = {
+        id: data.brand.id,
+        name: data.brand.name,
+        slug: data.brand.slug,
+      };
+    }
   }
 }
 
@@ -41,6 +54,7 @@ export class InventoryVariantDto {
 
 export class InventoryDto {
   id: string;
+  productId: string;
   variantId: string;
   quantity: number;
   reserved: number;
@@ -49,7 +63,10 @@ export class InventoryDto {
   maxStock: number;
   isLowStock?: boolean;
   isOutOfStock?: boolean;
+  isArchived?: boolean;
+  lastMovementAt?: Date | null;
   variant?: InventoryVariantDto;
+  product?: InventoryProductDto;
   createdAt: Date;
   updatedAt: Date;
 
@@ -73,8 +90,25 @@ export class InventoryDto {
       this.isOutOfStock = data.isOutOfStock;
     }
 
+    if (data.isArchived !== undefined) {
+      this.isArchived = data.isArchived;
+    } else if (data.variant?.isActive !== undefined) {
+      this.isArchived = !data.variant.isActive;
+    }
+
+    if (data.lastMovementAt !== undefined) {
+      this.lastMovementAt = data.lastMovementAt ? new Date(data.lastMovementAt) : null;
+    }
+
     if (data.variant) {
       this.variant = new InventoryVariantDto(data.variant);
+      this.productId = data.variant.productId;
+      if (data.variant.product) {
+        this.product = new InventoryProductDto(data.variant.product);
+      }
+    } else {
+       // Fallback if variant is not loaded but productId is available on data (unlikely in current repo structure but safe)
+       this.productId = data.productId || '';
     }
   }
 }

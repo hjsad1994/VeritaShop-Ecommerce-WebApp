@@ -96,6 +96,10 @@ export class InventoryController {
         maxAvailable,
         lowStock,
         search,
+        brandId,
+        includeArchived,
+        status,
+        sort,
         page = '1',
         limit = '20',
       } = req.query;
@@ -106,6 +110,10 @@ export class InventoryController {
         maxAvailable: maxAvailable ? parseInt(maxAvailable as string) : undefined,
         lowStock: lowStock === 'true',
         search: search as string,
+        brandId: brandId as string,
+        includeArchived: includeArchived === 'true',
+        status: status as 'low' | 'out' | 'archived' | undefined,
+        sort: (sort as 'available' | 'updatedAt') || 'updatedAt',
         page: parseInt(page as string),
         limit: parseInt(limit as string),
       };
@@ -119,8 +127,10 @@ export class InventoryController {
       res.status(HTTP_STATUS.OK).json({
         success: true,
         message: SUCCESS_MESSAGES.GET_INVENTORY_SUCCESS,
-        data: inventoryDtos,
-        pagination: result.pagination,
+        data: {
+          inventories: inventoryDtos,
+          pagination: result.pagination,
+        },
       });
     } catch (error) {
       next(error);
@@ -299,8 +309,10 @@ export class InventoryController {
       res.status(HTTP_STATUS.OK).json({
         success: true,
         message: SUCCESS_MESSAGES.GET_MOVEMENTS_SUCCESS,
-        data: movementDtos,
-        pagination: result.pagination,
+        data: {
+          movements: movementDtos,
+          pagination: result.pagination,
+        },
       });
     } catch (error) {
       next(error);

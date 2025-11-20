@@ -42,6 +42,8 @@ class InventoryService {
       maxAvailable: params.maxAvailable,
       lowStock: params.lowStock,
       includeArchived: params.includeArchived,
+      status: params.status,
+      sort: params.sort,
     });
 
     const url = queryString ? `${this.basePath}?${queryString}` : this.basePath;

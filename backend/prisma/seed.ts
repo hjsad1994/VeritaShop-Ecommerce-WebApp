@@ -354,6 +354,8 @@ async function main() {
       }
     } else {
       console.log("Additional product already exists:", existingProduct.name);
+    }
+  }
   // Seed sample variants per product
   const productRecords = await prisma.product.findMany({
     where: { slug: { in: products.map((p) => p.slug) } },

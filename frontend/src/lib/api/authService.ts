@@ -60,7 +60,7 @@ export const authService = {
     const response = await apiClient.post<ApiResponse<null>>(
       '/auth/refresh-token',
       {},
-      { withCredentials: true } // Include HTTP-only cookies
+      { withCredentials: true, _skipRedirect: true } // Include HTTP-only cookies and skip redirect on failure
     );
     return response.data;
   },

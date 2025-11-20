@@ -19,6 +19,7 @@ export const ERROR_MESSAGES = {
   FORBIDDEN: 'Bạn không có quyền thực hiện hành động này',
   INVALID_TOKEN: 'Token không hợp lệ hoặc đã hết hạn',
   TOKEN_REQUIRED: 'Vui lòng cung cấp access token',
+  REFRESH_TOKEN_REQUIRED: 'Vui lòng cung cấp refresh token',
   INTERNAL_ERROR: 'Đã xảy ra lỗi, vui lòng thử lại sau',
   VALIDATION_ERROR: 'Dữ liệu không hợp lệ',
   PRODUCT_NOT_FOUND: 'Không tìm thấy sản phẩm',

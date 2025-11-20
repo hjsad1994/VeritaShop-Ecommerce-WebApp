@@ -78,8 +78,22 @@ class CartService {
 
   // Backend Cart Methods (for authenticated users)
   async getCart(): Promise<ApiResponse<Cart>> {
+    // Check if we are on the client side and have no user in localStorage
+    // This avoids making unnecessary API calls that will definitely fail
+    if (typeof window !== 'undefined') {
+        const savedUser = localStorage.getItem('verita-user');
+        if (!savedUser) {
+            const guestCart = this.getGuestCart();
+            return {
+                success: true,
+                message: 'Lấy giỏ hàng khách thành công',
+                data: this.convertGuestCartToCart(guestCart)
+            };
+        }
+    }
+
     try {
-      const response = await apiClient.get(this.baseUrl);
+      const response = await apiClient.get(this.baseUrl, { _skipRedirect: true });
       return response.data;
     } catch (error: unknown) {
       // If user is not authenticated, fallback to guest cart
@@ -97,8 +111,21 @@ class CartService {
   }
 
   async addCartItem(variantId: string, quantity: number): Promise<ApiResponse<Cart>> {
+    // Check if we are on the client side and have no user in localStorage
+    if (typeof window !== 'undefined') {
+        const savedUser = localStorage.getItem('verita-user');
+        if (!savedUser) {
+            const guestCart = this.addToGuestCart(variantId, quantity);
+            return {
+                success: true,
+                message: 'Thêm vào giỏ hàng khách thành công',
+                data: this.convertGuestCartToCart(guestCart)
+            };
+        }
+    }
+
     try {
-      const response = await apiClient.post(`${this.baseUrl}/items`, { variantId, quantity });
+      const response = await apiClient.post(`${this.baseUrl}/items`, { variantId, quantity }, { _skipRedirect: true });
       return response.data;
     } catch (error: unknown) {
       // If user is not authenticated, add to guest cart
@@ -116,8 +143,21 @@ class CartService {
   }
 
   async updateCartItem(itemId: string, quantity: number): Promise<ApiResponse<Cart>> {
+    // Check if we are on the client side and have no user in localStorage
+    if (typeof window !== 'undefined') {
+        const savedUser = localStorage.getItem('verita-user');
+        if (!savedUser) {
+            const guestCart = this.updateGuestCart(itemId, quantity);
+            return {
+                success: true,
+                message: 'Cập nhật giỏ hàng khách thành công',
+                data: this.convertGuestCartToCart(guestCart)
+            };
+        }
+    }
+
     try {
-      const response = await apiClient.put(`${this.baseUrl}/items/${itemId}`, { quantity });
+      const response = await apiClient.put(`${this.baseUrl}/items/${itemId}`, { quantity }, { _skipRedirect: true });
       return response.data;
     } catch (error: unknown) {
       // If user is not authenticated, update guest cart
@@ -135,8 +175,21 @@ class CartService {
   }
 
   async removeCartItem(itemId: string): Promise<ApiResponse<Cart>> {
+    // Check if we are on the client side and have no user in localStorage
+    if (typeof window !== 'undefined') {
+        const savedUser = localStorage.getItem('verita-user');
+        if (!savedUser) {
+             const guestCart = this.removeFromGuestCart(itemId);
+            return {
+                success: true,
+                message: 'Xóa khỏi giỏ hàng khách thành công',
+                data: this.convertGuestCartToCart(guestCart)
+            };
+        }
+    }
+
     try {
-      const response = await apiClient.delete(`${this.baseUrl}/items/${itemId}`);
+      const response = await apiClient.delete(`${this.baseUrl}/items/${itemId}`, { _skipRedirect: true });
       return response.data;
     } catch (error: unknown) {
       // If user is not authenticated, remove from guest cart
@@ -154,8 +207,21 @@ class CartService {
   }
 
   async clearCart(): Promise<ApiResponse<Cart>> {
+    // Check if we are on the client side and have no user in localStorage
+    if (typeof window !== 'undefined') {
+        const savedUser = localStorage.getItem('verita-user');
+        if (!savedUser) {
+            this.clearGuestCart();
+            return {
+                success: true,
+                message: 'Xóa giỏ hàng khách thành công',
+                data: this.convertGuestCartToCart({ items: [], subtotal: 0, totalItems: 0 })
+            };
+        }
+    }
+
     try {
-      const response = await apiClient.delete(this.baseUrl);
+      const response = await apiClient.delete(this.baseUrl, { _skipRedirect: true });
       return response.data;
     } catch (error: unknown) {
       // If user is not authenticated, clear guest cart

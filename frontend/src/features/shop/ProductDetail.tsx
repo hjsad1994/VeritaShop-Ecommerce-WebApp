@@ -1,53 +1,89 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
-import { getProductById, type Review } from '@/lib/data/products';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import Toast from '@/components/ui/Toast';
+import productService from '@/lib/api/productService';
+import { ProductDetailResponse, ProductVariantItem } from '@/lib/api/types';
 
 interface ProductDetailProps {
-  productId: string;
+  productSlug: string;
 }
 
-const colorMap: { [key: string]: string } = {
-  'Black': '#000000',
-  'Black Titanium': '#1a1a1a',
-  'White': '#ffffff',
-  'White Titanium': '#e5e5e5',
-  'Blue': '#4169e1',
-  'Blue Titanium': '#4a5f7f',
-  'Natural': '#d4c5b0',
-  'Natural Titanium': '#d4c5b0',
-  'Red': '#dc2626',
-  'Purple': '#9333ea',
-  'Green': '#16a34a',
-  'Silver': '#c0c0c0',
-  'Gray': '#6b7280',
-  'Gold': '#fbbf24',
-  'Pink': '#ec4899',
-  'Yellow': '#fde047',
-};
-
-export default function ProductDetail({ productId }: ProductDetailProps) {
+export default function ProductDetail({ productSlug }: ProductDetailProps) {
   const { addToCartLegacy, openCart } = useCart();
   const { isAuthenticated } = useAuth();
-  const [selectedImage, setSelectedImage] = React.useState(0);
-  const [quantity, setQuantity] = React.useState(1);
-  const [selectedColor, setSelectedColor] = React.useState(0);
-  const [isReviewModalOpen, setIsReviewModalOpen] = React.useState(false);
-  const [reviewRating, setReviewRating] = React.useState(5);
-  const [reviewText, setReviewText] = React.useState('');
-  const [isAddingToCart, setIsAddingToCart] = React.useState(false);
-  const [showToast, setShowToast] = React.useState(false);
+  
+  const [product, setProduct] = useState<ProductDetailResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const productData = getProductById(parseInt(productId));
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariantItem | null>(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [quantity, setQuantity] = useState(1);
+  
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewText, setReviewText] = useState('');
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [showToast, setShowToast] = useState(false);
 
-  if (!productData) {
+  const fetchProduct = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await productService.getProductBySlug(productSlug);
+      setProduct(data);
+      
+      // Select first active variant by default if available
+      if (data.variants && data.variants.length > 0) {
+        // Find first active variant or just first one
+        const defaultVariant = data.variants.find(v => v.isActive !== false) || data.variants[0];
+        setSelectedVariant(defaultVariant);
+      }
+    } catch (err) {
+      console.error('Failed to load product:', err);
+      setError('Product not found or failed to load.');
+    } finally {
+      setLoading(false);
+    }
+  }, [productSlug]);
+
+  useEffect(() => {
+    fetchProduct();
+  }, [fetchProduct]);
+
+  // Get images to display: Variant images (max 5) + Product primary image?
+  // Spec says: "displays 5 corresponding images... for that specific variant"
+  // If no variant selected (or no variant images), fallback to product images?
+  const displayImages = React.useMemo(() => {
+    if (selectedVariant && selectedVariant.images && selectedVariant.images.length > 0) {
+        return selectedVariant.images.map(img => img.url).slice(0, 5);
+    }
+    if (product && product.images && product.images.length > 0) {
+        return product.images.map(img => img.url).slice(0, 5);
+    }
+    return [product?.primaryImage || '/placeholder.png'];
+  }, [product, selectedVariant]);
+
+  // Reset image index when variant changes
+  useEffect(() => {
+    setSelectedImageIndex(0);
+  }, [selectedVariant]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
+      </div>
+    );
+  }
+
+  if (error || !product) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
@@ -61,38 +97,40 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
     );
   }
 
-  const { product, reviews: reviewsData } = productData;
-  const reviews: Review[] = reviewsData;
+  // Price display
+  const currentPrice = selectedVariant ? Number(selectedVariant.price) : Number(product.finalPrice || product.basePrice);
+  const oldPrice = selectedVariant && selectedVariant.comparePrice ? Number(selectedVariant.comparePrice) : (Number(product.basePrice) > Number(product.finalPrice) ? Number(product.basePrice) : null);
 
-  const averageRating = reviews.length > 0
-    ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
-    : 5;
-
-  const ratingCounts = [5, 4, 3, 2, 1].map(star => 
-    reviews.filter(r => r.rating === star).length
-  );
-
-  const images = Array(4).fill(product.image);
+  // Inventory display
+  const inventory = selectedVariant?.inventory;
+  const maxQuantity = inventory ? inventory.available : 10; // Fallback if no inventory data
+  const isOutOfStock = inventory ? inventory.available <= 0 : false;
 
   const handleAddToCart = () => {
     if (!isAuthenticated) {
-      // Save current page for redirect after login
       sessionStorage.setItem('redirectPath', window.location.pathname);
       window.location.href = '/login';
       return;
     }
     
+    if (!selectedVariant) {
+        alert('Please select a variant');
+        return;
+    }
+
     setIsAddingToCart(true);
 
-    // Map Product to LegacyCartItem format
     const legacyProduct = {
-      id: product.id.toString(),
+      id: product.id,
       name: product.name,
-      price: product.price,
-      slug: '', // Not available in this Product type
-      images: product.images || [product.image]
+      price: currentPrice,
+      slug: product.slug,
+      images: displayImages
     };
-    addToCartLegacy(legacyProduct, quantity, product.colors[selectedColor]);
+    
+    // Note: Legacy cart might need updating to handle variant ID properly
+    // For now passing variant color as "color" option
+    addToCartLegacy(legacyProduct, quantity, selectedVariant.color);
 
     setTimeout(() => {
       setIsAddingToCart(false);
@@ -103,23 +141,15 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
 
   const handleBuyNow = () => {
     if (!isAuthenticated) {
-      // Save checkout intent for redirect after login
       sessionStorage.setItem('redirectPath', '/checkout');
       window.location.href = '/login';
       return;
     }
-    
-    // Navigate to checkout
-    window.location.href = '/checkout';
-  };
-
-  const handleSubmitReview = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('Submitting review:', { rating: reviewRating, text: reviewText });
-    setIsReviewModalOpen(false);
-    setReviewText('');
-    setReviewRating(5);
-    alert('Thank you for your review!');
+    handleAddToCart();
+    // Ideally redirect to checkout immediately, but we add to cart first
+    setTimeout(() => {
+        window.location.href = '/checkout';
+    }, 100);
   };
 
   return (
@@ -136,9 +166,7 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
         FREE SHIPPING ON ORDERS OVER $100
       </div>
 
-      {/* Product Detail */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Breadcrumb */}
         <div className="mb-8">
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <Link href="/" className="hover:text-black transition">Home</Link>
@@ -148,26 +176,28 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
             <span className="text-black font-medium">{product.name}</span>
           </div>
         </div>
+
         <div className="grid lg:grid-cols-2 gap-12">
           {/* Left: Images */}
           <div>
             <div className="bg-gray-50 rounded-2xl aspect-square mb-6 flex items-center justify-center overflow-hidden relative">
               <Image
-                src={images[selectedImage]}
+                src={displayImages[selectedImageIndex] || '/placeholder.png'}
                 alt={product.name}
                 fill
                 className="object-contain p-8"
                 unoptimized
+                priority
                 sizes="(min-width: 1024px) 50vw, 100vw"
               />
             </div>
-            <div className="grid grid-cols-4 gap-4">
-              {images.map((img: string, idx: number) => (
+            <div className="grid grid-cols-5 gap-4">
+              {displayImages.map((img: string, idx: number) => (
                 <button
                   key={idx}
-                  onClick={() => setSelectedImage(idx)}
+                  onClick={() => setSelectedImageIndex(idx)}
                   className={`relative aspect-square rounded-lg overflow-hidden border-2 transition ${
-                    selectedImage === idx ? 'border-black' : 'border-gray-200 hover:border-gray-400'
+                    selectedImageIndex === idx ? 'border-black' : 'border-gray-200 hover:border-gray-400'
                   }`}
                 >
                   <Image
@@ -185,102 +215,86 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
 
           {/* Right: Details */}
           <div>
-            {product.badge && (
-              <div className="mb-2">
-                <span className="inline-block px-3 py-1 bg-black text-white text-xs font-bold rounded-full">
-                  {product.badge}
-                </span>
-              </div>
-            )}
-            
             <h1 className="text-4xl font-bold text-black mb-4">{product.name}</h1>
             
+            {/* Rating (Placeholder for now as API might not return full reviews yet or format differs) */}
             <div className="flex items-center gap-4 mb-6">
-              <div className="flex items-center gap-2">
-                <div className="flex">
-                  {[...Array(5)].map((_, i) => (
-                    <svg
-                      key={i}
-                      className={`w-5 h-5 ${i < Math.floor(averageRating) ? 'text-yellow-400' : 'text-gray-300'}`}
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                  ))}
-                </div>
-                <span className="text-sm text-gray-600">
-                  {averageRating.toFixed(1)} ({reviews.length} reviews)
-                </span>
-              </div>
+               <div className="flex items-center gap-2">
+                 <span className="text-yellow-400">★</span>
+                 <span className="text-sm text-gray-600">{product.averageRating || '0.0'} ({product.reviewCount || 0} reviews)</span>
+               </div>
             </div>
 
             <div className="flex items-baseline gap-4 mb-8">
-              <span className="text-5xl font-bold text-black">${product.price}</span>
-              {product.oldPrice && (
+              <span className="text-5xl font-bold text-black">
+                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(currentPrice)}
+              </span>
+              {oldPrice && (
                 <>
-                  <span className="text-2xl text-gray-400 line-through">${product.oldPrice}</span>
-                  <span className="px-3 py-1 bg-red-100 text-red-600 text-sm font-bold rounded-full">
-                    Save ${product.oldPrice - product.price}
+                  <span className="text-2xl text-gray-400 line-through">
+                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(oldPrice)}
                   </span>
                 </>
               )}
             </div>
 
             <div className="border-t border-b border-gray-200 py-6 mb-6">
-              <p className="text-gray-700 leading-relaxed">{product.description}</p>
+              <div className="prose prose-sm text-gray-700" dangerouslySetInnerHTML={{ __html: product.description || '' }} />
             </div>
 
-            {/* Color Selection */}
+            {/* Variant Selection */}
+            {product.variants && product.variants.length > 0 && (
             <div className="mb-6">
-              <h3 className="text-sm font-bold text-black mb-3">Color</h3>
-              <div className="flex gap-3">
-                {product.colors.map((color: string, idx: number) => (
+              <h3 className="text-sm font-bold text-black mb-3">Select Variant</h3>
+              <div className="flex flex-wrap gap-3">
+                {product.variants.map((variant) => (
                   <button
-                    key={idx}
-                    onClick={() => setSelectedColor(idx)}
-                    className={`px-4 py-2 rounded-lg border-2 transition ${
-                      selectedColor === idx
-                        ? 'border-black bg-gray-100'
+                    key={variant.id}
+                    onClick={() => setSelectedVariant(variant)}
+                    className={`px-4 py-2 rounded-lg border-2 transition flex flex-col items-center ${
+                      selectedVariant?.id === variant.id
+                        ? 'border-black bg-gray-50'
                         : 'border-gray-300 hover:border-gray-400'
                     }`}
                   >
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="w-4 h-4 rounded-full border border-gray-300"
-                        style={{ backgroundColor: colorMap[color] || '#000000' }}
-                      />
-                      <span className="text-sm font-medium text-black">{color}</span>
-                    </div>
+                    <span className="text-sm font-bold text-black">{variant.color}</span>
+                    {(variant.storage || variant.ram) && (
+                        <span className="text-xs text-gray-600">
+                            {variant.storage ? variant.storage : ''}
+                            {variant.storage && variant.ram ? ' - ' : ''}
+                            {variant.ram ? variant.ram : ''}
+                        </span>
+                    )}
                   </button>
                 ))}
               </div>
             </div>
+            )}
 
-            {/* Quantity */}
+            {/* Quantity & Inventory */}
             <div className="mb-8">
               <h3 className="text-sm font-bold text-black mb-3">Quantity</h3>
               <div className="flex items-center gap-4">
                 <div className="flex items-center border-2 border-gray-300 rounded-lg">
                   <button
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="px-4 py-2 hover:bg-gray-100 transition text-black"
+                    disabled={isOutOfStock}
+                    className="px-4 py-2 hover:bg-gray-100 transition text-black disabled:opacity-50"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                    </svg>
+                    -
                   </button>
                   <span className="px-6 py-2 font-bold text-black">{quantity}</span>
                   <button
-                    onClick={() => setQuantity(quantity + 1)}
-                    className="px-4 py-2 hover:bg-gray-100 transition text-black"
+                    onClick={() => setQuantity(Math.min(maxQuantity, quantity + 1))}
+                    disabled={isOutOfStock || quantity >= maxQuantity}
+                    className="px-4 py-2 hover:bg-gray-100 transition text-black disabled:opacity-50"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
+                    +
                   </button>
                 </div>
-                <span className="text-sm text-black font-medium">In Stock</span>
+                <span className={`text-sm font-medium ${isOutOfStock ? 'text-red-600' : 'text-green-600'}`}>
+                    {inventory ? (isOutOfStock ? 'Out of Stock' : `${inventory.available} available`) : 'In Stock'}
+                </span>
               </div>
             </div>
 
@@ -288,237 +302,47 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
             <div className="flex gap-4 mb-8">
               <button
                 onClick={handleAddToCart}
-                disabled={isAddingToCart}
+                disabled={isAddingToCart || isOutOfStock}
                 className={`flex-1 bg-white border-2 border-black text-black py-4 rounded-lg font-bold transition-all flex items-center justify-center gap-2 ${
-                  isAddingToCart ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 hover:scale-[1.02]'
+                  isAddingToCart || isOutOfStock ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 hover:scale-[1.02]'
                 }`}
               >
-                {isAddingToCart ? (
-                  <>
-                    <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
-                    </svg>
-                    Adding...
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    Add to Cart
-                  </>
-                )}
+                {isAddingToCart ? 'Adding...' : 'Add to Cart'}
               </button>
               <button
                 onClick={handleBuyNow}
-                className="flex-1 bg-black text-white py-4 rounded-lg font-bold hover:bg-gray-800 transition-all hover:scale-[1.02] flex items-center justify-center gap-2"
+                disabled={isOutOfStock}
+                className={`flex-1 bg-black text-white py-4 rounded-lg font-bold transition-all flex items-center justify-center gap-2 ${
+                    isOutOfStock ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-800 hover:scale-[1.02]'
+                }`}
               >
-                <span>Buy Now</span>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                </svg>
+                Buy Now
               </button>
             </div>
-
-            {/* Features */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
-                <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                </svg>
-                <div>
-                  <h4 className="font-bold text-black text-sm">Free Shipping</h4>
-                  <p className="text-xs text-gray-600">On orders over $500</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
-                <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
-                <div>
-                  <h4 className="font-bold text-black text-sm">Warranty</h4>
-                  <p className="text-xs text-gray-600">Official manufacturer warranty</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
-                <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                <div>
-                  <h4 className="font-bold text-black text-sm">Easy Returns</h4>
-                  <p className="text-xs text-gray-600">30-day return policy</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Specs */}
-        {product.specs && product.specs.length > 0 && (
-          <div className="mt-16">
-            <h2 className="text-3xl font-bold text-black mb-8">Specifications</h2>
-            <div className="bg-gray-50 rounded-2xl p-8">
-              <div className="grid md:grid-cols-2 gap-6">
-                {product.specs.map((spec: { label: string; value: string }) => (
-                  <div key={spec.label} className="flex justify-between py-3 border-b border-gray-200">
-                    <span className="text-gray-600 font-medium">{spec.label}</span>
-                    <span className="text-black font-bold">{spec.value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Reviews */}
-        <div className="mt-16">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-bold text-black">Customer Reviews</h2>
-            <button
-              onClick={() => setIsReviewModalOpen(true)}
-              className="bg-black text-white px-6 py-3 rounded-lg font-bold hover:bg-gray-800 transition"
-            >
-              Write a Review
-            </button>
-          </div>
-
-          {/* Rating Summary */}
-          <div className="bg-gray-50 rounded-2xl p-8 mb-8">
-            <div className="grid md:grid-cols-2 gap-8">
-              <div className="text-center">
-                <div className="text-6xl font-bold text-black mb-2">{averageRating.toFixed(1)}</div>
-                <div className="flex justify-center mb-2">
-                  {[...Array(5)].map((_, i) => (
-                    <svg
-                      key={i}
-                      className={`w-6 h-6 ${i < Math.floor(averageRating) ? 'text-yellow-400' : 'text-gray-300'}`}
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                  ))}
-                </div>
-                <p className="text-gray-600">Based on {reviews.length} reviews</p>
-              </div>
-              <div className="space-y-2">
-                {ratingCounts.map((count, idx) => {
-                  const star = 5 - idx;
-                  const percentage = reviews.length > 0 ? (count / reviews.length) * 100 : 0;
-                  return (
-                    <div key={star} className="flex items-center gap-3">
-                      <span className="text-sm text-gray-600 w-12">{star} star</span>
-                      <div className="flex-1 bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-yellow-400 h-2 rounded-full"
-                          style={{ width: `${percentage}%` }}
-                        />
-                      </div>
-                      <span className="text-sm text-gray-600 w-12 text-right">{count}</span>
+            
+            {/* Specs Display */}
+            {product.specs && (
+                <div className="mt-8 border-t pt-8">
+                    <h3 className="text-xl font-bold mb-4">Specifications</h3>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                        {Object.entries(product.specs).map(([key, value]) => {
+                            if (key === 'id' || key === 'productId' || key === 'createdAt' || key === 'updatedAt' || !value) return null;
+                            // Format camelCase keys to Title Case if needed
+                            const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                            return (
+                                <div key={key} className="flex flex-col">
+                                    <span className="text-gray-500">{label}</span>
+                                    <span className="font-medium text-black">{String(value)}</span>
+                                </div>
+                            );
+                        })}
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* Review List */}
-          <div className="space-y-6">
-            {reviews.map(review => (
-              <div key={review.id} className="border-b border-gray-200 pb-6">
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <div className="flex items-center gap-3 mb-2">
-                      <h4 className="font-bold text-black">{review.userName}</h4>
-                      {review.verified && (
-                        <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">
-                          ✓ Verified Purchase
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex">
-                        {[...Array(5)].map((_, i) => (
-                          <svg
-                            key={i}
-                            className={`w-4 h-4 ${i < review.rating ? 'text-yellow-400' : 'text-gray-300'}`}
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                          </svg>
-                        ))}
-                      </div>
-                      <span className="text-sm text-gray-500">{review.date}</span>
-                    </div>
-                  </div>
                 </div>
-                <p className="text-gray-700">{review.comment}</p>
-              </div>
-            ))}
+            )}
+
           </div>
         </div>
       </div>
-
-      {/* Review Modal */}
-      {isReviewModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-8 max-w-md w-full">
-            <h3 className="text-2xl font-bold text-black mb-6">Write a Review</h3>
-            <form onSubmit={handleSubmitReview}>
-              <div className="mb-6">
-                <label className="block text-sm font-bold text-black mb-2">Rating</label>
-                <div className="flex gap-2">
-                  {[1, 2, 3, 4, 5].map(star => (
-                    <button
-                      key={star}
-                      type="button"
-                      onClick={() => setReviewRating(star)}
-                      className="focus:outline-none"
-                    >
-                      <svg
-                        className={`w-8 h-8 ${star <= reviewRating ? 'text-yellow-400' : 'text-gray-300'}`}
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="mb-6">
-                <label className="block text-sm font-bold text-black mb-2">Your Review</label>
-                <textarea
-                  value={reviewText}
-                  onChange={(e) => setReviewText(e.target.value)}
-                  required
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-black focus:outline-none"
-                  rows={4}
-                  placeholder="Share your thoughts about this product..."
-                />
-              </div>
-              <div className="flex gap-4">
-                <button
-                  type="button"
-                  onClick={() => setIsReviewModalOpen(false)}
-                  className="flex-1 bg-gray-200 text-black py-3 rounded-lg font-bold hover:bg-gray-300 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 bg-black text-white py-3 rounded-lg font-bold hover:bg-gray-800 transition"
-                >
-                  Submit
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
       <Footer />
     </div>
   );

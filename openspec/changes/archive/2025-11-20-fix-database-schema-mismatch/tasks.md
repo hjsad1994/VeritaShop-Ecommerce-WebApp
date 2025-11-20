@@ -1,0 +1,2 @@
+- [x] Run Prisma migration to add `colorCode` column <!-- id: 0 -->
+- [x] Verify Admin UI loads product variants successfully <!-- id: 1 -->

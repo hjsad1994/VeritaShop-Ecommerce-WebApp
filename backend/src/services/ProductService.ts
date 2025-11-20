@@ -129,6 +129,24 @@ export class ProductService {
         }
     }
 
+    async getProductBySlug(slug: string): Promise<ProductDetailResponse> {
+        try {
+            const product = await this.productRepository.findBySlug(slug);
+
+            if (!product) {
+                throw new ApiError(404, ERROR_MESSAGES.PRODUCT_NOT_FOUND);
+            }
+
+            return product as ProductDetailResponse;
+        } catch (error) {
+            if (error instanceof ApiError) {
+                throw error;
+            }
+            logger.error('Error fetching product by slug:', error);
+            throw new ApiError(500, ERROR_MESSAGES.INTERNAL_ERROR);
+        }
+    }
+
     async getFeaturedProducts(limit: number = 8): Promise<Product[]> {
         try {
             const validatedLimit = Math.min(Math.max(1, limit), 100);
@@ -193,6 +211,9 @@ export class ProductService {
                     );
                 }
                 if (error.message.includes('Maximum 4 images')) {
+                    throw new ApiError(400, error.message);
+                }
+                if (error.message.includes('Product must have exactly one') || error.message.includes('Product can only have one')) {
                     throw new ApiError(400, error.message);
                 }
             }

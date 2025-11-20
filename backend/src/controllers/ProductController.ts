@@ -61,6 +61,23 @@ export class ProductController {
         }
     };
 
+    getProductBySlug = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const { slug } = req.params;
+
+            const product = await this.productService.getProductBySlug(slug);
+
+            const productDto = ProductDto.fromProductDetail(product);
+
+            res.status(200).json({
+                success: true,
+                data: productDto
+            });
+        } catch (error) {
+            next(error);
+        }
+    };
+
     getFeaturedProducts = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
             const limit = parseInt(req.query.limit as string) || 8;

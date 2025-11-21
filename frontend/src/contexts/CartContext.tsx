@@ -70,7 +70,21 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const initializeCart = async () => {
       try {
         // Check if user is authenticated
-        const userResponse = await userService.getCurrentUser().catch(() => null);
+        // Optimization: Check local storage first. If no user data, likely guest.
+        if (typeof window !== 'undefined' && !localStorage.getItem('verita-user')) {
+             // Treat as guest immediately
+             await refreshCart(); 
+             setIsInitialized(true);
+             setIsLoading(false);
+             return;
+        }
+
+        // We skip redirect here because this is just an initial check
+        // and we don't want to force login if the user is just browsing
+        const userResponse = await userService.getCurrentUser({ _skipRedirect: true }).catch(() => {
+             // Silently catch auth errors during polling to prevent unhandled rejections
+             return null;
+        });
         if (userResponse?.success) {
           setUser(userResponse.data.user);
 
@@ -95,7 +109,21 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const handleAuthChange = async () => {
       try {
-        const userResponse = await userService.getCurrentUser().catch(() => null);
+        // Optimization: Check local storage first.
+        if (typeof window !== 'undefined' && !localStorage.getItem('verita-user')) {
+            // If no user in local storage, ensure we are in guest state
+            if (user !== null) {
+                setUser(null);
+                await refreshCart();
+            }
+            return;
+        }
+
+        // We skip redirect here too because this is a background check
+        const userResponse = await userService.getCurrentUser({ _skipRedirect: true }).catch(() => {
+             // Silently catch auth errors during polling to prevent unhandled rejections
+             return null;
+        });
         const newUser = userResponse?.success ? userResponse.data.user : null;
 
         if (newUser !== user) {
@@ -130,8 +158,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (error: unknown) {
       console.error('Failed to refresh cart:', error);
-      const typedError = error as { response?: { data?: { message?: string } } };
-      toast.error(typedError.response?.data?.message || 'Không thể tải giỏ hàng');
+      const typedError = error as { response?: { data?: { message?: string }, status?: number } };
+      
+      // Only show error toast if it's not a 401/403 (auth errors) or 404 (not found)
+      if (typedError.response?.status !== 401 && typedError.response?.status !== 403 && typedError.response?.status !== 404) {
+          toast.error(typedError.response?.data?.message || 'Không thể tải giỏ hàng');
+      }
     } finally {
       setIsLoading(false);
     }

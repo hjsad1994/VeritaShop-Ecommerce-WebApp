@@ -244,6 +244,23 @@ export const checkAvailabilityValidation = [
 ];
 
 /**
+ * Validation for quick quantity update
+ */
+export const quickQuantityUpdateValidation = [
+  param('variantId')
+    .notEmpty()
+    .withMessage('Variant ID là bắt buộc')
+    .isString()
+    .withMessage('Variant ID phải là chuỗi'),
+
+  body('quantity')
+    .notEmpty()
+    .withMessage('Số lượng là bắt buộc')
+    .isInt({ min: 0 })
+    .withMessage('Số lượng phải là số nguyên không âm'),
+];
+
+/**
  * Validation for creating inventory record
  */
 export const createInventoryValidation = [

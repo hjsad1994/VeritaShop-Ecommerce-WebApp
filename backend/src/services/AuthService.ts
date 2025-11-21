@@ -80,7 +80,7 @@ export class AuthService {
     logger.debug('Refresh token request received');
 
     if (!refreshToken) {
-      throw ApiError.unauthorized(ERROR_MESSAGES.TOKEN_REQUIRED);
+      throw ApiError.unauthorized(ERROR_MESSAGES.REFRESH_TOKEN_REQUIRED);
     }
 
     const user = await this.userRepository.findByRefreshToken(refreshToken);

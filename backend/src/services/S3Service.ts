@@ -22,6 +22,7 @@ export class S3Service {
    * @param productSlug - Product slug for folder structure
    * @param fileName - Original file name
    * @param contentType - MIME type of the file
+   * @param variantSku - Variant SKU for hierarchical storage (optional)
    * @param expiresIn - URL expiration time in seconds (default: 15 minutes)
    * @returns Presigned URL and S3 key
    */
@@ -29,6 +30,7 @@ export class S3Service {
     productSlug: string,
     fileName: string,
     contentType: string,
+    variantSku?: string,
     expiresIn: number = 15 * 60 // 15 minutes
   ): Promise<{ presignedUrl: string; s3Key: string; cloudFrontUrl: string }> {
     try {
@@ -40,8 +42,13 @@ export class S3Service {
       const fileExtension = fileName.split('.').pop() || 'jpg';
       const sanitizedFileName = `${timestamp}-${fileName.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
       
-      // S3 key: products/[product-slug]/[filename]
-      const s3Key = `products/${slug}/${sanitizedFileName}`;
+      // S3 key: products/[product-slug]/[variant-sku]/[filename] or products/[product-slug]/[filename]
+      let s3Key = `products/${slug}/${sanitizedFileName}`;
+      
+      if (variantSku) {
+        const safeSku = variantSku.replace(/[^a-zA-Z0-9.-]/g, '_');
+        s3Key = `products/${slug}/${safeSku}/${sanitizedFileName}`;
+      }
 
       // Create PutObject command
       // Note: S3 bucket must have CORS configured to allow PUT requests from the frontend origin

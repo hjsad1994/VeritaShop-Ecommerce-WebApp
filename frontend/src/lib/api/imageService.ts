@@ -6,6 +6,7 @@ export interface PresignedUrlRequest {
   fileName: string;
   fileType: string;
   fileSize: number;
+  variantSku?: string;
 }
 
 export interface PresignedUrlResponse {
@@ -106,7 +107,8 @@ class ImageService {
    */
   async uploadImage(
     productSlug: string,
-    file: File
+    file: File,
+    variantSku?: string
   ): Promise<ImageMetadata> {
     // 1. Get presigned URL
     const presignedResponse = await this.getPresignedUrl({
@@ -114,6 +116,7 @@ class ImageService {
       fileName: file.name,
       fileType: file.type,
       fileSize: file.size,
+      variantSku,
     });
 
     // 2. Upload to S3

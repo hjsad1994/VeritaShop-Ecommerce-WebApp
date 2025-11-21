@@ -59,6 +59,7 @@ export default function ProductsPage() {
   // Image upload state
   const [productImages, setProductImages] = useState<ProductImageData[]>([]);
   const [imagesToDelete, setImagesToDelete] = useState<string[]>([]);
+  const [filesToUpload, setFilesToUpload] = useState<File[]>([]); // Track files to upload
   const [existingProductImages, setExistingProductImages] = useState<Array<{
     id: string;
     url: string;
@@ -136,6 +137,7 @@ export default function ProductsPage() {
     setProductImages([]);
     setImagesToDelete([]);
     setExistingProductImages([]);
+    setFilesToUpload([]);
     setShowModal(true);
   };
 
@@ -174,6 +176,7 @@ export default function ProductsPage() {
     setProductImages([]);
     setImagesToDelete([]);
     setExistingProductImages([]);
+    setFilesToUpload([]);
     
     // Fetch product detail to get images
     try {
@@ -237,9 +240,16 @@ export default function ProductsPage() {
     }
 
     // For new products, brand and category are required
-    if (modalMode === 'add' && (!formData.brandId || !formData.categoryId)) {
-      alert('Vui lòng chọn thương hiệu và danh mục cho sản phẩm mới');
-      return;
+    if (modalMode === 'add') {
+      if (!formData.brandId || !formData.categoryId) {
+        alert('Vui lòng chọn thương hiệu và danh mục cho sản phẩm mới');
+        return;
+      }
+      
+      if (filesToUpload.length === 0) {
+        alert('Product must have a primary image');
+        return;
+      }
     }
 
     try {
@@ -700,10 +710,11 @@ export default function ProductsPage() {
                   ref={imageUploadRef}
                   productSlug={formData.name ? generateSlug(formData.name) : ''}
                   productName={formData.name}
-                  maxImages={4}
+                  maxImages={1}
                   existingImages={existingProductImages}
                   onImagesChange={handleImagesChange}
                   onRemoveImage={handleRemoveImage}
+                  onFilesChange={setFilesToUpload}
                   disabled={submitting}
                 />
               </div>

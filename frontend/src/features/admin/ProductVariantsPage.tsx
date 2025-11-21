@@ -17,7 +17,6 @@ type VariantFormMode = 'create' | 'edit';
 
 interface VariantFormState {
   color: string;
-  colorCode: string;
   storage: string;
   ram: string;
   price: string;
@@ -54,7 +53,6 @@ export default function ProductVariantsPage({ productId }: ProductVariantsPagePr
 
   const [formState, setFormState] = useState<VariantFormState>({
     color: '',
-    colorCode: '',
     storage: '',
     ram: '',
     price: '',
@@ -120,7 +118,6 @@ export default function ProductVariantsPage({ productId }: ProductVariantsPagePr
     setSelectedVariant(null);
     setFormState({
       color: '',
-      colorCode: '',
       storage: '',
       ram: '',
       price: '',
@@ -141,7 +138,6 @@ export default function ProductVariantsPage({ productId }: ProductVariantsPagePr
     setSelectedVariant(variant);
     setFormState({
       color: variant.color,
-      colorCode: variant.colorCode || '',
       storage: variant.storage || '',
       ram: variant.ram || '',
       price: variant.price,
@@ -173,7 +169,7 @@ export default function ProductVariantsPage({ productId }: ProductVariantsPagePr
 
   const buildPayload = async (): Promise<Record<string, unknown>> => {
     const uploadResults = imageUploadRef.current
-      ? await imageUploadRef.current.uploadFiles(product?.slug)
+      ? await imageUploadRef.current.uploadFiles(product?.slug, formState.sku)
       : [];
 
     const imagesPayload = uploadResults.length ? uploadResults : uploadedImages;
@@ -189,7 +185,6 @@ export default function ProductVariantsPage({ productId }: ProductVariantsPagePr
 
     return {
       color: formState.color,
-      colorCode: formState.colorCode || undefined,
       storage: formState.storage || undefined,
       ram: formState.ram || undefined,
       price: Number(formState.price),
@@ -366,10 +361,6 @@ export default function ProductVariantsPage({ productId }: ProductVariantsPagePr
               <tr key={variant.id} className="border-t border-gray-100">
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
-                    <span
-                      className="inline-block w-4 h-4 rounded-full border border-gray-300"
-                      style={{ backgroundColor: variant.colorCode || '#f5f5f5' }}
-                    />
                     <div>
                       <p className="font-semibold text-black">
                         {variant.color} {variant.storage ? `• ${variant.storage}` : ''}
@@ -451,15 +442,6 @@ export default function ProductVariantsPage({ productId }: ProductVariantsPagePr
                     type="text"
                     value={formState.color}
                     onChange={(e) => handleFormChange('color', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">Mã màu (#HEX)</label>
-                  <input
-                    type="text"
-                    value={formState.colorCode}
-                    onChange={(e) => handleFormChange('colorCode', e.target.value)}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                   />
                 </div>

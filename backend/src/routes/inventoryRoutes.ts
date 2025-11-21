@@ -14,6 +14,7 @@ import {
   updateStockThresholdsValidation,
   checkAvailabilityValidation,
   createInventoryValidation,
+  quickQuantityUpdateValidation,
 } from '../validations/InventoryValidation';
 
 export const createInventoryRoutes = (): Router => {
@@ -168,6 +169,19 @@ export const createInventoryRoutes = (): Router => {
     authorize(Role.ADMIN, Role.MANAGER),
     validate(updateStockThresholdsValidation),
     inventoryController.updateStockThresholds
+  );
+
+  /**
+   * @route   PUT /api/inventory/:variantId/quantity
+   * @desc    Quick update quantity
+   * @access  Private (ADMIN, MANAGER)
+   */
+  router.put(
+    '/:variantId/quantity',
+    authenticate,
+    authorize(Role.ADMIN, Role.MANAGER),
+    validate(quickQuantityUpdateValidation),
+    inventoryController.quickUpdateQuantity
   );
 
   return router;

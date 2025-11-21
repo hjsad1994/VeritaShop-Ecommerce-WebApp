@@ -37,7 +37,7 @@ const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 export interface ImageUploadRef {
-  uploadFiles: (slug?: string) => Promise<ImageMetadata[]>;
+  uploadFiles: (slug?: string, variantSku?: string) => Promise<ImageMetadata[]>;
 }
 
 const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(function ImageUpload({
@@ -145,7 +145,7 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(function ImageU
 
   // Expose upload function for parent component to call
   useImperativeHandle(ref, () => ({
-    uploadFiles: async (slug?: string): Promise<ImageMetadata[]> => {
+    uploadFiles: async (slug?: string, variantSku?: string): Promise<ImageMetadata[]> => {
       // Get all files with their indices
       const filesToUpload: Array<{ file: File; index: number }> = [];
       selectedFiles.forEach((file, index) => {
@@ -169,7 +169,7 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(function ImageU
           setUploadProgress((prev) => ({ ...prev, [index]: 0 }));
 
           try {
-            const metadata = await imageService.uploadImage(targetSlug, file);
+            const metadata = await imageService.uploadImage(targetSlug, file, variantSku);
             uploadedImages.push(metadata);
             setUploadProgress((prev) => ({ ...prev, [index]: 100 }));
 

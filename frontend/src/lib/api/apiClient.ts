@@ -36,10 +36,11 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Extend axios config type to include retry flag
+// Extend axios config type to include retry flag and skipRedirect
 declare module 'axios' {
   interface AxiosRequestConfig {
     _retry?: boolean;
+    _skipRedirect?: boolean;
   }
 }
 
@@ -56,6 +57,21 @@ apiClient.interceptors.response.use(
 
       // If we get a 401 (Unauthorized) error, try to refresh the token
       if (error.response.status === 401 && originalRequest && !originalRequest._retry) {
+        
+        // If the request URL is exactly the refresh token endpoint, do not retry
+        if (originalRequest.url === '/auth/refresh-token' || originalRequest.url?.endsWith('/auth/refresh-token')) {
+             if (typeof window !== 'undefined') {
+                // Clear local storage
+                localStorage.removeItem('verita-user');
+                
+                // Only redirect to login if it wasn't a background check
+                if (originalRequest._skipRedirect !== true && !window.location.pathname.includes('/login')) {
+                    window.location.href = '/login';
+                }
+              }
+             return Promise.reject(error);
+        }
+
         originalRequest._retry = true; // Mark that we've tried to refresh
 
         try {
@@ -65,18 +81,29 @@ apiClient.interceptors.response.use(
           return apiClient(originalRequest);
         } catch (refreshError) {
           // If refresh fails, the user needs to log in again
-          console.error('Token refresh failed:', refreshError);
+          if (originalRequest._skipRedirect !== true) {
+             console.error('Token refresh failed:', refreshError);
+          }
 
           // Only redirect if we're in the browser
           if (typeof window !== 'undefined') {
-            // Clear local storage and redirect to login
+            // Clear local storage
             localStorage.removeItem('verita-user');
-            window.location.href = '/login';
+            
+            // Only redirect to login if it wasn't a background check
+            if (originalRequest._skipRedirect !== true && !window.location.pathname.includes('/login')) {
+                 window.location.href = '/login';
+            }
           }
 
+          // Instead of rejecting which causes unhandled errors in components, 
+          // we return a resolved promise with a specific structure that services can check
+          // or we make sure the rejection is handled gracefully. 
+          // However, for consistency with existing code which expects rejection on error:
           return Promise.reject({
-            success: false,
-            message: 'Your session has expired. Please log in again.',
+             // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             ...(refreshError as any),
+             isAuthError: true // Tag this error so consumers can ignore it if needed
           });
         }
       }

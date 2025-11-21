@@ -28,6 +28,11 @@ export const createProductRoutes = (): Router => {
   );
 
   router.get(
+    '/slug/:slug',
+    productController.getProductBySlug
+  );
+
+  router.get(
     '/:id',
     productController.getProductById
   );

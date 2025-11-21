@@ -156,7 +156,11 @@ export class ProductRepository extends BaseRepository<Product> {
             orderBy,
             include: {
                 brand: true,
-                category: true
+                category: true,
+                images: {
+                    where: { isPrimary: true },
+                    take: 1
+                }
             }
         });
         return { products, total };
@@ -202,6 +206,50 @@ export class ProductRepository extends BaseRepository<Product> {
                 },
                 images: true,
             },
+        });
+    }
+
+    async findBySlug(slug: string): Promise<Product | null> {
+        return this.prisma.product.findFirst({
+            where: { 
+                slug, 
+                isActive: true 
+            },
+            include: {
+                brand: true,
+                category: true,
+                specs: true,
+                variants: {
+                    where: { isActive: true },
+                    include: {
+                        images: {
+                            take: 5,
+                            orderBy: { sortOrder: 'asc' }
+                        },
+                        inventory: true
+                    }
+                },
+                images: {
+                    where: { isPrimary: true }, // Only need primary image for product? Or all? Spec says "display 5 corresponding images... for that variant". For product itself, Shop page uses Primary. Detail page might need more?
+                    // Spec says "Product Detail Page... displays 5 corresponding images... for that specific variant".
+                    // It doesn't explicitly say about product base images.
+                    // But usually we need them. I'll fetch them.
+                    orderBy: { sortOrder: 'asc' }
+                },
+                reviews: {
+                    include: {
+                        user: {
+                            select: {
+                                id: true,
+                                name: true,
+                                avatar: true
+                            }
+                        }
+                    },
+                    orderBy: { createdAt: 'desc' },
+                    take: 5 // Limit reviews too?
+                }
+            }
         });
     }
     /**
@@ -300,35 +348,28 @@ export class ProductRepository extends BaseRepository<Product> {
                 }
             });
 
-            // 6. Create images if provided
-            if (data.images && data.images.length > 0) {
-                // Validate max 4 images
-                if (data.images.length > 4) {
-                    throw new Error('Maximum 4 images allowed per product');
-                }
+            // 6. Create images (Mandatory: Exactly 1 image)
+            if (!data.images || data.images.length === 0) {
+                throw new Error('Product must have exactly one primary image');
+            }
+            
+            if (data.images.length > 1) {
+                throw new Error('Product can only have one primary image');
+            }
 
-                const imageData = data.images.map((img, index) => ({
+            const img = data.images[0];
+            await tx.productImage.create({
+                data: {
                     productId: product.id,
                     url: img.s3Key, // Store S3 key in database
                     altText: img.altText || null,
-                    isPrimary: index === 0 || img.isPrimary || false, // First image is primary by default
-                    sortOrder: img.sortOrder !== undefined ? img.sortOrder : index,
-                }));
-
-                // Ensure only one primary image
-                if (imageData.filter(img => img.isPrimary).length > 1) {
-                    // Keep only first as primary
-                    imageData.forEach((img, idx) => {
-                        img.isPrimary = idx === 0;
-                    });
+                    isPrimary: true, // Always primary
+                    sortOrder: 0,
                 }
+            });
 
-                await tx.productImage.createMany({
-                    data: imageData,
-                });
-
-                // Reload product with images
-                return await tx.product.findUnique({
+            // Reload product with images
+            return await tx.product.findUnique({
                     where: { id: product.id },
                     include: {
                         brand: true,
@@ -339,9 +380,6 @@ export class ProductRepository extends BaseRepository<Product> {
                         specs: true
                     }
                 }) as Product;
-            }
-
-            return product;
         });
     }
     async update(id: string, data: UpdateProductData): Promise<Product> {
@@ -416,37 +454,29 @@ export class ProductRepository extends BaseRepository<Product> {
                 });
             }
 
-            // 7. Handle image additions
+            // 7. Handle image additions (Replace logic)
             if (data.images && data.images.length > 0) {
-                // Get current image count
-                const currentImageCount = await tx.productImage.count({
-                    where: { productId: id },
+                if (data.images.length > 1) {
+                    throw new Error('Product can only have one primary image');
+                }
+
+                // Delete all existing images for this product (not variants)
+                await tx.productImage.deleteMany({
+                    where: { 
+                        productId: id,
+                        variantId: null
+                    }
                 });
 
-                // Calculate how many images we can add (max 4 total)
-                const remainingSlots = 4 - currentImageCount;
-                if (data.images.length > remainingSlots) {
-                    throw new Error(`Maximum 4 images allowed per product. Can only add ${remainingSlots} more.`);
-                }
-
-                const imageData = data.images.map((img, index) => ({
-                    productId: id,
-                    url: img.s3Key, // Store S3 key in database
-                    altText: img.altText || null,
-                    isPrimary: img.isPrimary || false,
-                    sortOrder: img.sortOrder !== undefined ? img.sortOrder : currentImageCount + index,
-                }));
-
-                // If setting a new primary image, unset others
-                if (imageData.some(img => img.isPrimary)) {
-                    await tx.productImage.updateMany({
-                        where: { productId: id },
-                        data: { isPrimary: false },
-                    });
-                }
-
-                await tx.productImage.createMany({
-                    data: imageData,
+                const img = data.images[0];
+                await tx.productImage.create({
+                    data: {
+                        productId: id,
+                        url: img.s3Key,
+                        altText: img.altText || null,
+                        isPrimary: true,
+                        sortOrder: 0,
+                    }
                 });
             }
 

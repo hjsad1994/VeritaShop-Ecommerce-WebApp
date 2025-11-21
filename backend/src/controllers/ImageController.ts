@@ -18,7 +18,7 @@ export class ImageController {
    */
   generatePresignedUrl = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { productSlug, fileName, fileType, fileSize } = req.body;
+      const { productSlug, fileName, fileType, fileSize, variantSku } = req.body;
 
       // Validate required fields
       if (!productSlug || !fileName || !fileType || !fileSize) {
@@ -35,7 +35,8 @@ export class ImageController {
       const result = await this.s3Service.generatePresignedUrl(
         productSlug,
         fileName,
-        fileType
+        fileType,
+        variantSku
       );
 
       res.status(200).json({

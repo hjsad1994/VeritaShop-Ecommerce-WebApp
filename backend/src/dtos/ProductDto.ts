@@ -1,4 +1,4 @@
-import { Product, Brand, Category, ProductSpecs, ProductVariant, ProductImage } from '@prisma/client';
+import { Product, Brand, Category, ProductSpecs, ProductVariant, ProductImage, Inventory } from '@prisma/client';
 import { toCloudFrontUrl } from '../utils/cdn';
 
 export interface ProductResponse {
@@ -38,12 +38,15 @@ export interface ProductDetailResponse extends ProductResponse {
   variants: Array<{
     id: string;
     color: string;
-    colorCode: string | null;
     storage: string | null;
     ram: string | null;
     price: string;
     comparePrice: string | null;
     sku: string;
+    inventory: {
+      quantity: number;
+      available: number;
+    } | null;
     images: Array<{
       id: string;
       url: string;
@@ -117,6 +120,7 @@ export class ProductDto {
     specs: ProductSpecs | null;
     variants: (ProductVariant & {
       images: ProductImage[];
+      inventory?: Inventory | null;
     })[];
     images: ProductImage[];
   }): ProductDetailResponse {
@@ -142,15 +146,19 @@ export class ProductDto {
       sortedVariants.push({
         id: variant.id,
         color: variant.color,
-        colorCode: variant.colorCode,
         storage: variant.storage,
         ram: variant.ram,
         price: variant.price.toString(),
         comparePrice: variant.comparePrice ? variant.comparePrice.toString() : null,
         sku: variant.sku,
+        inventory: variant.inventory ? {
+            quantity: variant.inventory.quantity,
+            available: variant.inventory.available
+        } : null,
         images: variantImages,
       });
     }
+
 
     const imagesCopy = [...product.images];
     imagesCopy.sort((a, b) => a.sortOrder - b.sortOrder);

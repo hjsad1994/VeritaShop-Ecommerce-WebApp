@@ -429,4 +429,44 @@ export class InventoryController {
       next(error);
     }
   };
+
+  /**
+   * Quick update quantity
+   * PUT /api/inventory/:variantId/quantity
+   * Auth: Required (ADMIN, MANAGER)
+   */
+  quickUpdateQuantity = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const userId = req.user!.userId;
+      const { variantId } = req.params;
+      const { quantity } = req.body;
+
+      const result = await this.inventoryService.adjustStock({
+        variantId,
+        newQuantity: quantity,
+        reason: 'Quick quantity update',
+        userId,
+      });
+
+      const inventoryDto = new InventoryDto(result.inventory);
+      const movementDto = result.movement
+        ? new StockMovementDto(result.movement)
+        : null;
+
+      res.status(HTTP_STATUS.OK).json({
+        success: true,
+        message: SUCCESS_MESSAGES.ADJUSTMENT_SUCCESS,
+        data: {
+          inventory: inventoryDto,
+          movement: movementDto,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
 }

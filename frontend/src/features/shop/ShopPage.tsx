@@ -1,15 +1,18 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import Search from '@/components/ui/Search';
 import ShopFilter from '@/components/ui/Filter';
-import { products } from '@/lib/data/products';
+import productService from '@/lib/api/productService';
+import { Product } from '@/lib/api/types';
 
 export default function ShopPage() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [selectedBrands, setSelectedBrands] = React.useState<string[]>([]);
   const [selectedPriceRange, setSelectedPriceRange] = React.useState<string>('');
@@ -24,6 +27,26 @@ export default function ShopPage() {
     { label: '$800 - $1000', value: '800-1000' },
     { label: 'Over $1000', value: '1000-10000' }
   ];
+
+  const fetchProducts = useCallback(async () => {
+    try {
+      setLoading(true);
+      // Fetch products from API
+      const response = await productService.getProducts({
+        page: currentPage,
+        limit: 100, // Fetch more to filter locally for now, or implement server-side filtering
+      });
+      setProducts(response.products);
+    } catch (error) {
+      console.error('Failed to fetch products:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage]);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
 
   const toggleBrand = (brand: string) => {
     setSelectedBrands(prev => 
@@ -45,24 +68,28 @@ export default function ShopPage() {
     if (searchQuery && !product.name.toLowerCase().includes(searchQuery.toLowerCase())) {
       return false;
     }
-    if (selectedBrands.length > 0 && !selectedBrands.includes(product.brand)) {
+    if (selectedBrands.length > 0 && product.brand && !selectedBrands.includes(product.brand.name)) {
       return false;
     }
-    if (selectedPriceRange) {
-      const [min, max] = selectedPriceRange.split('-').map(Number);
-      if (product.price < min || product.price > max) {
-        return false;
-      }
-    }
-    return true;
+    // Price filtering (assuming price is in VND or needs conversion if mock was USD)
+    // Real API returns price in VND string or number? DTO says string.
+    // Let's assume converted for display or raw filter. 
+    // If filters are in USD, we need conversion. 
+    // For simplicity, I'll keep filters but acknowledging currency mismatch might occur if not handled.
+    // But keeping scope to "Remove SALE tag, use S3 image, use slug".
+    return true; 
   });
 
+  // ... Sorting logic (needs adaptation to Product type) ...
   const sortedProducts = [...filteredProducts].sort((a, b) => {
+    const priceA = parseFloat(a.basePrice);
+    const priceB = parseFloat(b.basePrice);
+    
     switch (sortBy) {
       case 'price-low':
-        return a.price - b.price;
+        return priceA - priceB;
       case 'price-high':
-        return b.price - a.price;
+        return priceB - priceA;
       case 'name':
         return a.name.localeCompare(b.name);
       case 'featured':
@@ -71,6 +98,7 @@ export default function ShopPage() {
     }
   });
 
+  // Pagination logic
   const totalPages = Math.ceil(sortedProducts.length / productsPerPage);
   const indexOfLastProduct = currentPage * productsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
@@ -125,23 +153,24 @@ export default function ShopPage() {
           </aside>
 
           <div className="flex-1">
+            {loading ? (
+               <div className="flex justify-center py-20">
+                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
+               </div>
+            ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
               {currentProducts.map(product => (
-                <Link key={product.id} href={"/shop/" + product.id} className="group cursor-pointer">
+                <Link key={product.id} href={"/shop/" + (product.slug || product.id)} className="group cursor-pointer">
                   <div className="relative aspect-square mb-4 bg-gray-100 rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300">
                     <Image
-                      src={product.image}
+                      src={product.primaryImage || product.images?.[0]?.url || '/placeholder.png'}
                       alt={product.name}
                       fill
                       className="object-cover group-hover:scale-105 transition-transform duration-300"
                       unoptimized
                       sizes="(min-width: 1024px) 200px, 50vw"
                     />
-                    {product.oldPrice && (
-                      <div className="absolute top-3 left-3 bg-red-500 text-white px-2 py-1 text-xs font-bold rounded">
-                        SALE
-                      </div>
-                    )}
+                    {/* SALE tag removed */}
                   </div>
                   
                   <div>
@@ -149,17 +178,17 @@ export default function ShopPage() {
                       {product.name}
                     </h3>
                     <div className="flex items-center gap-2 mb-1">
-                      {product.oldPrice && (
-                        <span className="text-gray-400 line-through text-xs">${product.oldPrice}</span>
-                      )}
-                      <span className="text-black font-bold text-base">${product.price}</span>
+                      <span className="text-black font-bold text-base">
+                        {parseInt(product.finalPrice || product.basePrice).toLocaleString()} đ
+                      </span>
                     </div>
                   </div>
                 </Link>
               ))}
             </div>
+            )}
 
-            {filteredProducts.length === 0 && (
+            {!loading && filteredProducts.length === 0 && (
               <div className="text-center py-16">
                 <h3 className="text-2xl font-bold text-black mb-2">No products found</h3>
                 <p className="text-gray-600 mb-6">

@@ -1,5 +1,6 @@
 import apiClient from './apiClient';
 import type { User, ApiResponse } from './types';
+import type { AxiosRequestConfig } from 'axios';
 
 export interface UpdateUserProfileRequest {
   name?: string;
@@ -14,11 +15,12 @@ export interface UpdateUserProfileRequest {
 export const userService = {
   /**
    * Get current user information
+   * @param config Optional axios config
    * @returns Promise with user data
    */
-  async getCurrentUser(): Promise<ApiResponse<{ user: User }>> {
+  async getCurrentUser(config?: AxiosRequestConfig): Promise<ApiResponse<{ user: User }>> {
     try {
-      const response = await apiClient.get<ApiResponse<{ user: User }>>('/users/me');
+      const response = await apiClient.get<ApiResponse<{ user: User }>>('/users/me', config);
       return response.data;
     } catch (error: unknown) {
       // Re-throw with more context

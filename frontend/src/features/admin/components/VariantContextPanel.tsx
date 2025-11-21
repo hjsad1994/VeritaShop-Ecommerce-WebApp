@@ -18,11 +18,9 @@ export default function VariantContextPanel({
   onViewMovements,
 }: VariantContextPanelProps) {
   const [latestMovement, setLatestMovement] = useState<StockMovement | null>(null);
-  const [loadingMovement, setLoadingMovement] = useState(false);
 
   useEffect(() => {
     if (selectedInventory?.variantId) {
-      setLoadingMovement(true);
       inventoryService
         .getStockMovements(selectedInventory.variantId, { page: 1, limit: 1 })
         .then((response) => {
@@ -34,9 +32,6 @@ export default function VariantContextPanel({
         })
         .catch(() => {
           setLatestMovement(null);
-        })
-        .finally(() => {
-          setLoadingMovement(false);
         });
     } else {
       setLatestMovement(null);
@@ -212,6 +207,7 @@ export default function VariantContextPanel({
     </div>
   );
 }
+
 
 
 

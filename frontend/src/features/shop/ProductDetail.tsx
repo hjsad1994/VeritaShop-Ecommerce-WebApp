@@ -27,9 +27,9 @@ export default function ProductDetail({ productSlug }: ProductDetailProps) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   
-  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
-  const [reviewRating, setReviewRating] = useState(5);
-  const [reviewText, setReviewText] = useState('');
+  // const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  // const [reviewRating, setReviewRating] = useState(5);
+  // const [reviewText, setReviewText] = useState('');
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [showToast, setShowToast] = useState(false);
 

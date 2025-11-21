@@ -19,7 +19,6 @@ import InventoryActionModal, {
   InventoryActionMode,
 } from './components/InventoryActionModal';
 import InventoryMovementDrawer from './components/InventoryMovementDrawer';
-import VariantContextPanel from './components/VariantContextPanel';
 
 interface InventoryFilters {
   search: string;

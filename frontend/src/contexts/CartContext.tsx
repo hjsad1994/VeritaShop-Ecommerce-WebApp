@@ -81,7 +81,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
         // We skip redirect here because this is just an initial check
         // and we don't want to force login if the user is just browsing
-        const userResponse = await userService.getCurrentUser({ _skipRedirect: true }).catch((err) => {
+        const userResponse = await userService.getCurrentUser({ _skipRedirect: true }).catch(() => {
              // Silently catch auth errors during polling to prevent unhandled rejections
              return null;
         });
@@ -120,7 +120,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
 
         // We skip redirect here too because this is a background check
-        const userResponse = await userService.getCurrentUser({ _skipRedirect: true }).catch((err) => {
+        const userResponse = await userService.getCurrentUser({ _skipRedirect: true }).catch(() => {
              // Silently catch auth errors during polling to prevent unhandled rejections
              return null;
         });

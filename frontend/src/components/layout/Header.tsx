@@ -4,17 +4,34 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useCart } from '@/contexts/CartContext';
 import UserMenu from '@/components/layout/UserMenu';
+import categoryService from '@/lib/api/categoryService';
+import { Category } from '@/lib/api/types';
 
 interface HeaderProps {
   isScrolled?: boolean;
   theme?: 'dark' | 'light';
+  variant?: 'transparent' | 'solid-black' | 'solid-white';
 }
 
-export default function Header({ isScrolled = false, theme = 'dark' }: HeaderProps) {
+export default function Header({ isScrolled = false, theme = 'dark', variant = 'transparent' }: HeaderProps) {
   const { getTotalItems, openCart } = useCart();
   const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
   
   const notificationDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await categoryService.getCategoryTree();
+        setCategories(data);
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -29,7 +46,10 @@ export default function Header({ isScrolled = false, theme = 'dark' }: HeaderPro
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
-  const isLight = theme === 'light';
+  
+  // Determine styling based on variant and theme
+  const isSolidBlack = variant === 'solid-black';
+  const isLight = theme === 'light' && !isSolidBlack; // Force dark theme styles if solid-black variant
 
   const textClass = isLight ? 'text-black hover:text-gray-600' : 'text-white hover:text-gray-300';
   const logoClass = isLight ? 'text-black hover:text-gray-700' : 'text-white hover:text-gray-300';
@@ -37,13 +57,19 @@ export default function Header({ isScrolled = false, theme = 'dark' }: HeaderPro
   const dropdownItemClass = isLight ? 'text-black hover:bg-gray-100' : 'text-white hover:bg-gray-800';
   const buttonClass = isLight ? 'bg-black text-white hover:bg-gray-800' : 'bg-white text-black hover:bg-gray-200';
 
+  // Calculate background class
+  let headerBgClass = '';
+  if (isSolidBlack) {
+    headerBgClass = 'bg-black';
+  } else if (isLight) {
+    headerBgClass = 'bg-white border-b border-gray-200';
+  } else {
+    // Transparent variant logic
+    headerBgClass = isScrolled ? 'bg-black' : 'bg-transparent';
+  }
+
   return (
-    <header className={`fixed top-0 w-full z-50 transition-all duration-300 ease-in-out ${isLight
-        ? 'bg-white border-b border-gray-200'
-        : isScrolled
-          ? 'bg-black'
-          : 'bg-transparent'
-      }`}>
+    <header className={`fixed top-0 w-full z-50 transition-all duration-300 ease-in-out ${headerBgClass}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
@@ -68,25 +94,22 @@ export default function Header({ isScrolled = false, theme = 'dark' }: HeaderPro
 
               {/* Dropdown Menu */}
               <div className={`absolute top-full left-0 mt-2 w-56 ${dropdownBgClass} border rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform group-hover:translate-y-0 -translate-y-2`}>
-                <div className="py-2">
-                  <Link href="/category/iphone" className={`flex items-center gap-3 px-4 py-3 transition-all font-medium ${dropdownItemClass}`}>
-                    iPhone
-                  </Link>
-                  <Link href="/category/samsung" className={`flex items-center gap-3 px-4 py-3 transition-all font-medium ${dropdownItemClass}`}>
-                    Samsung
-                  </Link>
-                  <Link href="/category/gaming" className={`flex items-center gap-3 px-4 py-3 transition-all font-medium ${dropdownItemClass}`}>
-                    Gaming Phones
-                  </Link>
-                  <Link href="/category/huawei" className={`flex items-center gap-3 px-4 py-3 transition-all font-medium ${dropdownItemClass}`}>
-                    Huawei
-                  </Link>
-                  <Link href="/category/xiaomi" className={`flex items-center gap-3 px-4 py-3 transition-all font-medium ${dropdownItemClass}`}>
-                    Xiaomi
-                  </Link>
-                  <Link href="/category/oneplus" className={`flex items-center gap-3 px-4 py-3 transition-all font-medium ${dropdownItemClass}`}>
-                    OnePlus
-                  </Link>
+                <div className="py-2 max-h-[60vh] overflow-y-auto">
+                  {categories.length > 0 ? (
+                    categories.map((category) => (
+                      <Link 
+                        key={category.id} 
+                        href={`/category/${category.slug}`} 
+                        className={`flex items-center gap-3 px-4 py-3 transition-all font-medium ${dropdownItemClass}`}
+                      >
+                        {category.name}
+                      </Link>
+                    ))
+                  ) : (
+                    <div className={`px-4 py-3 text-sm ${isLight ? 'text-gray-500' : 'text-gray-400'}`}>
+                      No categories
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

@@ -67,6 +67,7 @@ export interface Category {
   createdAt: string;
   updatedAt: string;
   productCount?: number;
+  children?: Category[];
 }
 
 export interface CategoryListResponse {

@@ -101,7 +101,7 @@ apiClient.interceptors.response.use(
           // or we make sure the rejection is handled gracefully. 
           // However, for consistency with existing code which expects rejection on error:
           return Promise.reject({
-             ...refreshError,
+             ...(refreshError as any),
              isAuthError: true // Tag this error so consumers can ignore it if needed
           });
         }

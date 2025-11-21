@@ -9,7 +9,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import Toast from '@/components/ui/Toast';
 import productService from '@/lib/api/productService';
-import { ProductDetailResponse, ProductVariantItem } from '@/lib/api/types';
+import { ProductDetail as ProductDetailType, ProductVariantItem, ProductImage } from '@/lib/api/types';
 
 interface ProductDetailProps {
   productSlug: string;
@@ -19,7 +19,7 @@ export default function ProductDetail({ productSlug }: ProductDetailProps) {
   const { addToCartLegacy, openCart } = useCart();
   const { isAuthenticated } = useAuth();
   
-  const [product, setProduct] = useState<ProductDetailResponse | null>(null);
+  const [product, setProduct] = useState<ProductDetailType | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -62,10 +62,10 @@ export default function ProductDetail({ productSlug }: ProductDetailProps) {
   // If no variant selected (or no variant images), fallback to product images?
   const displayImages = React.useMemo(() => {
     if (selectedVariant && selectedVariant.images && selectedVariant.images.length > 0) {
-        return selectedVariant.images.map(img => img.url).slice(0, 5);
+        return selectedVariant.images.map((img: ProductImage) => img.url).slice(0, 5);
     }
     if (product && product.images && product.images.length > 0) {
-        return product.images.map(img => img.url).slice(0, 5);
+        return product.images.map((img: ProductImage) => img.url).slice(0, 5);
     }
     return [product?.primaryImage || '/placeholder.png'];
   }, [product, selectedVariant]);
@@ -247,7 +247,7 @@ export default function ProductDetail({ productSlug }: ProductDetailProps) {
             <div className="mb-6">
               <h3 className="text-sm font-bold text-black mb-3">Select Variant</h3>
               <div className="flex flex-wrap gap-3">
-                {product.variants.map((variant) => (
+                {product.variants.map((variant: ProductVariantItem) => (
                   <button
                     key={variant.id}
                     onClick={() => setSelectedVariant(variant)}

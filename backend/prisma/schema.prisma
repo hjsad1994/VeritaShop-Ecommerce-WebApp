@@ -142,7 +142,6 @@ model ProductVariant {
   id             String          @id @default(cuid())
   productId      String
   color          String
-  colorCode      String?
   storage        String?
   ram            String?
   price          Decimal         @db.Decimal(15, 2)
@@ -151,6 +150,7 @@ model ProductVariant {
   isActive       Boolean         @default(true)
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
+  colorCode      String?
   cartItems      CartItem[]
   inventory      Inventory?
   orderItems     OrderItem[]

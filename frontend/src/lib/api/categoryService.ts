@@ -32,6 +32,11 @@ class CategoryService {
     return response.data.data;
   }
 
+  async getCategoryTree(): Promise<Category[]> {
+    const response = await apiClient.get<ApiResponse<Category[]>>(`${this.basePath}/tree`);
+    return response.data.data;
+  }
+
   async createCategory(payload: CreateCategoryRequest): Promise<Category> {
     const response = await apiClient.post<ApiResponse<Category>>(this.basePath, payload);
     return response.data.data;

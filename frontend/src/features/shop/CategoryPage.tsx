@@ -1,37 +1,28 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import Search from '@/components/ui/Search';
 import ShopFilter from '@/components/ui/Filter';
-import { products } from '@/lib/data/products';
+import productService from '@/lib/api/productService';
+import { Product } from '@/lib/api/types';
 
 interface CategoryPageProps {
   category: string;
 }
 
 export default function CategoryPage({ category }: CategoryPageProps) {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [selectedBrands, setSelectedBrands] = React.useState<string[]>([]);
   const [selectedPriceRange, setSelectedPriceRange] = React.useState<string>('');
   const [sortBy, setSortBy] = React.useState('featured');
   const [currentPage, setCurrentPage] = React.useState(1);
   const productsPerPage = 20;
-
-  // Map category names
-  const categoryMap: { [key: string]: string } = {
-    'iphone': 'Apple',
-    'samsung': 'Samsung',
-    'gaming': 'Gaming Phones',
-    'huawei': 'Huawei',
-    'xiaomi': 'Xiaomi',
-    'oneplus': 'OnePlus',
-  };
-
-  const brandName = categoryMap[category.toLowerCase()] || category;
 
   const brands = ['Apple', 'Samsung', 'ASUS', 'Xiaomi', 'OnePlus', 'Black Shark', 'RedMagic'];
   const priceRanges = [
@@ -40,6 +31,25 @@ export default function CategoryPage({ category }: CategoryPageProps) {
     { label: '$800 - $1000', value: '800-1000' },
     { label: 'Over $1000', value: '1000-10000' }
   ];
+
+  const fetchProducts = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await productService.getProductsByCategory(category, {
+        page: currentPage,
+        limit: 100, // Fetch more to allow client-side filtering for now
+      });
+      setProducts(response.products);
+    } catch (error) {
+      console.error('Failed to fetch category products:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [category, currentPage]);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
 
   const toggleBrand = (brand: string) => {
     setSelectedBrands(prev => 
@@ -58,29 +68,21 @@ export default function CategoryPage({ category }: CategoryPageProps) {
   };
 
   const filteredProducts = products.filter(product => {
-    // Filter by category/brand
-    if (category.toLowerCase() === 'gaming') {
-      if (!['ASUS', 'RedMagic', 'Black Shark'].includes(product.brand)) {
-        return false;
-      }
-    } else if (brandName && product.brand !== brandName) {
-      return false;
-    }
-
     // Filter by search query
     if (searchQuery && !product.name.toLowerCase().includes(searchQuery.toLowerCase())) {
       return false;
     }
 
     // Filter by selected brands
-    if (selectedBrands.length > 0 && !selectedBrands.includes(product.brand)) {
+    if (selectedBrands.length > 0 && product.brand && !selectedBrands.includes(product.brand.name)) {
       return false;
     }
 
     // Filter by price range
     if (selectedPriceRange) {
       const [min, max] = selectedPriceRange.split('-').map(Number);
-      if (product.price < min || product.price > max) {
+      const price = parseFloat(product.finalPrice || product.basePrice.toString());
+      if (price < min || price > max) {
         return false;
       }
     }
@@ -89,11 +91,14 @@ export default function CategoryPage({ category }: CategoryPageProps) {
   });
 
   const sortedProducts = [...filteredProducts].sort((a, b) => {
+    const priceA = parseFloat(a.finalPrice || a.basePrice.toString());
+    const priceB = parseFloat(b.finalPrice || b.basePrice.toString());
+
     switch (sortBy) {
       case 'price-low':
-        return a.price - b.price;
+        return priceA - priceB;
       case 'price-high':
-        return b.price - a.price;
+        return priceB - priceA;
       case 'name':
         return a.name.localeCompare(b.name);
       case 'featured':
@@ -114,9 +119,11 @@ export default function CategoryPage({ category }: CategoryPageProps) {
 
   // Get category display name
   const getCategoryDisplayName = () => {
-    if (category.toLowerCase() === 'gaming') return 'Gaming Phones';
-    if (category.toLowerCase() === 'iphone') return 'iPhone';
-    return brandName;
+    // Capitalize first letter and replace hyphens with spaces
+    return category
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   };
 
   return (
@@ -163,41 +170,51 @@ export default function CategoryPage({ category }: CategoryPageProps) {
           </aside>
 
           <div className="flex-1">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
-              {currentProducts.map(product => (
-                <Link key={product.id} href={"/shop/" + product.id} className="group cursor-pointer">
-                  <div className="relative aspect-square mb-4 bg-gray-100 rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300">
-                    <Image
-                      src={product.image}
-                      alt={product.name}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
-                      unoptimized
-                      sizes="(min-width: 1024px) 200px, 50vw"
-                    />
-                    {product.oldPrice && (
-                      <div className="absolute top-3 left-3 bg-red-500 text-white px-2 py-1 text-xs font-bold rounded">
-                        SALE
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div>
-                    <h3 className="font-semibold text-black text-sm mb-2 group-hover:text-gray-600 transition-colors line-clamp-2">
-                      {product.name}
-                    </h3>
-                    <div className="flex items-center gap-2 mb-1">
-                      {product.oldPrice && (
-                        <span className="text-gray-400 line-through text-xs">${product.oldPrice}</span>
+            {loading ? (
+              <div className="flex justify-center py-20">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+                {currentProducts.map(product => (
+                  <Link key={product.id} href={"/shop/" + (product.slug || product.id)} className="group cursor-pointer">
+                    <div className="relative aspect-square mb-4 bg-gray-100 rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300">
+                      <Image
+                        src={product.primaryImage || product.images?.[0]?.url || '/placeholder.png'}
+                        alt={product.name}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        unoptimized
+                        sizes="(min-width: 1024px) 200px, 50vw"
+                      />
+                      {product.discount > 0 && (
+                        <div className="absolute top-3 left-3 bg-red-500 text-white px-2 py-1 text-xs font-bold rounded">
+                          SALE
+                        </div>
                       )}
-                      <span className="text-black font-bold text-base">${product.price}</span>
                     </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
+                    
+                    <div>
+                      <h3 className="font-semibold text-black text-sm mb-2 group-hover:text-gray-600 transition-colors line-clamp-2">
+                        {product.name}
+                      </h3>
+                      <div className="flex items-center gap-2 mb-1">
+                        {product.discount > 0 && (
+                          <span className="text-gray-400 line-through text-xs">
+                            {parseInt(product.basePrice.toString()).toLocaleString()} đ
+                          </span>
+                        )}
+                        <span className="text-black font-bold text-base">
+                          {parseInt(product.finalPrice || product.basePrice.toString()).toLocaleString()} đ
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
 
-            {filteredProducts.length === 0 && (
+            {!loading && filteredProducts.length === 0 && (
               <div className="text-center py-16">
                 <h3 className="text-2xl font-bold text-black mb-2">No products found</h3>
                 <p className="text-gray-600 mb-6">

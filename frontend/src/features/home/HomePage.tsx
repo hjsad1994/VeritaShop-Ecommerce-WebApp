@@ -16,15 +16,17 @@ export default function HomePage() {
   const [lastClickedTime, setLastClickedTime] = React.useState<{ [key: number]: number }>({});
 
   const rotatingWords = [
-    "gaming beast\nwith ROG Phone",
-    "Samsung\nflagship",
-    "IPhone you've been waiting for",
-    "Huawei\ninnovation"
+    "iPhone\n15 Pro Max",
+    "Samsung\nGalaxy S24 Ultra",
+    "ASUS ROG\nPhone 8",
+    "Huawei\nPura 70 Ultra"
   ];
 
   const [currentWord, setCurrentWord] = React.useState(0);
   const [isScrolled, setIsScrolled] = React.useState(false);
   const [animateText, setAnimateText] = React.useState(true);
+  const [scrollProgress, setScrollProgress] = React.useState(0);
+  const [mousePosition, setMousePosition] = React.useState({ x: 0, y: 0 });
 
   React.useEffect(() => {
     const interval = setInterval(() => {
@@ -32,209 +34,270 @@ export default function HomePage() {
       setTimeout(() => {
         setCurrentWord((prev) => (prev + 1) % rotatingWords.length);
         setAnimateText(true);
-      }, 500);
-    }, 3000);
+      }, 300);
+    }, 3500);
     return () => clearInterval(interval);
   }, [rotatingWords.length]);
 
   React.useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
+      const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+      const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      setScrollProgress(Math.min((winScroll / height) * 100, 100));
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  React.useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePosition({ x: e.clientX, y: e.clientY });
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white text-black overflow-x-hidden">
+      {/* Progress Bar */}
+      <div className="fixed top-0 left-0 w-full h-1 bg-black z-50 transform origin-left transition-transform duration-300"
+           style={{ transform: `scaleX(${scrollProgress / 100})` }} />
+
       <Header isScrolled={isScrolled} theme="light" variant="solid-black" />
 
-      {/* Hero Section */}
-      <section className="relative h-screen flex items-center overflow-hidden bg-gradient-to-br from-white via-gray-50 to-blue-50">
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-100 rounded-full filter blur-[128px] animate-pulse"></div>
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-100 rounded-full filter blur-[128px] animate-pulse"></div>
+      {/* Hero Section - Brutalist Tech Aesthetic */}
+      <section className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-white via-gray-50 to-black overflow-hidden">
+        {/* Dynamic Grid Background */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute inset-0" style={{
+            backgroundImage: 'linear-gradient(0deg, transparent 24%, rgba(0,0,0,0.05) 25%, rgba(0,0,0,0.05) 26%, transparent 27%, transparent 74%, rgba(0,0,0,0.05) 75%, rgba(0,0,0,0.05) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(0,0,0,0.05) 25%, rgba(0,0,0,0.05) 26%, transparent 27%, transparent 74%, rgba(0,0,0,0.05) 75%, rgba(0,0,0,0.05) 76%, transparent 77%, transparent)',
+            backgroundSize: '50px 50px'
+          }}></div>
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 w-full pt-16">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div className="max-w-2xl order-2 md:order-1 animate-fade-in-up">
-              <div className="mb-10">
-                <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-black leading-[1.1] tracking-tight mb-6">
-                  Get the <br />
-                  <span className="inline-block relative min-h-[2.4em] w-full overflow-hidden">
-                    <span className={`absolute left-0 top-0 transition-all duration-500 ease-in-out whitespace-pre-line text-black ${animateText
-                      ? 'translate-y-0 opacity-100'
-                      : '-translate-y-full opacity-0'
-                      }`}>
+        {/* Mouse-follower gradient */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div
+            className="absolute w-[600px] h-[600px] rounded-full opacity-20 blur-[100px] transition-transform duration-1000 ease-out"
+            style={{
+              background: 'radial-gradient(circle, rgba(59,130,246,0.8) 0%, transparent 70%)',
+              left: `${mousePosition.x - 300}px`,
+              top: `${mousePosition.y - 300}px`,
+            }}
+          />
+        </div>
+
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 pt-20">
+          <div className="grid lg:grid-cols-2 gap-16 items-center min-h-[80vh]">
+
+            {/* Left Column - Typography Heavy */}
+            <div className="space-y-8 order-2 lg:order-1">
+              <div className="space-y-4">
+                <div className="inline-block">
+                  <p className="text-sm font-bold tracking-[0.3em] uppercase text-blue-600 mb-2">
+                    Premium Smartphones 2025
+                  </p>
+                </div>
+
+                <h1 className="text-6xl md:text-7xl lg:text-8xl font-black leading-[0.9] tracking-tighter">
+                  THE <br />
+                  <span className="relative block h-[1.2em] overflow-hidden">
+                    <span className={`absolute left-0 top-0 transition-all duration-700 ease-out whitespace-pre-line ${
+                      animateText
+                        ? 'translate-y-0 opacity-100'
+                        : '-translate-y-full opacity-0'
+                    }`}>
                       {rotatingWords[currentWord]}
                     </span>
                   </span>
                 </h1>
               </div>
-              <p className="text-xl md:text-2xl text-gray-600 mb-12 leading-relaxed font-light">
-                Premium smartphones from the world&apos;s best brands. <span className="text-black font-medium">Free shipping</span> on orders over $500.
-              </p>
-              <div className="flex flex-wrap gap-4">
-                <Link href="/shop" className="group bg-black text-white px-12 py-5 rounded-full text-lg font-bold hover:shadow-2xl hover:scale-105 transition-all duration-300 flex items-center gap-2">
-                  Shop now
-                  <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                  </svg>
-                </Link>
+
+              <div className="space-y-6 max-w-lg">
+                <p className="text-xl md:text-2xl text-gray-600 leading-relaxed font-light">
+                  Experience the pinnacle of mobile technology.
+                  <span className="block text-black font-bold mt-2">Crafted for excellence.</span>
+                </p>
+
+                <div className="flex flex-wrap gap-4">
+                  <Link
+                    href="/shop"
+                    className="group relative overflow-hidden bg-black text-white px-12 py-5 rounded-full text-lg font-bold hover:shadow-2xl transition-all duration-500 flex items-center gap-3 border border-black"
+                  >
+                    <span className="relative z-10 flex items-center gap-3">
+                      Shop Collection
+                      <svg className="w-5 h-5 group-hover:translate-x-2 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                      </svg>
+                    </span>
+                    <div className="absolute inset-0 bg-white transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out"></div>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Stats */}
+              <div className="grid grid-cols-3 gap-8 pt-8 border-t border-gray-200">
+                <div>
+                  <div className="text-3xl font-black">50K+</div>
+                  <div className="text-sm text-gray-600 uppercase tracking-wide">Customers</div>
+                </div>
+                <div>
+                  <div className="text-3xl font-black">4.9★</div>
+                  <div className="text-sm text-gray-600 uppercase tracking-wide">Rating</div>
+                </div>
+                <div>
+                  <div className="text-3xl font-black">24/7</div>
+                  <div className="text-sm text-gray-600 uppercase tracking-wide">Support</div>
+                </div>
               </div>
             </div>
 
-            <div className="relative md:flex items-center justify-center order-1 md:order-2 animate-fade-in">
-              <div className="relative w-full max-w-[650px] h-[700px] flex items-center justify-center">
-                {/* Animated background gradients */}
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-full filter blur-[150px] animate-pulse"></div>
-                <div className="absolute top-1/4 right-1/4 w-64 h-64 bg-cyan-500/10 rounded-full filter blur-[100px] animate-pulse" style={{ animationDelay: '1s' }}></div>
+            {/* Right Column - Product Showcase */}
+            <div className="relative order-1 lg:order-2 h-[70vh] lg:h-[80vh] flex items-center justify-center">
+              {/* Background Elements */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="absolute w-[500px] h-[500px] bg-gradient-to-br from-blue-500/10 to-transparent rounded-full blur-[150px] animate-pulse"></div>
+                <div className="absolute top-1/4 right-1/4 w-[300px] h-[300px] bg-black/5 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '2s' }}></div>
+              </div>
 
-                {/* Product image */}
-                <div className="relative z-10 group">
+              {/* Product Image Container */}
+              <div className="relative z-10 group">
+                <div className="absolute inset-0 bg-gradient-to-br from-black/5 to-blue-500/5 rounded-3xl blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+
+                <div className="relative w-[350px] lg:w-[400px] h-[600px] lg:h-[700px]">
                   <Image
                     src="/images/iphone17.png"
                     alt="Premium Smartphone"
-                    width={400}
-                    height={650}
+                    fill
                     priority
-                    className="relative w-auto h-[650px] object-contain drop-shadow-2xl animate-float group-hover:scale-105 transition-transform duration-700"
+                    className="object-contain drop-shadow-2xl transition-transform duration-1000 group-hover:scale-105"
                     onError={(event) => {
                       event.currentTarget.src = 'https://images.unsplash.com/photo-1695048064555-7f2f29c9e588?w=800&h=1200&fit=crop&q=80';
                     }}
                   />
 
-                  {/* Decorative elements */}
-                  <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-80 h-8 bg-gradient-to-r from-transparent via-blue-200/50 to-transparent blur-xl"></div>
+                  {/* Floating elements */}
+                  <div className="absolute top-10 -left-10 w-20 h-20 bg-blue-500 rounded-full blur-xl opacity-20 animate-bounce" style={{ animationDuration: '3s' }}></div>
+                  <div className="absolute bottom-20 -right-10 w-16 h-16 bg-black rounded-full blur-lg opacity-10 animate-bounce" style={{ animationDuration: '4s', animationDelay: '1s' }}></div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-
-        <style jsx>{`
-          @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-20px); }
-          }
-          .animate-float {
-            animation: float 6s ease-in-out infinite;
-          }
-          @keyframes fade-in-up {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
-          .animate-fade-in-up {
-            animation: fade-in-up 1s ease-out forwards;
-          }
-          @keyframes fade-in {
-            from { opacity: 0; }
-            to { opacity: 1; }
-          }
-          .animate-fade-in {
-            animation: fade-in 1.5s ease-out forwards;
-          }
-        `}</style>
       </section>
 
-      {/* Brand Showcase */}
-      <section className="py-32 bg-slate-50 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 mb-20">
-          <div className="text-center">
-            <div className="inline-block mb-4">
-              <span className="text-sm uppercase tracking-widest text-blue-600 font-semibold">Explore Brands</span>
-            </div>
-            <h2
-              className="text-5xl md:text-6xl font-bold mb-6 tracking-tight text-black"
-            >
-              Shop by Brand
-            </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Premium smartphones from the world&apos;s leading manufacturers
-            </p>
-          </div>
+      {/* Brand Showcase - Asymmetrical Layout */}
+      <section className="relative py-32 bg-black text-white overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="h-full w-full" style={{
+            backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(255,255,255,.1) 35px, rgba(255,255,255,.1) 70px)`,
+          }}></div>
         </div>
 
+        {/* Header - Constrained */}
+        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 mb-20">
+          <div className="flex items-center gap-4 mb-8">
+            <div className="w-20 h-0.5 bg-white"></div>
+            <p className="text-sm font-bold tracking-[0.3em] uppercase">Explore Brands</p>
+          </div>
+
+          <h2 className="text-6xl md:text-7xl lg:text-8xl font-black leading-[0.9] tracking-tighter mb-8">
+            SHOP BY <br /> <span className="text-blue-400">BRAND</span>
+          </h2>
+
+          <p className="text-xl text-gray-400 max-w-2xl">
+            Premium smartphones from the world&apos;s leading manufacturers
+          </p>
+        </div>
+
+        {/* Scrolling Brand Cards - Full Width */}
         <div className="relative">
-          <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-gray-50 to-transparent z-10"></div>
-          <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-gray-50 to-transparent z-10"></div>
+          <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-black to-transparent z-10"></div>
+          <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-black to-transparent z-10"></div>
 
-          <div className="flex animate-scroll-left">
-            {[...Array(2)].map((_, setIndex) => (
-              <div key={setIndex} className="flex gap-6 px-3">
-                {[
-                  {
-                    name: 'iPhone',
-                    tagline: 'Think Different',
-                    gradient: 'from-gray-100 to-gray-200',
-                    img: '/images/iphone17.png',
-                    link: '/category/iphone'
-                  },
-                  {
-                    name: 'Samsung',
-                    tagline: 'Next is Now',
-                    gradient: 'from-blue-50 to-gray-100',
-                    img: '/images/samsungs24.jpg',
-                    link: '/category/samsung'
-                  },
-                  {
-                    name: 'ASUS ROG',
-                    tagline: 'For Those Who Dare',
-                    gradient: 'from-red-50 to-gray-100',
-                    img: '/images/rogphone8.png',
-                    link: '/category/gaming'
-                  },
-                  {
-                    name: 'Huawei',
-                    tagline: 'Make it Possible',
-                    gradient: 'from-purple-50 to-gray-100',
-                    img: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800',
-                    link: '/category/huawei'
-                  },
-                  {
-                    name: 'Xiaomi',
-                    tagline: 'Innovation For Everyone',
-                    gradient: 'from-orange-50 to-gray-100',
-                    img: '/images/Xiaomi14.png',
-                    link: '/category/xiaomi'
-                  },
-                  {
-                    name: 'OnePlus',
-                    tagline: 'Never Settle',
-                    gradient: 'from-red-50 to-gray-100',
-                    img: '/images/oneplus12.png',
-                    link: '/category/oneplus'
-                  }
-                ].map((brand, index) => (
-                  <Link
-                    key={`${setIndex}-${index}`}
-                    href={brand.link}
-                    className={`group relative bg-gradient-to-br ${brand.gradient} rounded-3xl p-8 hover:scale-105 transition-all duration-500 cursor-pointer min-w-[320px] border border-gray-100 hover:border-gray-200 overflow-hidden shadow-md hover:shadow-2xl`}
-                  >
-                    <div className="absolute inset-0 opacity-50 group-hover:opacity-60 transition-opacity duration-500">
-                      <Image
-                        src={brand.img}
-                        alt={brand.name}
-                        fill
-                        className="object-cover"
-                        unoptimized
-                        sizes="320px"
-                      />
-                    </div>
-                    <div className="relative z-10 text-center">
-                      <h3 className="text-2xl font-bold text-black mb-2 tracking-wide drop-shadow-sm">{brand.name}</h3>
-                      <p className="text-gray-700 text-sm uppercase tracking-wider font-medium drop-shadow-sm">{brand.tagline}</p>
-                      <div className="mt-6 inline-block px-6 py-2 bg-black text-white rounded-full text-sm font-bold group-hover:scale-105 transition-all shadow-lg">
-                        Explore →
+          <div className="flex animate-scroll-left gap-8">
+              {[...Array(2)].map((_, setIndex) => (
+                <div key={setIndex} className="flex gap-8 px-4">
+                  {[
+                    {
+                      name: 'iPhone',
+                      tagline: 'Think Different',
+                      bg: 'bg-gradient-to-br from-gray-900 to-gray-800',
+                      img: '/images/iphone17.png',
+                      link: '/category/iphone'
+                    },
+                    {
+                      name: 'Samsung',
+                      tagline: 'Next is Now',
+                      bg: 'bg-gradient-to-br from-blue-900 to-blue-800',
+                      img: '/images/samsungs24.jpg',
+                      link: '/category/samsung'
+                    },
+                    {
+                      name: 'ASUS ROG',
+                      tagline: 'For Those Who Dare',
+                      bg: 'bg-gradient-to-br from-red-900 to-red-800',
+                      img: '/images/rogphone8.png',
+                      link: '/category/gaming'
+                    },
+                    {
+                      name: 'Huawei',
+                      tagline: 'Make it Possible',
+                      bg: 'bg-gradient-to-br from-purple-900 to-purple-800',
+                      img: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800',
+                      link: '/category/huawei'
+                    },
+                    {
+                      name: 'Xiaomi',
+                      tagline: 'Innovation For Everyone',
+                      bg: 'bg-gradient-to-br from-orange-900 to-orange-800',
+                      img: '/images/Xiaomi14.png',
+                      link: '/category/xiaomi'
+                    },
+                    {
+                      name: 'OnePlus',
+                      tagline: 'Never Settle',
+                      bg: 'bg-gradient-to-br from-red-900 to-pink-900',
+                      img: '/images/oneplus12.png',
+                      link: '/category/oneplus'
+                    }
+                  ].map((brand, index) => (
+                    <Link
+                      key={`${setIndex}-${index}`}
+                      href={brand.link}
+                      className={`group relative ${brand.bg} rounded-3xl p-8 hover:scale-105 transition-all duration-700 cursor-pointer min-w-[350px] border border-gray-800 hover:border-gray-600 overflow-hidden`}
+                    >
+                      {/* Background Image */}
+                      <div className="absolute inset-0 opacity-20 group-hover:opacity-30 transition-opacity duration-700">
+                        <Image
+                          src={brand.img}
+                          alt={brand.name}
+                          fill
+                          className="object-cover"
+                          unoptimized
+                          sizes="350px"
+                        />
                       </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            ))}
+
+                      {/* Content */}
+                      <div className="relative z-10">
+                        <h3 className="text-2xl font-black text-white mb-2 tracking-tight">{brand.name}</h3>
+                        <p className="text-gray-400 text-sm uppercase tracking-wider font-bold mb-6">{brand.tagline}</p>
+                        <div className="flex items-center gap-3 text-white group-hover:text-blue-400 transition-all duration-300">
+                          <span className="text-sm font-bold uppercase tracking-wider">Explore</span>
+                          <svg className="w-4 h-4 group-hover:translate-x-2 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                          </svg>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
 
         <style jsx>{`
           @keyframes scroll-left {
@@ -242,7 +305,7 @@ export default function HomePage() {
             100% { transform: translateX(-50%); }
           }
           .animate-scroll-left {
-            animation: scroll-left 30s linear infinite;
+            animation: scroll-left 40s linear infinite;
           }
           .animate-scroll-left:hover {
             animation-play-state: paused;
@@ -250,29 +313,30 @@ export default function HomePage() {
         `}</style>
       </section>
 
-      {/* Featured Products */}
+      {/* Featured Products - Editorial Layout */}
       <section className="py-32 bg-white">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16">
-            <div className="mb-6 md:mb-0">
-              <div className="inline-block mb-4">
-                <span className="bg-gradient-to-r from-orange-500 to-pink-500 text-white px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg">
-                  Limited Time
-                </span>
+          <div className="mb-20">
+            <div className="flex items-center justify-between mb-12">
+              <div className="flex items-center gap-8">
+                <div className="w-20 h-0.5 bg-black"></div>
+                <div>
+                  <p className="text-sm font-bold tracking-[0.3em] uppercase text-red-600 mb-2">Limited Time</p>
+                  <h2 className="text-5xl md:text-6xl font-black leading-[0.9] tracking-tighter">
+                    HOT DEALS
+                  </h2>
+                </div>
               </div>
-              <h2
-                className="text-4xl md:text-5xl lg:text-6xl font-bold mb-3 tracking-tight text-black"
-              >
-                Hot Deals This Week
-              </h2>
-              <p className="text-gray-600 text-lg font-light">Limited time offers on premium devices</p>
+              <Link href="/shop" className="group flex items-center gap-3 text-black hover:text-blue-600 font-bold text-lg transition-all">
+                View All
+                <svg className="w-5 h-5 group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </Link>
             </div>
-            <Link href="/shop" className="group inline-flex items-center gap-2 text-black hover:text-blue-600 font-semibold text-lg transition-all">
-              View All
-              <span className="group-hover:translate-x-2 transition-transform">→</span>
-            </Link>
           </div>
 
+          {/* Product Grid */}
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {products.slice(0, 8).map((product, index) => {
               const getBadge = (product: Product) => {
@@ -296,38 +360,38 @@ export default function HomePage() {
               return (
                 <div
                   key={index}
-                  className="group relative bg-white border border-gray-100 rounded-3xl overflow-hidden hover:border-gray-200 hover:shadow-2xl transition-all duration-500 cursor-pointer flex flex-col h-full"
+                  className="group relative bg-white border border-gray-200 rounded-3xl overflow-hidden hover:border-gray-400 hover:shadow-2xl transition-all duration-700 cursor-pointer flex flex-col h-full"
                 >
                   <div className="relative aspect-square overflow-hidden bg-gray-50">
                     <Image
                       src={product.image}
                       alt={product.name}
                       fill
-                      className="object-cover group-hover:scale-110 transition-transform duration-700"
+                      className="object-cover group-hover:scale-110 transition-transform duration-1000"
                       unoptimized
                       sizes="(min-width: 1024px) 250px, 50vw"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
 
-                    <div className={`absolute top-4 right-4 ${badge.color} text-white px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider shadow-md transform group-hover:scale-105 transition-transform`}>
+                    <div className={`absolute top-4 right-4 ${badge.color} text-white px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider shadow-lg transform group-hover:scale-110 transition-transform`}>
                       {badge.text}
                     </div>
 
                     {discount > 0 && (
-                      <div className="absolute top-4 left-4 bg-white text-black border border-gray-100 px-3 py-1 rounded-full text-xs font-bold shadow-sm">
-                        -{discount}% OFF
+                      <div className="absolute top-4 left-4 bg-white text-black border-2 border-black px-3 py-1 rounded-full text-xs font-black shadow-lg">
+                        -{discount}%
                       </div>
                     )}
 
-                    <div className="absolute bottom-0 left-0 right-0 p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                      <Link href={`/shop/${product.id}`} className="block w-full bg-black text-white py-3 rounded-full text-sm font-bold hover:bg-gray-800 transition-all shadow-lg text-center">
+                    <div className="absolute bottom-0 left-0 right-0 p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-500 bg-gradient-to-t from-white/90 to-transparent">
+                      <Link href={`/shop/${product.id}`} className="block w-full bg-black text-white py-3 rounded-full text-xs font-black hover:bg-blue-600 transition-all shadow-lg text-center uppercase tracking-wider">
                         Quick View
                       </Link>
                     </div>
                   </div>
 
                   <div className="p-6 flex flex-col flex-grow">
-                    <h3 className="text-lg font-bold text-black mb-3 line-clamp-2 min-h-[3.5rem]">
+                    <h3 className="text-lg font-black text-black mb-3 line-clamp-2 min-h-[3rem] leading-tight">
                       {product.name}
                     </h3>
 
@@ -337,11 +401,11 @@ export default function HomePage() {
                           <span key={i} className="text-yellow-400 text-sm">★</span>
                         ))}
                       </div>
-                      <span className="text-gray-500 text-xs">(128 reviews)</span>
+                      <span className="text-gray-500 text-xs">(128)</span>
                     </div>
 
-                    <div className="flex items-center gap-3 mb-5">
-                      <span className="text-3xl font-bold text-black">${product.price}</span>
+                    <div className="flex items-center gap-3 mb-6">
+                      <span className="text-2xl font-black text-black">${product.price}</span>
                       {product.oldPrice && (
                         <span className="text-base text-gray-400 line-through">${product.oldPrice}</span>
                       )}
@@ -352,50 +416,32 @@ export default function HomePage() {
                         e.preventDefault();
                         e.stopPropagation();
 
-                        // Prevent multiple clicks
-                        if (addingToCart === product.id) {
-                          console.log('Button disabled, ignoring click');
-                          return;
-                        }
+                        if (addingToCart === product.id) return;
 
-                        // Throttle clicks - prevent clicking within 500ms
                         const now = Date.now();
                         const lastClick = lastClickedTime[product.id] || 0;
-                        if (now - lastClick < 500) {
-                          console.log('Click throttled, ignoring');
-                          return;
-                        }
+                        if (now - lastClick < 500) return;
                         setLastClickedTime({ ...lastClickedTime, [product.id]: now });
 
                         if (!isAuthenticated) {
-                          // Save current page for redirect after login
                           sessionStorage.setItem('redirectPath', window.location.pathname);
                           window.location.href = '/login';
                           return;
                         }
 
-                        console.log('🚀 HomePage: Adding to cart -', product.name);
-
-                        // Set loading state
                         setAddingToCart(product.id);
-
-                        // Add to cart logic
                         const selectedColor = product.colors ? product.colors[0] : 'Default';
-
-                        // Map Product to LegacyCartItem format
                         const legacyProduct = {
                           id: product.id.toString(),
                           name: product.name,
                           price: product.price,
-                          slug: '', // Not available in this Product type
+                          slug: '',
                           images: product.images || [product.image]
                         };
                         addToCartLegacy(legacyProduct, 1, selectedColor);
 
-                        // Reset loading state and open cart
                         setTimeout(() => {
                           setAddingToCart(null);
-                          // Clear click throttle after 1 second
                           setTimeout(() => {
                             setLastClickedTime((prev: typeof lastClickedTime) => ({ ...prev, [product.id]: 0 }));
                           }, 1000);
@@ -403,7 +449,7 @@ export default function HomePage() {
                         }, 300);
                       }}
                       disabled={addingToCart === product.id}
-                      className={`w-full bg-black text-white py-3.5 rounded-full text-sm font-bold hover:bg-gray-800 hover:scale-[1.02] transition-all duration-300 shadow-lg mt-auto ${addingToCart === product.id ? 'opacity-50 cursor-not-allowed' : ''
+                      className={`w-full bg-black text-white py-4 rounded-full text-sm font-black hover:bg-blue-600 hover:scale-[1.02] transition-all duration-300 shadow-lg mt-auto uppercase tracking-wider border-2 border-black ${addingToCart === product.id ? 'opacity-50 cursor-not-allowed' : ''
                         }`}
                     >
                       {addingToCart === product.id ? 'Adding...' : 'Add to Cart'}
@@ -416,289 +462,143 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Categories Section */}
-      <section className="py-32 bg-slate-50">
+      {/* Categories - Bold Minimalist */}
+      <section className="py-32 bg-black text-white">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-          <h2
-            className="text-5xl md:text-6xl font-bold text-center mb-8 tracking-tight text-black"
-          >
-            Shop by category
-          </h2>
-          <p className="text-center text-lg text-gray-600 mb-20 max-w-2xl mx-auto font-light">
-            Explore our curated collection of premium smartphones across different categories
-          </p>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="group relative rounded-2xl overflow-hidden cursor-pointer h-96 hover:scale-105 transition-all shadow-lg hover:shadow-2xl duration-500">
-              <Image
-                src="https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?w=800&h=800&fit=crop"
-                alt="Flagship Phones"
-                fill
-                className="object-cover"
-                unoptimized
-                sizes="(min-width: 768px) 33vw, 100vw"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent flex flex-col justify-end p-10">
-                <h3 className="text-4xl font-light text-white mb-3 tracking-tight transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">Flagship Phones</h3>
-                <p className="text-gray-200 mb-6 font-light text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">The latest and greatest from top brands</p>
-                <Link href="/shop" className="text-white font-medium text-xs uppercase tracking-widest inline-flex items-center group-hover:gap-3 transition-all">
-                  Shop now <span className="ml-2 group-hover:ml-4 transition-all">→</span>
-                </Link>
-              </div>
+          <div className="text-center mb-20">
+            <div className="flex items-center justify-center gap-4 mb-8">
+              <div className="w-20 h-0.5 bg-white"></div>
+              <p className="text-sm font-bold tracking-[0.3em] uppercase">Categories</p>
+              <div className="w-20 h-0.5 bg-white"></div>
             </div>
 
-            <div className="group relative rounded-2xl overflow-hidden cursor-pointer h-96 hover:scale-105 transition-all shadow-lg hover:shadow-2xl duration-500">
-              <Image
-                src="https://images.unsplash.com/photo-1574944985070-8f3ebc6b79d2?w=800&h=800&fit=crop"
-                alt="Gaming Phones"
-                fill
-                className="object-cover"
-                unoptimized
-                sizes="(min-width: 768px) 33vw, 100vw"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent flex flex-col justify-end p-10">
-                <h3 className="text-4xl font-light text-white mb-3 tracking-tight transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">Gaming Phones</h3>
-                <p className="text-gray-200 mb-6 font-light text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">Ultimate power for mobile gaming</p>
-                <Link href="/shop" className="text-white font-medium text-xs uppercase tracking-widest inline-flex items-center group-hover:gap-3 transition-all">
-                  Shop now <span className="ml-2 group-hover:ml-4 transition-all">→</span>
-                </Link>
-              </div>
-            </div>
-
-            <div className="group relative rounded-2xl overflow-hidden cursor-pointer h-96 hover:scale-105 transition-all shadow-lg hover:shadow-2xl duration-500">
-              <Image
-                src="https://images.unsplash.com/photo-1512499617640-c74ae3a79d37?w=800&h=800&fit=crop"
-                alt="Budget Friendly"
-                fill
-                className="object-cover"
-                unoptimized
-                sizes="(min-width: 768px) 33vw, 100vw"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent flex flex-col justify-end p-10">
-                <h3 className="text-4xl font-light text-white mb-3 tracking-tight transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">Budget Friendly</h3>
-                <p className="text-gray-200 mb-6 font-light text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">Great phones at amazing prices</p>
-                <Link href="/shop" className="text-white font-medium text-xs uppercase tracking-widest inline-flex items-center group-hover:gap-3 transition-all">
-                  Shop now <span className="ml-2 group-hover:ml-4 transition-all">→</span>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* iPhone Feature Section */}
-      <section className="py-32 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-2 gap-16 items-center">
-            <div className="animate-fade-in">
-              <p className="text-sm text-blue-600 font-bold uppercase tracking-widest mb-3">Apple</p>
-              <h2 className="text-5xl md:text-6xl font-bold text-black mb-8 leading-tight">
-                The iPhone everyone&apos;s talking about
-              </h2>
-              <p className="text-xl text-gray-600 mb-10 leading-relaxed font-light">
-                Experience the power of the latest iPhone 15 series. A17 Pro chip, ProMotion display, and the best camera system ever.
-              </p>
-              <div className="space-y-6 mb-10">
-                <div className="flex items-start gap-4 p-6 rounded-2xl hover:bg-gray-50 transition-all duration-300 cursor-pointer group border border-transparent hover:border-gray-100 hover:shadow-lg">
-                  <div>
-                    <h4 className="font-bold text-black text-xl mb-1 group-hover:text-blue-600 transition-colors">A17 Pro Chip</h4>
-                    <p className="text-gray-600 group-hover:text-gray-800 transition-colors">Console-level gaming and pro workflows</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4 p-6 rounded-2xl hover:bg-gray-50 transition-all duration-300 cursor-pointer group border border-transparent hover:border-gray-100 hover:shadow-lg">
-                  <div>
-                    <h4 className="font-bold text-black text-xl mb-1 group-hover:text-blue-600 transition-colors">Pro Camera System</h4>
-                    <p className="text-gray-600 group-hover:text-gray-800 transition-colors">48MP main camera with 5x optical zoom</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4 p-6 rounded-2xl hover:bg-gray-50 transition-all duration-300 cursor-pointer group border border-transparent hover:border-gray-100 hover:shadow-lg">
-                  <div>
-                    <h4 className="font-bold text-black text-xl mb-1 group-hover:text-blue-600 transition-colors">All-day Battery</h4>
-                    <p className="text-gray-600 group-hover:text-gray-800 transition-colors">Up to 29 hours video playback</p>
-                  </div>
-                </div>
-              </div>
-              <Link href="/category/iphone" className="inline-block bg-black text-white px-12 py-5 rounded-full text-lg font-bold hover:bg-gray-800 hover:shadow-xl hover:scale-105 transition-all duration-300">
-                Shop iPhone
-              </Link>
-            </div>
-            <div className="relative">
-              <div className="aspect-square rounded-3xl overflow-hidden bg-gradient-to-br from-gray-50 to-white border border-gray-100 hover:border-gray-200 hover:shadow-2xl transition-all duration-700 cursor-pointer group relative">
-                <Image
-                  src="https://images.unsplash.com/photo-1678652197831-2d180705cd2c?q=80&w=800&h=800&fit=crop"
-                  alt="iPhone 15 Pro"
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-700"
-                  unoptimized
-                  sizes="(min-width: 768px) 50vw, 100vw"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Samsung Section */}
-      <section className="py-32 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-2 gap-16 items-center">
-            <div className="order-2 md:order-1 relative">
-              <div className="aspect-square rounded-3xl overflow-hidden bg-gradient-to-br from-blue-50 to-white border border-gray-200 hover:border-gray-300 hover:shadow-2xl transition-all duration-700 cursor-pointer group relative">
-                <Image
-                  src="https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=800&h=800&fit=crop"
-                  alt="Samsung Galaxy"
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
-                  unoptimized
-                  sizes="(min-width: 768px) 50vw, 100vw"
-                />
-              </div>
-            </div>
-            <div className="order-1 md:order-2">
-              <p className="text-sm text-blue-600 font-bold uppercase tracking-widest mb-3">Samsung</p>
-              <h2 className="text-5xl md:text-6xl font-bold text-black mb-8 leading-tight">
-                Galaxy AI is here
-              </h2>
-              <p className="text-xl text-gray-600 mb-10 leading-relaxed font-light">
-                The new Galaxy S24 Ultra with Galaxy AI. Circle to Search, Live Translate, and intelligent photo editing.
-              </p>
-              <div className="space-y-6 mb-10">
-                <div className="flex items-start gap-4 p-6 rounded-2xl hover:bg-white transition-all duration-300 cursor-pointer group border border-transparent hover:border-gray-200 hover:shadow-lg">
-                  <div>
-                    <h4 className="font-bold text-black text-xl mb-1 group-hover:text-blue-600 transition-colors">Galaxy AI</h4>
-                    <p className="text-gray-600 group-hover:text-gray-800 transition-colors">AI-powered features for everything you do</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4 p-6 rounded-2xl hover:bg-white transition-all duration-300 cursor-pointer group border border-transparent hover:border-gray-200 hover:shadow-lg">
-                  <div>
-                    <h4 className="font-bold text-black text-xl mb-1 group-hover:text-blue-600 transition-colors">S Pen Included</h4>
-                    <p className="text-gray-600 group-hover:text-gray-800 transition-colors">Note-taking and creativity redefined</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4 p-6 rounded-2xl hover:bg-white transition-all duration-300 cursor-pointer group border border-transparent hover:border-gray-200 hover:shadow-lg">
-                  <div>
-                    <h4 className="font-bold text-black text-xl mb-1 group-hover:text-blue-600 transition-colors">Dynamic AMOLED 2X</h4>
-                    <p className="text-gray-600 group-hover:text-gray-800 transition-colors">6.8&quot; QHD+ 120Hz display</p>
-                  </div>
-                </div>
-              </div>
-              <Link href="/category/samsung" className="inline-block bg-black text-white px-12 py-5 rounded-full text-lg font-bold hover:bg-gray-800 hover:shadow-xl hover:scale-105 transition-all duration-300">
-                Shop Samsung
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Gaming Section */}
-      <section className="py-32 bg-gradient-to-br from-gray-100 via-white to-gray-100 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-red-200 rounded-full filter blur-[128px] animate-pulse"></div>
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-200 rounded-full filter blur-[128px] animate-pulse"></div>
-        </div>
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center mb-16">
-            <div className="inline-block mb-6">
-              <span className="bg-black text-white px-8 py-3 rounded-full text-sm font-bold uppercase tracking-wider shadow-xl hover:scale-105 transition-all duration-300">
-                Gaming
-              </span>
-            </div>
-            <h2
-              className="text-5xl md:text-6xl font-bold mb-6 text-black"
-            >
-              Built for gamers
+            <h2 className="text-6xl md:text-7xl font-black leading-[0.9] tracking-tighter mb-8">
+              SHOP BY <span className="text-blue-400">CATEGORY</span>
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto font-light">
-              ROG Phone and gaming smartphones designed for maximum performance
+
+            <p className="text-xl text-gray-400 max-w-3xl mx-auto">
+              Explore our curated collection of premium smartphones across different categories
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            {[products[2], products[3], products[4]].map((phone, index) => (
-              <div
-                key={index}
-                className="group bg-white border border-gray-200 rounded-3xl overflow-hidden hover:scale-105 transition-all duration-500 cursor-pointer hover:border-gray-300 hover:shadow-2xl"
-              >
-                <div className="h-96 overflow-hidden bg-gray-50 relative">
+            {[
+              {
+                title: "FLAGSHIP",
+                subtitle: "The Best of the Best",
+                image: "https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?w=800&h=800&fit=crop",
+                link: "/shop"
+              },
+              {
+                title: "GAMING",
+                subtitle: "Ultimate Power",
+                image: "https://images.unsplash.com/photo-1574944985070-8f3ebc6b79d2?w=800&h=800&fit=crop",
+                link: "/shop"
+              },
+              {
+                title: "VALUE",
+                subtitle: "Smart Choice",
+                image: "https://images.unsplash.com/photo-1512499617640-c74ae3a79d37?w=800&h=800&fit=crop",
+                link: "/shop"
+              }
+            ].map((category, index) => (
+              <Link key={index} href={category.link} className="group relative">
+                <div className="relative rounded-3xl overflow-hidden h-[500px] hover:scale-[1.02] transition-all duration-700 shadow-2xl">
                   <Image
-                    src={phone.image}
-                    alt={phone.name}
+                    src={category.image}
+                    alt={category.title}
                     fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-700"
+                    className="object-cover group-hover:scale-110 transition-transform duration-1000"
                     unoptimized
-                    sizes="(min-width: 768px) 30vw, 100vw"
+                    sizes="(min-width: 768px) 33vw, 100vw"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                </div>
-                <div className="p-8">
-                  <h3 className="text-2xl font-bold text-black mb-2">{phone.name}</h3>
-                  <p className="text-sm text-gray-500 mb-6 uppercase tracking-wide font-medium">
-                    {phone.specs ? phone.specs.slice(0, 3).map(s => s.value).join(' • ') : `${phone.brand} • Premium Gaming`}
-                  </p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-3xl font-bold text-black">${phone.price}</span>
-                    <Link href={`/shop/${phone.id}`} className="bg-black text-white px-8 py-3 rounded-full font-bold border border-black hover:bg-white hover:text-black transition-all duration-300 shadow-lg">
-                      View
-                    </Link>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
+
+                  <div className="absolute bottom-0 left-0 right-0 p-10 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                    <h3 className="text-4xl font-black mb-2 tracking-tighter">{category.title}</h3>
+                    <p className="text-gray-400 mb-6 text-sm uppercase tracking-wider font-bold">{category.subtitle}</p>
+                    <div className="flex items-center gap-3 text-white group-hover:text-blue-400 transition-all duration-300">
+                      <span className="text-sm font-black uppercase tracking-wider">Shop Now</span>
+                      <svg className="w-4 h-4 group-hover:translate-x-2 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                      </svg>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Why Choose Us */}
+      {/* iPhone Feature Section - Editorial */}
       <section className="py-32 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2
-            className="text-4xl md:text-5xl font-bold text-center mb-16 text-black"
-          >
-            Why shop with VeritaShop?
-          </h2>
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            <div className="space-y-8">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="w-20 h-0.5 bg-black"></div>
+                <p className="text-sm font-bold tracking-[0.3em] uppercase text-blue-600">Apple</p>
+              </div>
 
-          <div className="grid md:grid-cols-4 gap-8">
-            <div className="text-center p-8 bg-slate-50 rounded-3xl border border-gray-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
-              <h3 className="text-xl font-bold text-black mb-3">Free Shipping</h3>
-              <p className="text-gray-600">Free delivery on orders over $500</p>
+              <h2 className="text-6xl md:text-7xl font-black leading-[0.9] tracking-tighter">
+                THE IPHONE <br /> <span className="text-gray-400">EVERYONE&apos;S</span> <br /> TALKING ABOUT
+              </h2>
+
+              <p className="text-xl text-gray-600 leading-relaxed font-light max-w-lg">
+                Experience the power of the latest iPhone 15 series. A17 Pro chip, ProMotion display, and the best camera system ever.
+              </p>
+
+              <div className="space-y-4">
+                {[
+                  { title: "A17 Pro Chip", desc: "Console-level gaming and pro workflows" },
+                  { title: "Pro Camera System", desc: "48MP main camera with 5x optical zoom" },
+                  { title: "All-day Battery", desc: "Up to 29 hours video playback" }
+                ].map((feature, index) => (
+                  <div key={index} className="group border-l-2 border-transparent hover:border-black transition-all duration-300 pl-6 py-3">
+                    <h4 className="font-black text-xl mb-1 group-hover:text-blue-600 transition-colors">{feature.title}</h4>
+                    <p className="text-gray-600 text-sm">{feature.desc}</p>
+                  </div>
+                ))}
+              </div>
+
+              <Link href="/category/iphone" className="inline-block bg-black text-white px-12 py-5 rounded-full font-black hover:bg-blue-600 hover:shadow-2xl hover:scale-105 transition-all duration-500 uppercase tracking-wider text-sm border-2 border-black">
+                Shop iPhone
+              </Link>
             </div>
-            <div className="text-center p-8 bg-slate-50 rounded-3xl border border-gray-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
-              <h3 className="text-xl font-bold text-black mb-3">100% Authentic</h3>
-              <p className="text-gray-600">All products are genuine and sealed</p>
-            </div>
-            <div className="text-center p-8 bg-slate-50 rounded-3xl border border-gray-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
-              <h3 className="text-xl font-bold text-black mb-3">Easy Returns</h3>
-              <p className="text-gray-600">30-day return policy, no questions</p>
-            </div>
-            <div className="text-center p-8 bg-slate-50 rounded-3xl border border-gray-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
-              <h3 className="text-xl font-bold text-black mb-3">Warranty</h3>
-              <p className="text-gray-600">Official manufacturer warranty</p>
+
+            <div className="relative">
+              <div className="aspect-square rounded-3xl overflow-hidden bg-gray-100 hover:bg-gray-200 transition-all duration-700 group">
+                <Image
+                  src="https://images.unsplash.com/photo-1678652197831-2d180705cd2c?q=80&w=800&h=800&fit=crop"
+                  alt="iPhone 15 Pro"
+                  fill
+                  className="object-cover group-hover:scale-110 transition-transform duration-1000"
+                  unoptimized
+                  sizes="(min-width: 1024px) 50vw, 100vw"
+                />
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Stats Section */}
+      {/* Stats - Bold Statement */}
       <section className="py-24 bg-black text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           <div className="grid md:grid-cols-4 gap-8 text-center">
-            <div>
-              <div className="text-5xl font-bold text-white mb-2">50K+</div>
-              <p className="text-gray-400 text-lg">Happy Customers</p>
-            </div>
-            <div>
-              <div className="text-5xl font-bold text-white mb-2">500+</div>
-              <p className="text-gray-400 text-lg">Phone Models</p>
-            </div>
-            <div>
-              <div className="text-5xl font-bold text-white mb-2">4.9★</div>
-              <p className="text-gray-400 text-lg">Average Rating</p>
-            </div>
-            <div>
-              <div className="text-5xl font-bold text-white mb-2">24/7</div>
-              <p className="text-gray-400 text-lg">Customer Support</p>
-            </div>
+            {[
+              { number: "50K+", label: "Happy Customers" },
+              { number: "500+", label: "Phone Models" },
+              { number: "4.9★", label: "Average Rating" },
+              { number: "24/7", label: "Support" }
+            ].map((stat, index) => (
+              <div key={index} className="group">
+                <div className="text-5xl md:text-6xl font-black mb-2 group-hover:text-blue-400 transition-colors duration-300">{stat.number}</div>
+                <p className="text-gray-400 text-lg uppercase tracking-wider font-bold">{stat.label}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>

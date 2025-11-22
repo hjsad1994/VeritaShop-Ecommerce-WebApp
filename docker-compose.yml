@@ -3,33 +3,15 @@ version: '3.8'
 services:
   postgres:
     image: postgres:13
-    restart: unless-stopped
+    restart: always
     environment:
-      POSTGRES_USER: dbuser
-      POSTGRES_PASSWORD: dbpass123
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
       POSTGRES_DB: nextecommerce
-      POSTGRES_HOST_AUTH_METHOD: trust
-      TZ: Asia/Ho_Chi_Minh
-      PGTZ: Asia/Ho_Chi_Minh
     ports:
-      - '5432:5432'
+      - '5436:5432'
     volumes:
       - postgres-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dbuser -d nextecommerce"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    command:
-      - "postgres"
-      - "-c"
-      - "shared_buffers=256MB"
-      - "-c"
-      - "work_mem=16MB"
-      - "-c"
-      - "maintenance_work_mem=128MB"
-      - "-c"
-      - "effective_cache_size=512MB"
 
 volumes:
   postgres-data:

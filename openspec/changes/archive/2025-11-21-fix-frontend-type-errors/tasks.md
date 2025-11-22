@@ -1,5 +1,0 @@
-- [x] Fix import of `ProductDetail` in `frontend/src/features/shop/ProductDetail.tsx` <!-- id: fix-import -->
-- [x] Add explicit type annotations for `img` and `variant` parameters in `ProductDetail.tsx` <!-- id: fix-types -->
-- [x] Resolve naming conflict between `ProductDetail` component and interface <!-- id: fix-conflict -->
-- [x] Fix spread operator error in `frontend/src/lib/api/apiClient.ts` <!-- id: fix-spread -->
-- [x] Verify strict compilation with `npx tsc -p frontend --noEmit` <!-- id: verify-build -->

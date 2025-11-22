@@ -534,3 +534,46 @@ export interface StockMovementListResponse {
   movements: StockMovement[];
   pagination: InventoryPaginationMeta;
 }
+
+// Comment API Types
+export interface CommentUser {
+  id: string;
+  name: string;
+  avatar?: string;
+  role: string;
+}
+
+export interface Comment {
+  id: string;
+  productId: string;
+  userId: string;
+  parentId?: string | null;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+  user: CommentUser;
+  replies?: Comment[];
+}
+
+export interface CommentListResponse {
+  comments: Comment[];
+  pagination: PaginationMeta;
+}
+
+export interface CommentQueryParams {
+  productId?: string;
+  userId?: string;
+  page?: number;
+  limit?: number;
+  sortBy?: 'newest' | 'oldest';
+}
+
+export interface CreateCommentRequest {
+  productId: string;
+  content: string;
+  parentId?: string;
+}
+
+export interface UpdateCommentRequest {
+  content: string;
+}

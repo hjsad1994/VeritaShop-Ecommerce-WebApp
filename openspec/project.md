@@ -1,65 +1,166 @@
 # Project Context
 
 ## Purpose
-VeritaShop is a full-stack e-commerce platform focused on premium consumer electronics. The goal is to provide a fast shopping experience for end users, while giving store operators an opinionated admin workspace to manage catalog content, vouchers, orders, inventory, and customer accounts without touching the database manually.
+VeritaShop is a full-stack e-commerce web application for selling electronics and smartphones. The platform provides a complete shopping experience with product browsing, cart management, order processing, reviews/comments, inventory management, and admin capabilities.
 
 ## Tech Stack
-- Frontend: Next.js 15 App Router, React 19, TypeScript, Tailwind CSS, Axios, react-hot-toast.
-- Backend: Node.js 20, Express 4, TypeScript, Prisma ORM, PostgreSQL 13 (Docker), AWS SDK v3, Cloudinary SDK, Nodemailer.
-- Tooling: ESLint (frontend), ts-node + tsc builds, Prisma Migrate/Seed, Docker Compose for local data stores.
+
+### Backend
+- **Runtime**: Node.js with TypeScript 5.7+
+- **Framework**: Express.js 4.x
+- **Database**: PostgreSQL 13 (local via Docker)
+- **ORM**: Prisma 5.15.0
+- **Authentication**: JWT with jsonwebtoken & jose
+- **Validation**: express-validator
+- **File Storage**: AWS S3 with Cloudinary support
+- **Email**: Nodemailer
+- **Testing**: Jest with ts-jest
+
+### Frontend
+- **Framework**: Next.js 15 (App Router)
+- **Language**: TypeScript 5
+- **UI Library**: React 19
+- **Styling**: Tailwind CSS 3.4
+- **HTTP Client**: Axios 1.13+
+- **Notifications**: react-hot-toast
+- **Build**: Next.js build system with custom Windows compatibility settings
+
+### Infrastructure
+- **Container**: Docker Compose for PostgreSQL
+- **Database Port**: 5436 (mapped to container 5432)
+- **CI/CD**: GitHub Actions for backend CI
 
 ## Project Conventions
 
 ### Code Style
-- TypeScript everywhere; avoid `any` unless interacting with third-party SDK responses.
-- Frontend uses Next.js ESLint config (`npm run lint`); formatting follows Prettier defaults (2-space indent).
-- Backend favors explicit return types on exported functions, PascalCase for classes, camelCase for variables/functions, and keeps files ASCII-only.
-- API routes, DTOs, and Prisma models use singular PascalCase names; REST paths use kebab-case plural nouns (e.g., `/api/products`).
-- Environment variables live in `.env` files but must also be documented in READMEs or `.env.example` before use.
+- **Language**: Strict TypeScript with `strict: true` in tsconfig
+- **Module System**: CommonJS for backend, ES modules for frontend
+- **Import Style**: 
+  - Backend uses path aliases (`@/`, `@controllers`, `@services`, etc.)
+  - Frontend uses relative imports and `@/` for src root
+- **Naming Conventions**:
+  - PascalCase for classes, interfaces, types, React components
+  - camelCase for functions, variables, methods
+  - UPPER_SNAKE_CASE for constants and env variables
+  - kebab-case for file names in specs/docs
+- **File Naming**:
+  - Controllers: `{Entity}Controller.ts`
+  - Services: `{Entity}Service.ts`
+  - Repositories: `{Entity}Repository.ts`
+  - DTOs: `{Entity}Dto.ts`
+  - Validations: `{Entity}Validation.ts`
+  - React components: PascalCase (e.g., `ProductDetail.tsx`)
 
 ### Architecture Patterns
-- Backend follows layered architecture:
-  - Routes wire Express handlers and attach middleware (auth, validation, file upload).
-  - Controllers perform request/response orchestration and translate validation errors into `ApiError`.
-  - Services hold business logic, coordinate repositories, and enforce invariants (stock checks, voucher windows, role gates).
-  - Repositories wrap Prisma queries; no service should reach Prisma directly.
-  - Shared DTOs/validations ensure consistent payload shapes between layers.
-- Frontend uses the App Router with co-located layouts; feature directories (`features/*`) encapsulate UI + hooks per domain.
-- State is shared via React Contexts (`AuthContext`, `CartContext`, `UserContext`) plus server components where possible.
-- Image uploads use a presigned URL flow (`/images/presigned-url` → direct S3 upload). Keep all media helpers inside `S3Service` on the backend and `imageService` on the frontend.
+
+#### Backend (Layered Architecture)
+1. **Controllers** - HTTP request/response handling, input validation
+2. **Services** - Business logic, orchestration
+3. **Repositories** - Data access layer (Prisma queries)
+4. **DTOs** - Data transfer objects for type safety
+5. **Validations** - express-validator schemas
+6. **Middleware** - Auth, error handling, logging
+
+**Key Patterns**:
+- Repository pattern with `BaseRepository` and `RepositoryFactory`
+- Dependency injection via factory initialization
+- Centralized error handling with custom `ApiError` class
+- Standardized API responses via `response.ts` utility
+- Module aliasing for clean imports
+
+#### Frontend (Feature-Based)
+- **App Router**: Next.js 15 app directory structure
+- **Features**: Organized by domain (admin, shop, auth)
+- **API Layer**: Centralized `apiClient` with interceptors
+- **Service Layer**: Separate service files per domain (cartService, productService, etc.)
+- **Context API**: For global state (auth, cart)
+- **Component Organization**: Reusable components in `/components`, feature-specific in `/features/{domain}/components`
 
 ### Testing Strategy
-- Run `npm run lint` in `frontend/` before every commit; treat warnings as errors.
-- Backend currently lacks formal automated tests; when adding coverage prefer Jest + Supertest for routes and Prisma test transactions for repositories.
-- Critical flows (auth, checkout, admin CRUD) must be verified end-to-end via manual smoke tests using seeded data (`npm run prisma:seed`).
-- When fixing bugs, add at least a regression test (service-level or component) or document manual steps in PR description until the automated suite exists.
+- **Framework**: Jest with ts-jest
+- **Backend Scripts**: 
+  - `npm test` - Run test suite
+  - Manual testing via API endpoints
+- **Frontend**: ESLint configured (build-time checks disabled for development speed)
+- **Database Testing**: Prisma migrations with seed data
 
 ### Git Workflow
-- Work happens on short-lived feature branches (`feature/<summary>` or `fix/<summary>`). Keep `main` deployable.
-- Rebase on top of `main` before opening a PR; resolve conflicts locally.
-- Commit messages follow `<type>: <imperative summary>` where `type ∈ {feat, fix, chore, docs, refactor, test}`.
-- For spec-driven work, create an OpenSpec change (`openspec/changes/<change-id>/`) and get the proposal approved before merging implementation code.
-- Every PR must mention how to test the change (lint/test commands or manual steps) and call out migrations or env var changes.
+- **Main Branch**: `main` (default)
+- **Feature Branches**: Format `main#{feature-name}` (e.g., `main#migrate-db-to-local`, `main#home-redesign`)
+- **Commit Style**: Descriptive messages, recent examples:
+  - "Update package.json and Prisma schema; remove outdated homepage visuals proposal"
+  - "Revamp HomePage layout and features for enhanced user experience"
+- **Pull Requests**: Merged via GitHub PRs with review
+- **CI**: Backend CI runs on GitHub Actions
 
 ## Domain Context
-- The storefront sells high-end phones and accessories. Catalog entries belong to both brands and nested categories; slugs must be unique.
-- Customers can browse, search, manage carts/wishlists, and place orders. Authentication uses JWT access tokens (15 min) plus UUID refresh tokens persisted in the user table.
-- The admin portal (under `/admin/*`) exposes dashboards for users, products (with variants), inventory thresholds, vouchers, and orders. Access requires `ADMIN` or `MANAGER` roles.
-- Inventory is tracked separately from products; adjustments propagate through services to prevent overselling.
-- Voucher management enforces uppercase codes, numeric bounds, and active windows as validated in `VoucherValidation.ts`. Frontend mirrors these rules to fail fast.
-- Error messages and copy are primarily Vietnamese; keep localization consistent when adding new API responses or UI text.
+
+### E-commerce Entities
+- **Products**: Electronics/smartphones with variants (color, storage, RAM)
+- **Variants**: Each product has multiple SKUs with different specs and prices
+- **Inventory**: Stock tracking with movements (STOCK_IN, STOCK_OUT, ORDER, etc.)
+- **Orders**: Full order lifecycle (PENDING → CONFIRMED → PROCESSING → SHIPPING → DELIVERED)
+- **Reviews**: Product ratings with optional responses from admins
+- **Comments**: Threaded discussion on products (parent-child relationships)
+- **Cart**: Per-user cart with variant items
+- **Wishlist**: Save products for later
+- **Vouchers**: Fixed or percentage discounts with usage limits
+
+### User Roles
+- **USER**: Regular customers (browse, shop, review)
+- **ADMIN**: Full system access
+- **MANAGER**: Limited admin capabilities
+
+### Key Business Rules
+- Variants track individual inventory (not product-level)
+- Stock movements are immutable audit logs
+- Orders calculate: subtotal + shipping - discount - voucher + tax = total
+- Reviews require user-product association (one per user per product)
+- Comments support nested replies
 
 ## Important Constraints
-- Target Node.js 20+ and Next.js 15; do not introduce dependencies that lack support.
-- PostgreSQL is the single source of truth; all schema updates must go through Prisma migrations checked into source control.
-- JWT secrets, database URLs, mail credentials, and S3 keys must never be hard-coded. Use `.env` + `config/index.ts` accessors.
-- Direct S3 uploads rely on the CORS policy documented in `backend/S3_CORS_CONFIG.md`; changing the flow requires updating that doc.
-- Backend responses standardize on `{ success, message, data }`. New controllers should stick to this contract so the frontend error handling remains consistent.
-- Image metadata and large payloads are stored in S3/CloudFront; avoid persisting base64 blobs in the database.
+
+### Technical
+- **Windows Development Environment**: Custom Next.js config for EPERM workarounds
+- **React Strict Mode**: Disabled to prevent double function calls
+- **TypeScript**: Build errors ignored in frontend for faster iteration
+- **Database**: Local PostgreSQL only (migrated from AWS RDS)
+- **Port**: Backend on non-standard 5436 to avoid conflicts
+
+### Business
+- Each user can only review a product once
+- Vouchers have usage limits (global and per-user)
+- Inventory must track reserved vs available stock
+- Orders cannot be deleted, only cancelled
+
+### Security
+- JWT-based authentication with refresh tokens
+- Passwords hashed with bcryptjs
+- CORS configured for specific origins
+- Cookie-based refresh token storage
 
 ## External Dependencies
-- PostgreSQL 13 (local via Docker, managed in production).
-- AWS S3 + optional CloudFront distribution for product media (presigned upload + CDN delivery).
-- Cloudinary (legacy asset host) — keep credentials valid until all assets migrate to S3.
-- Nodemailer SMTP account for transactional email (order confirmations, password flows).
-- Any client consuming the backend must provide `NEXT_PUBLIC_API_URL` or equivalent base URL; CORS is configured to allow the Next.js host plus admin domain.
+
+### Required Services
+- **PostgreSQL**: Local Docker container (user:password@localhost:5436)
+- **AWS S3**: Product images and file uploads
+- **Cloudinary**: Alternative image hosting
+- **SMTP Server**: Email notifications via Nodemailer
+
+### Environment Variables
+Backend requires:
+- `DATABASE_URL` - PostgreSQL connection string
+- `JWT_SECRET` - Token signing key
+- `AWS_*` - S3 credentials and bucket config
+- `CORS_ORIGIN` - Frontend URL
+- `SMTP_*` - Email service config
+
+Frontend requires:
+- `NEXT_PUBLIC_API_URL` - Backend API endpoint
+- `NEXT_PUBLIC_IMAGE_HOSTS` - Comma-separated CDN hosts for Next.js Image
+
+### Development Tools
+- Docker Compose for local database
+- Prisma CLI for migrations and schema management
+- ts-node for running TypeScript directly
+- nodemon for backend hot reload

@@ -325,12 +325,12 @@ export default function ProductVariantsPage({ productId }: ProductVariantsPagePr
           placeholder="Tìm theo màu, SKU, dung lượng..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 min-w-[220px] px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+          className="flex-1 min-w-[220px] px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black text-black placeholder:text-gray-400"
         />
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+          className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black text-black"
         >
           <option value="all">Tất cả trạng thái</option>
           <option value="active">Đang bán</option>
@@ -442,7 +442,7 @@ export default function ProductVariantsPage({ productId }: ProductVariantsPagePr
                     type="text"
                     value={formState.color}
                     onChange={(e) => handleFormChange('color', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black text-black placeholder:text-gray-400"
                   />
                 </div>
                 <div>
@@ -451,7 +451,7 @@ export default function ProductVariantsPage({ productId }: ProductVariantsPagePr
                     type="text"
                     value={formState.storage}
                     onChange={(e) => handleFormChange('storage', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black text-black placeholder:text-gray-400"
                   />
                 </div>
                 <div>
@@ -460,7 +460,7 @@ export default function ProductVariantsPage({ productId }: ProductVariantsPagePr
                     type="text"
                     value={formState.ram}
                     onChange={(e) => handleFormChange('ram', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black text-black placeholder:text-gray-400"
                   />
                 </div>
                 <div>
@@ -470,7 +470,7 @@ export default function ProductVariantsPage({ productId }: ProductVariantsPagePr
                     min="0"
                     value={formState.price}
                     onChange={(e) => handleFormChange('price', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black text-black placeholder:text-gray-400"
                   />
                 </div>
                 <div>
@@ -480,7 +480,7 @@ export default function ProductVariantsPage({ productId }: ProductVariantsPagePr
                     min="0"
                     value={formState.comparePrice}
                     onChange={(e) => handleFormChange('comparePrice', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black text-black placeholder:text-gray-400"
                   />
                 </div>
                 <div>
@@ -489,7 +489,7 @@ export default function ProductVariantsPage({ productId }: ProductVariantsPagePr
                     type="text"
                     value={formState.sku}
                     onChange={(e) => handleFormChange('sku', e.target.value.toUpperCase())}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black uppercase"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black uppercase text-black placeholder:text-gray-400"
                   />
                 </div>
                 <div className="flex items-center gap-2 mt-6">
@@ -516,7 +516,7 @@ export default function ProductVariantsPage({ productId }: ProductVariantsPagePr
                       min="0"
                       value={formState.quantity}
                       onChange={(e) => handleFormChange('quantity', e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black text-black placeholder:text-gray-400"
                     />
                   </div>
                   <div>
@@ -526,7 +526,7 @@ export default function ProductVariantsPage({ productId }: ProductVariantsPagePr
                       min="0"
                       value={formState.minStock}
                       onChange={(e) => handleFormChange('minStock', e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black text-black placeholder:text-gray-400"
                     />
                   </div>
                   <div>
@@ -536,7 +536,7 @@ export default function ProductVariantsPage({ productId }: ProductVariantsPagePr
                       min="0"
                       value={formState.maxStock}
                       onChange={(e) => handleFormChange('maxStock', e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black text-black placeholder:text-gray-400"
                     />
                   </div>
                 </div>

@@ -209,6 +209,7 @@ export interface Brand {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  productCount?: number;
 }
 
 export interface ProductImageData {

@@ -36,7 +36,7 @@ export class CommentRepository extends BaseRepository<Comment> {
     const {
       productId,
       userId,
-      parentId,
+      parentId = null, // Default to null (root comments only)
       page = 1,
       limit = 20,
       sortBy = 'newest',
@@ -53,7 +53,8 @@ export class CommentRepository extends BaseRepository<Comment> {
       where.userId = userId;
     }
 
-    // Handle parentId: undefined = all comments, null = root only, string = specific parent
+    // Handle parentId: null = root only, string = specific parent
+    // To fetch all comments regardless of hierarchy, pass undefined explicitly
     if (parentId !== undefined) {
       where.parentId = parentId;
     }

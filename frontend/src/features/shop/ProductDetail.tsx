@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import Toast from '@/components/ui/Toast';
 import productService from '@/lib/api/productService';
 import { ProductDetail as ProductDetailType, ProductVariantItem, ProductImage } from '@/lib/api/types';
+import CommentSection from './components/comments/CommentSection';
 
 interface ProductDetailProps {
   productSlug: string;
@@ -343,6 +344,9 @@ export default function ProductDetail({ productSlug }: ProductDetailProps) {
           </div>
         </div>
       </div>
+
+      <CommentSection productId={product.id} />
+      
       <Footer />
     </div>
   );

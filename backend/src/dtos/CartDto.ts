@@ -1,3 +1,5 @@
+import { toCloudFrontUrl } from '../utils/cdn';
+
 export class ProductImageDto {
   id: string;
   url: string;
@@ -5,7 +7,7 @@ export class ProductImageDto {
 
   constructor(data: any) {
     this.id = data.id;
-    this.url = data.url;
+    this.url = toCloudFrontUrl(data.url);
     this.sortOrder = data.sortOrder;
   }
 }

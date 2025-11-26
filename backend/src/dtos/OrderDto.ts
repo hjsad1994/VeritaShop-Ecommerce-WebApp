@@ -1,3 +1,5 @@
+import { toCloudFrontUrl } from '../utils/cdn';
+
 export class OrderUserDto {
   id: string;
   name: string | null;
@@ -18,7 +20,7 @@ export class OrderProductImageDto {
 
   constructor(data: any) {
     this.id = data.id;
-    this.url = data.url;
+    this.url = toCloudFrontUrl(data.url);
   }
 }
 

@@ -1,4 +1,5 @@
 import { Comment } from '@prisma/client';
+import axios from 'axios';
 import {
   CommentRepository,
   CreateCommentData,
@@ -6,7 +7,7 @@ import {
   CommentQueryOptions,
 } from '../repositories/CommentRepository';
 import { ApiError } from '../utils/ApiError';
-import { HTTP_STATUS, ERROR_MESSAGES } from '../constants';
+import { HTTP_STATUS, ERROR_MESSAGES, ML_SERVICE_URL } from '../constants';
 import { logger } from '../utils/logger';
 
 // Response interfaces
@@ -117,10 +118,20 @@ export class CommentService {
         );
       }
 
+      // Analyze comment with AI
+      let aiAnalysis = null;
+      try {
+        aiAnalysis = await this.analyzeComment(data.content);
+      } catch (error) {
+        // Log error but do not fail comment creation
+        logger.warn('Failed to analyze comment with AI:', error);
+      }
+
       // Create comment
       const comment = await this.commentRepository.create({
         ...data,
         userId,
+        aiAnalysis,
       });
 
       logger.info(`Comment created: ${comment.id} by user ${userId}`);
@@ -243,6 +254,21 @@ export class CommentService {
         HTTP_STATUS.INTERNAL_SERVER_ERROR,
         ERROR_MESSAGES.INTERNAL_ERROR
       );
+    }
+  }
+
+  /**
+   * Analyze comment content using AI service
+   */
+  private async analyzeComment(content: string): Promise<any> {
+    try {
+      const response = await axios.post(ML_SERVICE_URL, {
+        text: content,
+      });
+      return response.data;
+    } catch (error) {
+      logger.error('AI Service Error:', error);
+      throw error;
     }
   }
 }

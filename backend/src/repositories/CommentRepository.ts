@@ -7,6 +7,7 @@ export interface CreateCommentData {
   userId: string;
   content: string;
   parentId?: string;
+  aiAnalysis?: any;
 }
 
 export interface UpdateCommentData {
@@ -246,6 +247,7 @@ export class CommentRepository extends BaseRepository<Comment> {
         userId: data.userId,
         content: data.content,
         parentId: data.parentId || null,
+        aiAnalysis: data.aiAnalysis || Prisma.JsonNull,
       },
       include: {
         user: {

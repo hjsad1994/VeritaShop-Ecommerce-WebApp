@@ -6,6 +6,7 @@ import { toast } from 'react-hot-toast';
 import ImageUpload, { ImageUploadRef } from '@/components/admin/ImageUpload';
 import productService from '@/lib/api/productService';
 import variantService from '@/lib/api/variantService';
+import { SentimentAnalysisTable } from './components/SentimentAnalysisTable';
 import type {
   ProductDetail,
   ProductImageData,
@@ -50,6 +51,8 @@ export default function ProductVariantsPage({ productId }: ProductVariantsPagePr
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [formMode, setFormMode] = useState<VariantFormMode>('create');
   const [selectedVariant, setSelectedVariant] = useState<ProductVariantItem | null>(null);
+  const [isSentimentOpen, setIsSentimentOpen] = useState(false);
+  const [sentimentVariant, setSentimentVariant] = useState<ProductVariantItem | null>(null);
 
   const [formState, setFormState] = useState<VariantFormState>({
     color: '',
@@ -158,6 +161,16 @@ export default function ProductVariantsPage({ productId }: ProductVariantsPagePr
     setSelectedVariant(null);
     setImagesToDelete([]);
     setUploadedImages([]);
+  };
+
+  const handleOpenSentiment = (variant: ProductVariantItem) => {
+    setSentimentVariant(variant);
+    setIsSentimentOpen(true);
+  };
+
+  const closeSentiment = () => {
+    setIsSentimentOpen(false);
+    setSentimentVariant(null);
   };
 
   const handleFormChange = (field: keyof VariantFormState, value: string | boolean) => {
@@ -391,6 +404,12 @@ export default function ProductVariantsPage({ productId }: ProductVariantsPagePr
                 <td className="px-6 py-4">
                   <div className="flex items-center justify-end gap-3">
                     <button
+                      onClick={() => handleOpenSentiment(variant)}
+                      className="text-sm text-blue-600 underline"
+                    >
+                      Sentiment
+                    </button>
+                    <button
                       onClick={() => handleToggleStatus(variant)}
                       className="text-sm text-gray-600 hover:text-black underline"
                     >
@@ -578,6 +597,25 @@ export default function ProductVariantsPage({ productId }: ProductVariantsPagePr
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {isSentimentOpen && sentimentVariant && (
+        <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto relative">
+            <button
+              onClick={closeSentiment}
+              className="absolute top-4 right-4 text-gray-500 hover:text-black transition"
+            >
+              ✕
+            </button>
+            <div className="p-6">
+              <h2 className="text-2xl font-bold text-black mb-4">
+                Sentiment Analysis - {sentimentVariant.sku}
+              </h2>
+              <SentimentAnalysisTable productId={productId} variantId={sentimentVariant.id} />
+            </div>
           </div>
         </div>
       )}

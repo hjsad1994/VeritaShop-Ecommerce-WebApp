@@ -17,7 +17,7 @@ interface ProductDetailProps {
 }
 
 export default function ProductDetail({ productSlug }: ProductDetailProps) {
-  const { addToCartLegacy, openCart } = useCart();
+  const { addToCart, openCart } = useCart();
   const { isAuthenticated } = useAuth();
   
   const [product, setProduct] = useState<ProductDetailType | null>(null);
@@ -107,7 +107,7 @@ export default function ProductDetail({ productSlug }: ProductDetailProps) {
   const maxQuantity = inventory ? inventory.available : 10; // Fallback if no inventory data
   const isOutOfStock = inventory ? inventory.available <= 0 : false;
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!isAuthenticated) {
       sessionStorage.setItem('redirectPath', window.location.pathname);
       window.location.href = '/login';
@@ -121,36 +121,37 @@ export default function ProductDetail({ productSlug }: ProductDetailProps) {
 
     setIsAddingToCart(true);
 
-    const legacyProduct = {
-      id: product.id,
-      name: product.name,
-      price: currentPrice,
-      slug: product.slug,
-      images: displayImages
-    };
-    
-    // Note: Legacy cart might need updating to handle variant ID properly
-    // For now passing variant color as "color" option
-    addToCartLegacy(legacyProduct, quantity, selectedVariant.color);
-
-    setTimeout(() => {
-      setIsAddingToCart(false);
+    try {
+      await addToCart(selectedVariant.id, quantity);
       setShowToast(true);
       setTimeout(() => openCart(), 300);
-    }, 500);
+    } catch (error) {
+      console.error('Failed to add to cart:', error);
+    } finally {
+      setIsAddingToCart(false);
+    }
   };
 
-  const handleBuyNow = () => {
+  const handleBuyNow = async () => {
     if (!isAuthenticated) {
       sessionStorage.setItem('redirectPath', '/checkout');
       window.location.href = '/login';
       return;
     }
-    handleAddToCart();
-    // Ideally redirect to checkout immediately, but we add to cart first
-    setTimeout(() => {
-        window.location.href = '/checkout';
-    }, 100);
+    
+    if (!selectedVariant) {
+      alert('Please select a variant');
+      return;
+    }
+
+    setIsAddingToCart(true);
+    try {
+      await addToCart(selectedVariant.id, quantity);
+      window.location.href = '/checkout';
+    } catch (error) {
+      console.error('Failed to add to cart:', error);
+      setIsAddingToCart(false);
+    }
   };
 
   return (

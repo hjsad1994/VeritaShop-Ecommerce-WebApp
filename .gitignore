@@ -3,6 +3,7 @@
 # AI Assistant files
 .claude/
 .factory/
+openspec/
 CLAUDE.md
 REVIEW_API_TEST_RESULTS.md
 *_TEST_RESULTS.md

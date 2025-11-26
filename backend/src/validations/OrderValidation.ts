@@ -42,7 +42,7 @@ export const createOrderValidation = [
     .optional()
     .isString()
     .withMessage('Phương thức thanh toán phải là chuỗi')
-    .isIn(['COD', 'CREDIT_CARD', 'E_WALLET'])
+    .isIn(['COD', 'MOMO', 'CREDIT_CARD', 'E_WALLET'])
     .withMessage('Phương thức thanh toán không hợp lệ'),
 
   body('notes')

@@ -7,6 +7,7 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import AuthGuard from '@/components/auth/AuthGuard';
 import { useAuth } from '@/contexts/AuthContext';
+import { userService } from '@/lib/api/userService';
 import toast from 'react-hot-toast';
 
 export default function ProfilePage() {
@@ -15,6 +16,7 @@ export default function ProfilePage() {
     name: '',
     email: '',
     phone: '',
+    address: '',
     avatar: ''
   });
   const [isEditing, setIsEditing] = useState(false);
@@ -26,12 +28,13 @@ export default function ProfilePage() {
         name: user.name || '',
         email: user.email || '',
         phone: user.phone || '',
+        address: user.address || '',
         avatar: user.avatar || ''
       });
     }
   }, [user]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
@@ -43,20 +46,25 @@ export default function ProfilePage() {
     setIsLoading(true);
 
     try {
-      // TODO: Implement API call to update profile
-      // const response = await userService.updateProfile(formData);
-      
-      // For now, just update the local state
-      setUser({
-        ...user!,
-        ...formData
-      });
+      // Only send fields that have values
+      const updateData: Record<string, string> = {};
+      if (formData.name?.trim()) updateData.name = formData.name.trim();
+      if (formData.phone?.trim()) updateData.phone = formData.phone.trim();
+      if (formData.address?.trim()) updateData.address = formData.address.trim();
+      if (formData.avatar?.trim()) updateData.avatar = formData.avatar.trim();
 
-      toast.success('Profile updated successfully!');
-      setIsEditing(false);
+      const response = await userService.updateProfile(updateData);
+      
+      if (response.success && response.data) {
+        setUser(response.data.user);
+        toast.success('Cập nhật thông tin thành công!');
+        setIsEditing(false);
+      } else {
+        throw new Error(response.message || 'Cập nhật thất bại');
+      }
     } catch (error: unknown) {
-      const typedError = error as { message?: string };
-      toast.error(typedError.message || 'Failed to update profile');
+      const typedError = error as { response?: { data?: { message?: string } }; message?: string };
+      toast.error(typedError.response?.data?.message || typedError.message || 'Không thể cập nhật thông tin');
     } finally {
       setIsLoading(false);
     }
@@ -81,12 +89,21 @@ export default function ProfilePage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pb-24">
           <div className="bg-white rounded-lg border-2 border-gray-200 p-8">
             <div className="flex justify-between items-center mb-8">
-              <h1 className="text-3xl font-bold text-black">Profile Information</h1>
+              <div>
+                <h1 className="text-3xl font-bold text-black">Thông tin cá nhân</h1>
+                {!isEditing && (
+                  <p className="text-sm text-gray-500 mt-1">Bấm &quot;Chỉnh sửa&quot; để cập nhật thông tin</p>
+                )}
+              </div>
               <button
                 onClick={() => setIsEditing(!isEditing)}
-                className="bg-black text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-800 transition-colors"
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  isEditing 
+                    ? 'bg-gray-200 text-gray-700 hover:bg-gray-300' 
+                    : 'bg-black text-white hover:bg-gray-800'
+                }`}
               >
-                {isEditing ? 'Cancel' : 'Edit Profile'}
+                {isEditing ? 'Hủy' : 'Chỉnh sửa'}
               </button>
             </div>
 
@@ -117,7 +134,7 @@ export default function ProfilePage() {
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Full Name
+                      Họ và tên
                     </label>
                     <input
                       type="text"
@@ -125,35 +142,31 @@ export default function ProfilePage() {
                       value={formData.name}
                       onChange={handleChange}
                       disabled={!isEditing}
-                      className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black ${
+                      placeholder="Nhập họ và tên"
+                      className={`w-full px-4 py-2 border-2 rounded-lg focus:outline-none transition-all text-black ${
                         isEditing 
-                          ? 'border-gray-300 bg-white' 
-                          : 'border-gray-200 bg-gray-50 cursor-not-allowed'
+                          ? 'border-black bg-white focus:ring-2 focus:ring-gray-200' 
+                          : 'border-gray-200 bg-gray-50 cursor-not-allowed text-gray-600'
                       }`}
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Email Address
+                      Email <span className="text-xs text-gray-400">(không thể thay đổi)</span>
                     </label>
                     <input
                       type="email"
                       name="email"
                       value={formData.email}
-                      onChange={handleChange}
-                      disabled={!isEditing}
-                      className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black ${
-                        isEditing 
-                          ? 'border-gray-300 bg-white' 
-                          : 'border-gray-200 bg-gray-50 cursor-not-allowed'
-                      }`}
+                      disabled={true}
+                      className="w-full px-4 py-2 border-2 border-gray-200 bg-gray-100 rounded-lg text-gray-500 cursor-not-allowed"
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Phone Number
+                      Số điện thoại
                     </label>
                     <input
                       type="tel"
@@ -161,11 +174,30 @@ export default function ProfilePage() {
                       value={formData.phone}
                       onChange={handleChange}
                       disabled={!isEditing}
-                      placeholder="Enter your phone number"
-                      className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black ${
+                      placeholder="Nhập số điện thoại"
+                      className={`w-full px-4 py-2 border-2 rounded-lg focus:outline-none transition-all text-black ${
                         isEditing 
-                          ? 'border-gray-300 bg-white' 
-                          : 'border-gray-200 bg-gray-50 cursor-not-allowed'
+                          ? 'border-black bg-white focus:ring-2 focus:ring-gray-200' 
+                          : 'border-gray-200 bg-gray-50 cursor-not-allowed text-gray-600'
+                      }`}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Địa chỉ giao hàng
+                    </label>
+                    <textarea
+                      name="address"
+                      value={formData.address}
+                      onChange={handleChange}
+                      disabled={!isEditing}
+                      rows={2}
+                      placeholder="Nhập địa chỉ giao hàng mặc định"
+                      className={`w-full px-4 py-2 border-2 rounded-lg focus:outline-none transition-all text-black ${
+                        isEditing 
+                          ? 'border-black bg-white focus:ring-2 focus:ring-gray-200' 
+                          : 'border-gray-200 bg-gray-50 cursor-not-allowed text-gray-600'
                       }`}
                     />
                   </div>
@@ -181,10 +213,10 @@ export default function ProfilePage() {
                       onChange={handleChange}
                       disabled={!isEditing}
                       placeholder="https://example.com/avatar.jpg"
-                      className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black ${
+                      className={`w-full px-4 py-2 border-2 rounded-lg focus:outline-none transition-all text-black ${
                         isEditing 
-                          ? 'border-gray-300 bg-white' 
-                          : 'border-gray-200 bg-gray-50 cursor-not-allowed'
+                          ? 'border-black bg-white focus:ring-2 focus:ring-gray-200' 
+                          : 'border-gray-200 bg-gray-50 cursor-not-allowed text-gray-600'
                       }`}
                     />
                   </div>
@@ -194,9 +226,9 @@ export default function ProfilePage() {
                       <button
                         type="submit"
                         disabled={isLoading}
-                        className="bg-black text-white px-6 py-2 rounded-lg font-medium hover:bg-gray-800 transition-colors disabled:opacity-50"
+                        className="bg-black text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors disabled:opacity-50"
                       >
-                        {isLoading ? 'Saving...' : 'Save Changes'}
+                        {isLoading ? 'Đang lưu...' : 'Lưu thay đổi'}
                       </button>
                     </div>
                   )}
@@ -205,7 +237,7 @@ export default function ProfilePage() {
             </div>
 
             <div className="border-t border-gray-200 pt-8">
-              <h3 className="text-lg font-semibold text-black mb-4">Quick Actions</h3>
+              <h3 className="text-lg font-semibold text-black mb-4">Truy cập nhanh</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Link
                   href="/orders"
@@ -215,7 +247,7 @@ export default function ProfilePage() {
                     <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                     </svg>
-                    <span className="font-medium">My Orders</span>
+                    <span className="font-medium">Đơn hàng của tôi</span>
                   </div>
                   <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -223,15 +255,14 @@ export default function ProfilePage() {
                 </Link>
 
                 <Link
-                  href="/settings"
+                  href="/wishlist"
                   className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                     </svg>
-                    <span className="font-medium">Settings</span>
+                    <span className="font-medium">Sản phẩm yêu thích</span>
                   </div>
                   <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

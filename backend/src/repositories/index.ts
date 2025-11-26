@@ -11,6 +11,7 @@ import { OrderRepository } from './OrderRepository';
 import { WishlistRepository } from './WishlistRepository';
 import { VoucherRepository } from './VoucherRepository';
 import { ProductVariantRepository } from './ProductVariantRepository';
+import { ProductVariantSentimentRepository } from './ProductVariantSentimentRepository';
 
 export class RepositoryFactory {
   private static prisma: PrismaClient;
@@ -108,5 +109,12 @@ export class RepositoryFactory {
       throw new Error('RepositoryFactory not initialized. Call initialize() first.');
     }
     return new VoucherRepository(this.prisma);
+  }
+
+  static getProductVariantSentimentRepository(): ProductVariantSentimentRepository {
+    if (!this.prisma) {
+      throw new Error('RepositoryFactory not initialized. Call initialize() first.');
+    }
+    return new ProductVariantSentimentRepository(this.prisma);
   }
 }

@@ -14,6 +14,7 @@ export interface ICommentResponse {
   content: string;
   parentId: string | null;
   replyCount: number;
+  aiAnalysis?: any;
   replies?: ICommentResponse[];
   createdAt: Date;
   updatedAt: Date;
@@ -65,6 +66,7 @@ export class CommentDto {
       content: comment.content,
       parentId: comment.parentId,
       replyCount: comment.replies?.length || 0,
+      aiAnalysis: (comment as any).aiAnalysis,
       replies: comment.replies
         ?.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
         .map((reply) => ({
@@ -80,6 +82,7 @@ export class CommentDto {
           content: reply.content,
           parentId: reply.parentId,
           replyCount: reply.replies?.length || 0,
+          aiAnalysis: (reply as any).aiAnalysis,
           replies: reply.replies
             ?.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
             .map((nestedReply) => ({
@@ -95,6 +98,7 @@ export class CommentDto {
               content: nestedReply.content,
               parentId: nestedReply.parentId,
               replyCount: 0,
+              aiAnalysis: (nestedReply as any).aiAnalysis,
               createdAt: nestedReply.createdAt,
               updatedAt: nestedReply.updatedAt,
             })),

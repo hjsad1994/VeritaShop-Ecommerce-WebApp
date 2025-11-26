@@ -39,6 +39,14 @@ export default function CommentItem({
     }).format(new Date(dateString));
   };
 
+  const getSentimentColor = (sentiment: string) => {
+    switch (sentiment) {
+      case 'positive': return 'bg-green-100 text-green-800 border-green-200';
+      case 'negative': return 'bg-red-100 text-red-800 border-red-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
   const handleReply = async (content: string) => {
     try {
       setIsSubmitting(true);
@@ -82,6 +90,21 @@ export default function CommentItem({
         <div className="text-sm text-gray-700 leading-relaxed mb-2">
             {comment.content}
         </div>
+
+        {comment.aiAnalysis?.results && Array.isArray(comment.aiAnalysis.results) && comment.aiAnalysis.results.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-2">
+            {comment.aiAnalysis.results.map((analysis, idx) => (
+              <span 
+                key={idx} 
+                className={`text-xs px-2 py-0.5 rounded-full border ${getSentimentColor(analysis.sentiment)} flex items-center gap-1`}
+                title={`Confidence: ${analysis.confidence ? (analysis.confidence * 100).toFixed(1) : 0}%`}
+              >
+                <span className="font-medium">{analysis.aspect}</span>
+                <span className="opacity-75 text-[10px] uppercase">{analysis.sentiment}</span>
+              </span>
+            ))}
+          </div>
+        )}
 
         <div className="flex items-center gap-4 text-xs font-medium text-gray-500">
           <button 

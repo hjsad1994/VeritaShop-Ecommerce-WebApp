@@ -537,6 +537,23 @@ export interface StockMovementListResponse {
 }
 
 // Comment API Types
+export interface SentimentScores {
+  positive: number;
+  negative: number;
+  neutral: number;
+}
+
+export interface AspectAnalysis {
+  aspect: string;
+  sentiment: 'positive' | 'negative' | 'neutral';
+  confidence: number;
+  scores: SentimentScores;
+}
+
+export interface AiAnalysisResult {
+  results: AspectAnalysis[];
+}
+
 export interface CommentUser {
   id: string;
   name: string;
@@ -550,6 +567,7 @@ export interface Comment {
   userId: string;
   parentId?: string | null;
   content: string;
+  aiAnalysis?: AiAnalysisResult;
   createdAt: string;
   updatedAt: string;
   user: CommentUser;
@@ -577,4 +595,22 @@ export interface CreateCommentRequest {
 
 export interface UpdateCommentRequest {
   content: string;
+}
+
+export interface ProductVariantSentiment {
+  id: string;
+  variantId: string;
+  battery: number;
+  camera: number;
+  performance: number;
+  display: number;
+  design: number;
+  packaging: number;
+  price: number;
+  shopService: number;
+  shipping: number;
+  general: number;
+  others: number;
+  createdAt: string;
+  updatedAt: string;
 }

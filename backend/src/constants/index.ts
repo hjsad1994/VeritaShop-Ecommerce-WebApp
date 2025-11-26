@@ -186,3 +186,5 @@ export const VOUCHER_CONSTANTS = {
     MAX: 100000,
   },
 } as const;
+
+export const ML_SERVICE_URL = 'https://demo.honeysocial.click/predict';

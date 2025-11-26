@@ -158,6 +158,7 @@ model ProductVariant {
   images         ProductImage[]
   product        Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
   stockMovements StockMovement[]
+  sentiment      ProductVariantSentiment?
 
   @@index([productId])
   @@index([sku])
@@ -235,6 +236,7 @@ model Comment {
   userId    String
   parentId  String?
   content   String
+  aiAnalysis Json?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   parent    Comment?  @relation("CommentToComment", fields: [parentId], references: [id], onDelete: Cascade)
@@ -446,4 +448,25 @@ enum StockMovementType {
   ORDER
   ORDER_CANCELLED
   RETURN
+}
+
+model ProductVariantSentiment {
+  id           String         @id @default(cuid())
+  variantId    String         @unique
+  battery      Float          @default(0)
+  camera       Float          @default(0)
+  performance  Float          @default(0)
+  display      Float          @default(0)
+  design       Float          @default(0)
+  packaging    Float          @default(0)
+  price        Float          @default(0)
+  shopService  Float          @default(0)
+  shipping     Float          @default(0)
+  general      Float          @default(0)
+  others       Float          @default(0)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  variant      ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@index([variantId])
 }

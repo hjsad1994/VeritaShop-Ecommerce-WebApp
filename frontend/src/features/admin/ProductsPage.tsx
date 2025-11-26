@@ -166,7 +166,7 @@ export default function ProductsPage() {
       description: product.description || '',
       brandId: product.brand?.id || product.brandId || '', // Hiển thị thương hiệu hiện tại
       categoryId: product.category?.id || product.categoryId || '', // Hiển thị danh mục hiện tại
-      basePrice: (parseFloat(product.basePrice) / 1000000).toString(), // Convert from VND to millions for display
+      basePrice: product.basePrice.toString(),
       discount: product.discount.toString(),
       isFeatured: product.isFeatured,
       isActive: product.isActive
@@ -256,7 +256,7 @@ export default function ProductsPage() {
       setSubmitting(true);
       setError(null);
 
-      const basePriceVnd = parseFloat(formData.basePrice) * 1000000; // Convert from millions to VND
+      const basePriceVnd = parseFloat(formData.basePrice);
       const discountValue = parseFloat(formData.discount) || 0;
 
       if (modalMode === 'add') {

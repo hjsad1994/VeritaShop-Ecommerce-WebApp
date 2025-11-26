@@ -1,11 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { orderService } from '@/lib/api/orderService';
+import { paymentService } from '@/lib/api/paymentService';
 import Link from 'next/link';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
@@ -22,6 +24,7 @@ interface FormData {
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, getTotalPrice, clearCart } = useCart();
+  const { user } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     customerName: '',
@@ -33,6 +36,19 @@ export default function CheckoutPage() {
   });
 
   const [errors, setErrors] = useState<Partial<FormData>>({});
+
+  // Pre-fill form with user profile data
+  useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        customerName: user.name || prev.customerName,
+        customerEmail: user.email || prev.customerEmail,
+        customerPhone: user.phone || prev.customerPhone,
+        shippingAddress: user.address || prev.shippingAddress,
+      }));
+    }
+  }, [user]);
 
   const subtotal = getTotalPrice();
   const shippingFee = subtotal >= 3000000 ? 0 : 30000; // Free shipping for orders > 3M VND
@@ -101,10 +117,30 @@ export default function CheckoutPage() {
         // Clear cart after successful order creation
         await clearCart();
 
-        // Show success message
-        toast.success('Đặt hàng thành công! Đơn hàng của bạn đang được xử lý.');
+        // Handle MoMo payment
+        if (formData.paymentMethod === 'MOMO') {
+          toast.loading('Đang chuyển đến trang thanh toán MoMo...');
+          
+          try {
+            const momoResponse = await paymentService.createMomoPayment(createdOrder.id);
+            
+            if (momoResponse.success && momoResponse.data.payUrl) {
+              // Redirect to MoMo payment page
+              window.location.href = momoResponse.data.payUrl;
+              return;
+            } else {
+              throw new Error('Không thể tạo thanh toán MoMo');
+            }
+          } catch (momoError) {
+            console.error('MoMo payment error:', momoError);
+            toast.error('Lỗi thanh toán MoMo. Đơn hàng đã được tạo, vui lòng thanh toán sau.');
+            router.push(`/order-confirmation?orderNumber=${createdOrder.orderNumber}`);
+            return;
+          }
+        }
 
-        // Redirect to order confirmation page with order number
+        // COD payment - redirect to confirmation
+        toast.success('Đặt hàng thành công! Đơn hàng của bạn đang được xử lý.');
         router.push(`/order-confirmation?orderNumber=${createdOrder.orderNumber}`);
       } else {
         throw new Error(response.message || 'Đặt hàng thất bại');
@@ -343,6 +379,34 @@ export default function CheckoutPage() {
                   </div>
                   {formData.paymentMethod === 'COD' && (
                     <span className="bg-green-600 text-white text-xs px-3 py-1 rounded-full">Đã chọn</span>
+                  )}
+                </label>
+
+                <label className="flex items-center gap-4 p-4 border-2 rounded-xl cursor-pointer transition-all hover:shadow-md"
+                  style={{
+                    borderColor: formData.paymentMethod === 'MOMO' ? '#a50064' : '#d1d5db',
+                    backgroundColor: formData.paymentMethod === 'MOMO' ? '#fdf2f8' : 'white'
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="MOMO"
+                    checked={formData.paymentMethod === 'MOMO'}
+                    onChange={handleChange}
+                    className="w-4 h-4 text-pink-600"
+                  />
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className="w-10 h-10 bg-gradient-to-br from-pink-500 to-pink-600 rounded-lg flex items-center justify-center">
+                      <span className="text-white font-bold text-sm">M</span>
+                    </div>
+                    <div>
+                      <div className="font-semibold text-black">Ví MoMo</div>
+                      <div className="text-sm text-gray-600">Thanh toán qua ví điện tử MoMo</div>
+                    </div>
+                  </div>
+                  {formData.paymentMethod === 'MOMO' && (
+                    <span className="bg-pink-600 text-white text-xs px-3 py-1 rounded-full">Đã chọn</span>
                   )}
                 </label>
               </div>

@@ -17,8 +17,8 @@ export class UserValidation {
             body('address')
                 .optional()
                 .trim()
-                .isLength({ min: 2, max: 100 })
-                .withMessage('Address must be between 2 and 100 characters'),
+                .isLength({ min: 2, max: 500 })
+                .withMessage('Address must be between 2 and 500 characters'),
             body('avatar')
                 .optional()
                 .trim()
@@ -47,8 +47,8 @@ export class UserValidation {
             body('address')
                 .optional()
                 .trim()
-                .isLength({ min: 2, max: 100 })
-                .withMessage('Địa chỉ phải từ 2-100 ký tự'),
+                .isLength({ min: 2, max: 500 })
+                .withMessage('Địa chỉ phải từ 2-500 ký tự'),
             body('avatar')
                 .optional()
                 .trim()
@@ -88,8 +88,8 @@ export class UserValidation {
             body('address')
                 .optional()
                 .trim()
-                .isLength({ min: 2, max: 100 })
-                .withMessage('Địa chỉ phải từ 2-100 ký tự'),
+                .isLength({ min: 2, max: 500 })
+                .withMessage('Địa chỉ phải từ 2-500 ký tự'),
             body('avatar')
                 .optional()
                 .trim()

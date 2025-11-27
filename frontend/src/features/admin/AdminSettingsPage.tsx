@@ -10,10 +10,10 @@ export default function AdminSettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
 
   const tabs = [
-    { id: 'general', label: 'General Settings', icon: '⚙️' },
-    { id: 'notifications', label: 'Notifications', icon: '🔔' },
-    { id: 'appearance', label: 'Appearance', icon: '🎨' },
-    { id: 'advanced', label: 'Advanced', icon: '🔧' }
+    { id: 'general', label: 'Cài đặt chung', icon: '⚙️' },
+    { id: 'notifications', label: 'Thông báo', icon: '🔔' },
+    { id: 'appearance', label: 'Giao diện', icon: '🎨' },
+    { id: 'advanced', label: 'Nâng cao', icon: '🔧' }
   ];
 
   const [settings, setSettings] = useState({
@@ -58,9 +58,9 @@ export default function AdminSettingsPage() {
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
-      toast.success('Settings saved successfully');
+      toast.success('Lưu cài đặt thành công');
     } catch {
-      toast.error('Failed to save settings');
+      toast.error('Không thể lưu cài đặt');
     } finally {
       setIsSaving(false);
     }
@@ -69,7 +69,7 @@ export default function AdminSettingsPage() {
   const renderGeneralSettings = () => (
     <div className="space-y-6">
       <div>
-        <label className="block text-sm font-semibold text-black mb-2">Site Name</label>
+        <label className="block text-sm font-semibold text-black mb-2">Tên trang web</label>
         <input
           type="text"
           value={settings.general.siteName}
@@ -79,7 +79,7 @@ export default function AdminSettingsPage() {
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-black mb-2">Admin Email</label>
+        <label className="block text-sm font-semibold text-black mb-2">Email quản trị</label>
         <input
           type="email"
           value={settings.general.adminEmail}
@@ -89,7 +89,7 @@ export default function AdminSettingsPage() {
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-black mb-2">Timezone</label>
+        <label className="block text-sm font-semibold text-black mb-2">Múi giờ</label>
         <select
           value={settings.general.timezone}
           onChange={(e) => handleSettingChange('general', 'timezone', e.target.value)}
@@ -102,14 +102,14 @@ export default function AdminSettingsPage() {
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-black mb-2">Language</label>
+        <label className="block text-sm font-semibold text-black mb-2">Ngôn ngữ</label>
         <select
           value={settings.general.language}
           onChange={(e) => handleSettingChange('general', 'language', e.target.value)}
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-black"
         >
-          <option value="vi">Vietnamese</option>
-          <option value="en">English</option>
+          <option value="vi">Tiếng Việt</option>
+          <option value="en">Tiếng Anh</option>
         </select>
       </div>
     </div>
@@ -117,7 +117,7 @@ export default function AdminSettingsPage() {
 
   const renderNotificationSettings = () => (
     <div className="space-y-6">
-      <h4 className="text-lg font-semibold text-black mb-4">Email Notifications</h4>
+      <h4 className="text-lg font-semibold text-black mb-4">Thông báo qua email</h4>
       
       <div className="space-y-4">
         {Object.entries(settings.notifications).map(([key, value]) => (
@@ -127,11 +127,11 @@ export default function AdminSettingsPage() {
                 {key.replace(/([A-Z])/g, ' $1').trim()}
               </p>
               <p className="text-sm text-gray-600">
-                {key === 'emailAlerts' && 'Receive email notifications for important events'}
-                {key === 'pushNotifications' && 'Receive push notifications in your browser'}
-                {key === 'orderAlerts' && 'Get notified when new orders are placed'}
-                {key === 'lowStockAlerts' && 'Alert when products are running low on stock'}
-                {key === 'customerAlerts' && 'Notifications for new customer registrations'}
+                {key === 'emailAlerts' && 'Nhận thông báo email cho các sự kiện quan trọng'}
+                {key === 'pushNotifications' && 'Nhận thông báo đẩy trong trình duyệt'}
+                {key === 'orderAlerts' && 'Thông báo khi có đơn hàng mới'}
+                {key === 'lowStockAlerts' && 'Cảnh báo khi sản phẩm sắp hết hàng'}
+                {key === 'customerAlerts' && 'Thông báo khi có khách hàng mới đăng ký'}
               </p>
             </div>
             <input
@@ -149,15 +149,15 @@ export default function AdminSettingsPage() {
   const renderAppearanceSettings = () => (
     <div className="space-y-6">
       <div>
-        <label className="block text-sm font-semibold text-black mb-2">Theme</label>
+        <label className="block text-sm font-semibold text-black mb-2">Giao diện</label>
         <select
           value={settings.appearance.theme}
           onChange={(e) => handleSettingChange('appearance', 'theme', e.target.value)}
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-black"
         >
-          <option value="light">Light</option>
-          <option value="dark">Dark</option>
-          <option value="auto">Auto</option>
+          <option value="light">Sáng</option>
+          <option value="dark">Tối</option>
+          <option value="auto">Tự động</option>
         </select>
       </div>
 
@@ -169,8 +169,8 @@ export default function AdminSettingsPage() {
                 {key.replace(/([A-Z])/g, ' $1').trim()}
               </p>
               <p className="text-sm text-gray-600">
-                {key === 'sidebarCollapsed' && 'Collapse sidebar by default'}
-                {key === 'compactMode' && 'Use compact layout with reduced spacing'}
+                {key === 'sidebarCollapsed' && 'Thu gọn thanh bên theo mặc định'}
+                {key === 'compactMode' && 'Sử dụng bố cục thu gọn với khoảng cách giảm'}
               </p>
             </div>
             <input
@@ -188,17 +188,17 @@ export default function AdminSettingsPage() {
   const renderAdvancedSettings = () => (
     <div className="space-y-6">
       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-        <h4 className="text-sm font-semibold text-yellow-800 mb-2">⚠️ Warning</h4>
+        <h4 className="text-sm font-semibold text-yellow-800 mb-2">⚠️ Cảnh báo</h4>
         <p className="text-sm text-yellow-700">
-          These settings are intended for advanced users. Incorrect configuration may affect system performance.
+          Các cài đặt này dành cho người dùng nâng cao. Cấu hình không đúng có thể ảnh hưởng đến hiệu suất hệ thống.
         </p>
       </div>
 
       <div className="space-y-4">
         <label className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
           <div>
-            <p className="font-medium text-black">Debug Mode</p>
-            <p className="text-sm text-gray-600">Enable debug logging and development tools</p>
+            <p className="font-medium text-black">Chế độ gỡ lỗi</p>
+            <p className="text-sm text-gray-600">Bật ghi log gỡ lỗi và công cụ phát triển</p>
           </div>
           <input
             type="checkbox"
@@ -210,8 +210,8 @@ export default function AdminSettingsPage() {
 
         <label className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
           <div>
-            <p className="font-medium text-black">Maintenance Mode</p>
-            <p className="text-sm text-gray-600">Temporarily disable the admin panel</p>
+            <p className="font-medium text-black">Chế độ bảo trì</p>
+            <p className="text-sm text-gray-600">Tạm thời vô hiệu hóa bảng quản trị</p>
           </div>
           <input
             type="checkbox"
@@ -222,7 +222,7 @@ export default function AdminSettingsPage() {
         </label>
 
         <div>
-          <label className="block text-sm font-semibold text-black mb-2">API Rate Limit (requests/minute)</label>
+          <label className="block text-sm font-semibold text-black mb-2">Giới hạn API (yêu cầu/phút)</label>
           <input
             type="number"
             value={settings.advanced.apiRateLimit}
@@ -234,7 +234,7 @@ export default function AdminSettingsPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-black mb-2">Session Timeout (minutes)</label>
+          <label className="block text-sm font-semibold text-black mb-2">Hết phiên đăng nhập (phút)</label>
           <input
             type="number"
             value={settings.advanced.sessionTimeout}
@@ -267,7 +267,7 @@ export default function AdminSettingsPage() {
     return (
       <div className="p-8">
         <div className="text-center">
-          <p className="text-gray-500">Loading settings...</p>
+          <p className="text-gray-500">Đang tải cài đặt...</p>
         </div>
       </div>
     );
@@ -276,8 +276,8 @@ export default function AdminSettingsPage() {
   return (
     <div className="p-8 max-w-6xl mx-auto">
       <div className="mb-8">
-        <h2 className="text-3xl font-bold text-black mb-2">Admin Settings</h2>
-        <p className="text-sm text-gray-600">Configure your admin panel preferences</p>
+        <h2 className="text-3xl font-bold text-black mb-2">Cài đặt quản trị</h2>
+        <p className="text-sm text-gray-600">Tùy chỉnh các cài đặt bảng quản trị</p>
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
@@ -307,14 +307,14 @@ export default function AdminSettingsPage() {
         <div className="p-6 border-t border-gray-200 bg-gray-50">
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-600">
-              Last updated: {new Date().toLocaleDateString('vi-VN')} at {new Date().toLocaleTimeString('vi-VN')}
+              Cập nhật lần cuối: {new Date().toLocaleDateString('vi-VN')} lúc {new Date().toLocaleTimeString('vi-VN')}
             </p>
             <button
               onClick={handleSave}
               disabled={isSaving}
               className="px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSaving ? 'Saving...' : 'Save Settings'}
+              {isSaving ? 'Đang lưu...' : 'Lưu cài đặt'}
             </button>
           </div>
         </div>

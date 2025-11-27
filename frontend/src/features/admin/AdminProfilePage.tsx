@@ -73,7 +73,7 @@ export default function AdminProfilePage() {
     return (
       <div className="p-8">
         <div className="text-center">
-          <p className="text-gray-500">Loading profile...</p>
+          <p className="text-gray-500">Đang tải hồ sơ...</p>
         </div>
       </div>
     );
@@ -82,8 +82,8 @@ export default function AdminProfilePage() {
   return (
     <div className="p-8 max-w-4xl mx-auto">
       <div className="mb-8">
-        <h2 className="text-3xl font-bold text-black mb-2">Admin Profile</h2>
-        <p className="text-sm text-gray-600">Manage your admin account information</p>
+        <h2 className="text-3xl font-bold text-black mb-2">Hồ sơ quản trị viên</h2>
+        <p className="text-sm text-gray-600">Quản lý thông tin tài khoản quản trị viên</p>
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
@@ -97,7 +97,7 @@ export default function AdminProfilePage() {
                 <h3 className="text-xl font-semibold text-black">{user.name || 'Admin User'}</h3>
                 <p className="text-sm text-gray-600">{user.email}</p>
                 <span className="inline-block mt-1 px-3 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">
-                  {user.role === 'MANAGER' ? 'Manager' : user.role === 'ADMIN' ? 'Administrator' : 'User'}
+                  {user.role === 'MANAGER' ? 'Quản lý' : user.role === 'ADMIN' ? 'Quản trị viên' : 'Người dùng'}
                 </span>
               </div>
             </div>
@@ -106,7 +106,7 @@ export default function AdminProfilePage() {
                 onClick={() => setIsEditing(true)}
                 className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors font-semibold"
               >
-                Edit Profile
+                Chỉnh sửa hồ sơ
               </button>
             )}
           </div>
@@ -117,7 +117,7 @@ export default function AdminProfilePage() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-semibold text-black mb-2">Full Name</label>
+                  <label className="block text-sm font-semibold text-black mb-2">Họ tên</label>
                   <input
                     type="text"
                     name="name"
@@ -129,7 +129,7 @@ export default function AdminProfilePage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-black mb-2">Phone Number</label>
+                  <label className="block text-sm font-semibold text-black mb-2">Số điện thoại</label>
                   <input
                     type="tel"
                     name="phone"
@@ -142,19 +142,19 @@ export default function AdminProfilePage() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-black mb-2">Address</label>
+                <label className="block text-sm font-semibold text-black mb-2">Địa chỉ</label>
                 <textarea
                   name="address"
                   value={formData.address}
                   onChange={handleInputChange}
                   rows={3}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-black"
-                  placeholder="Enter your address"
+                  placeholder="Nhập địa chỉ của bạn"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-black mb-2">Avatar URL</label>
+                <label className="block text-sm font-semibold text-black mb-2">URL ảnh đại diện</label>
                 <input
                   type="url"
                   name="avatar"
@@ -171,7 +171,7 @@ export default function AdminProfilePage() {
                   disabled={isLoading}
                   className="px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isLoading ? 'Saving...' : 'Save Changes'}
+                  {isLoading ? 'Đang lưu...' : 'Lưu thay đổi'}
                 </button>
                 <button
                   type="button"
@@ -179,7 +179,7 @@ export default function AdminProfilePage() {
                   disabled={isLoading}
                   className="px-6 py-3 bg-white border border-gray-300 text-black rounded-lg hover:bg-gray-50 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Cancel
+                  Hủy
                 </button>
               </div>
             </form>
@@ -187,41 +187,41 @@ export default function AdminProfilePage() {
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h4 className="text-sm font-semibold text-gray-500 mb-1">Full Name</h4>
-                  <p className="text-black">{user.name || 'Not set'}</p>
+                  <h4 className="text-sm font-semibold text-gray-500 mb-1">Họ tên</h4>
+                  <p className="text-black">{user.name || 'Chưa cập nhật'}</p>
                 </div>
                 <div>
-                  <h4 className="text-sm font-semibold text-gray-500 mb-1">Email Address</h4>
+                  <h4 className="text-sm font-semibold text-gray-500 mb-1">Địa chỉ email</h4>
                   <p className="text-black">{user.email}</p>
                 </div>
                 <div>
-                  <h4 className="text-sm font-semibold text-gray-500 mb-1">Role</h4>
-                  <p className="text-black">{user.role === 'MANAGER' ? 'Manager' : user.role === 'ADMIN' ? 'Administrator' : 'User'}</p>
+                  <h4 className="text-sm font-semibold text-gray-500 mb-1">Vai trò</h4>
+                  <p className="text-black">{user.role === 'MANAGER' ? 'Quản lý' : user.role === 'ADMIN' ? 'Quản trị viên' : 'Người dùng'}</p>
                 </div>
                 <div>
-                  <h4 className="text-sm font-semibold text-gray-500 mb-1">Account Status</h4>
+                  <h4 className="text-sm font-semibold text-gray-500 mb-1">Trạng thái tài khoản</h4>
                   <span className="inline-flex px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
-                    Active
+                    Hoạt động
                   </span>
                 </div>
               </div>
 
               <div>
-                <h4 className="text-sm font-semibold text-gray-500 mb-1">Account Information</h4>
+                <h4 className="text-sm font-semibold text-gray-500 mb-1">Thông tin tài khoản</h4>
                 <div className="bg-gray-50 rounded-lg p-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="font-medium text-gray-600">User ID:</span>
+                      <span className="font-medium text-gray-600">ID người dùng:</span>
                       <span className="ml-2 text-black">{user.id}</span>
                     </div>
                     <div>
-                      <span className="font-medium text-gray-600">Member Since:</span>
+                      <span className="font-medium text-gray-600">Thành viên từ:</span>
                       <span className="ml-2 text-black">
                         {new Date(user.createdAt).toLocaleDateString('vi-VN')}
                       </span>
                     </div>
                     <div>
-                      <span className="font-medium text-gray-600">Last Updated:</span>
+                      <span className="font-medium text-gray-600">Cập nhật lần cuối:</span>
                       <span className="ml-2 text-black">
                         {new Date(user.updatedAt).toLocaleDateString('vi-VN')}
                       </span>
@@ -237,19 +237,19 @@ export default function AdminProfilePage() {
       {/* Security Section */}
       <div className="mt-8 bg-white rounded-lg border border-gray-200 overflow-hidden">
         <div className="p-6 border-b border-gray-200">
-          <h3 className="text-xl font-semibold text-black">Security Settings</h3>
-          <p className="text-sm text-gray-600 mt-1">Manage your password and security preferences</p>
+          <h3 className="text-xl font-semibold text-black">Cài đặt bảo mật</h3>
+          <p className="text-sm text-gray-600 mt-1">Quản lý mật khẩu và tùy chọn bảo mật</p>
         </div>
         <div className="p-6">
           <div className="space-y-4">
             <button className="w-full md:w-auto px-6 py-3 bg-white border border-gray-300 text-black rounded-lg hover:bg-gray-50 transition-colors font-semibold text-left">
-              Change Password
+              Đổi mật khẩu
             </button>
             <button className="w-full md:w-auto px-6 py-3 bg-white border border-gray-300 text-black rounded-lg hover:bg-gray-50 transition-colors font-semibold text-left">
-              Two-Factor Authentication
+              Xác thực hai yếu tố
             </button>
             <button className="w-full md:w-auto px-6 py-3 bg-white border border-gray-300 text-black rounded-lg hover:bg-gray-50 transition-colors font-semibold text-left">
-              Login History
+              Lịch sử đăng nhập
             </button>
           </div>
         </div>

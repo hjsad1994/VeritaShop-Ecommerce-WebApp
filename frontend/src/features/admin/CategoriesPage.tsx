@@ -70,7 +70,7 @@ export default function CategoriesPage() {
   };
 
   const handleDelete = async (categoryId: string) => {
-    if (!confirm('Are you sure you want to delete this category?')) return;
+    if (!confirm('Bạn có chắc chắn muốn xóa danh mục này?')) return;
     setDeletingId(categoryId);
     setError(null);
     try {
@@ -136,8 +136,8 @@ export default function CategoriesPage() {
     <div className="p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="text-3xl font-bold text-black mb-2">Category Management</h2>
-          <p className="text-sm text-black">Organize your product categories</p>
+          <h2 className="text-3xl font-bold text-black mb-2">Quản lý danh mục</h2>
+          <p className="text-sm text-black">Tổ chức các danh mục sản phẩm</p>
         </div>
         <button
           onClick={handleAdd}
@@ -146,7 +146,7 @@ export default function CategoriesPage() {
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
           </svg>
-          Add Category
+          Thêm danh mục
         </button>
       </div>
 
@@ -154,7 +154,7 @@ export default function CategoriesPage() {
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-black mb-1">Total Categories</p>
+              <p className="text-sm text-black mb-1">Tổng danh mục</p>
               <p className="text-3xl font-bold text-black">{pagination?.total ?? categories.length}</p>
             </div>
             <div className="p-3 bg-black rounded-lg">
@@ -168,7 +168,7 @@ export default function CategoriesPage() {
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-black mb-1">Total Products</p>
+              <p className="text-sm text-black mb-1">Tổng sản phẩm</p>
               <p className="text-3xl font-bold text-black">{totalProducts}</p>
             </div>
             <div className="p-3 bg-gray-100 rounded-lg">
@@ -185,7 +185,7 @@ export default function CategoriesPage() {
           <div className="relative">
             <input
               type="text"
-              placeholder="Search categories..."
+              placeholder="Tìm kiếm danh mục..."
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
@@ -205,7 +205,7 @@ export default function CategoriesPage() {
         </div>
 
         {isLoading && categories.length === 0 ? (
-          <div className="p-12 text-center text-black">Loading categories...</div>
+          <div className="p-12 text-center text-black">Đang tải danh mục...</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
             {formattedCategories.map((category) => (
@@ -224,16 +224,16 @@ export default function CategoriesPage() {
                   </div>
                 </div>
 
-                <p className="text-sm text-black mb-4 line-clamp-2">{category.description || 'No description'}</p>
+                <p className="text-sm text-black mb-4 line-clamp-2">{category.description || 'Không có mô tả'}</p>
 
                 <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200">
                   <div className="text-center">
                     <p className="text-2xl font-bold text-black">{category.productCount ?? 0}</p>
-                    <p className="text-xs text-black">Products</p>
+                    <p className="text-xs text-black">Sản phẩm</p>
                   </div>
                   <div className="text-center">
                     <p className="text-sm text-black">{category.createdDate}</p>
-                    <p className="text-xs text-black">Created</p>
+                    <p className="text-xs text-black">Ngày tạo</p>
                   </div>
                 </div>
 
@@ -245,7 +245,7 @@ export default function CategoriesPage() {
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
-                    Edit
+                    Sửa
                   </button>
                   <button
                     onClick={() => handleDelete(category.id)}
@@ -253,7 +253,7 @@ export default function CategoriesPage() {
                     className={`px-4 py-2 bg-white border border-gray-300 text-black rounded-lg hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-colors font-medium text-sm ${
                       deletingId === category.id ? 'opacity-60 cursor-not-allowed' : ''
                     }`}
-                    title="Delete"
+                    title="Xóa"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -267,7 +267,7 @@ export default function CategoriesPage() {
 
         {!isLoading && categories.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-black">No categories found</p>
+            <p className="text-black">Không tìm thấy danh mục</p>
           </div>
         )}
 
@@ -282,7 +282,7 @@ export default function CategoriesPage() {
                   : 'bg-white border border-gray-300 text-black hover:bg-gray-100'
               }`}
             >
-              Prev
+              Trước
             </button>
             {Array.from({ length: totalPages }, (_, idx) => idx + 1).map((pageNumber) => (
               <button
@@ -306,7 +306,7 @@ export default function CategoriesPage() {
                   : 'bg-white border border-gray-300 text-black hover:bg-gray-100'
               }`}
             >
-              Next
+              Sau
             </button>
           </div>
         )}
@@ -317,7 +317,7 @@ export default function CategoriesPage() {
           <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold text-black">
-                {modalMode === 'add' ? 'Add New Category' : 'Edit Category'}
+                {modalMode === 'add' ? 'Thêm danh mục mới' : 'Chỉnh sửa danh mục'}
               </h3>
               <button
                 onClick={() => setShowModal(false)}
@@ -331,7 +331,7 @@ export default function CategoriesPage() {
 
             <form onSubmit={handleSubmit} className="space-y-4" key={selectedCategory?.id ?? 'new'}>
               <div>
-                <label className="block text-sm font-semibold text-black mb-2">Category Name</label>
+                <label className="block text-sm font-semibold text-black mb-2">Tên danh mục</label>
                 <input
                   type="text"
                   name="name"
@@ -340,23 +340,23 @@ export default function CategoriesPage() {
                   placeholder="e.g., iPhone, Samsung"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-black placeholder:text-gray-400"
                 />
-                <p className="text-xs text-black mt-1">Slug will be auto-generated</p>
+                <p className="text-xs text-black mt-1">Slug sẽ được tạo tự động</p>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-black mb-2">Description</label>
+                <label className="block text-sm font-semibold text-black mb-2">Mô tả</label>
                 <textarea
                   name="description"
                   defaultValue={selectedCategory?.description ?? ''}
                   required
                   rows={3}
-                  placeholder="Brief description of this category"
+                  placeholder="Mô tả ngắn gọn về danh mục này"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent resize-none text-black placeholder:text-gray-400"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-black mb-2">Image URL</label>
+                <label className="block text-sm font-semibold text-black mb-2">URL hình ảnh</label>
                 <input
                   type="url"
                   name="image"
@@ -367,12 +367,12 @@ export default function CategoriesPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-black mb-2">Parent Category ID</label>
+                <label className="block text-sm font-semibold text-black mb-2">ID danh mục cha</label>
                 <input
                   type="text"
                   name="parentId"
                   defaultValue={selectedCategory?.parentId ?? ''}
-                  placeholder="Optional parent category ID"
+                  placeholder="ID danh mục cha (tùy chọn)"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-black placeholder:text-gray-400"
                 />
               </div>
@@ -385,14 +385,14 @@ export default function CategoriesPage() {
                     isSubmitting ? 'opacity-60 cursor-not-allowed' : ''
                   }`}
                 >
-                  {isSubmitting ? 'Saving...' : modalMode === 'add' ? 'Add Category' : 'Save Changes'}
+                  {isSubmitting ? 'Đang lưu...' : modalMode === 'add' ? 'Thêm danh mục' : 'Lưu thay đổi'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
                   className="flex-1 py-3 bg-white border border-gray-300 text-black rounded-lg hover:bg-gray-50 transition-colors font-semibold"
                 >
-                  Cancel
+                  Hủy
                 </button>
               </div>
             </form>

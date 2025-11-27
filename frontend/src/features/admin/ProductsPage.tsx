@@ -211,7 +211,7 @@ export default function ProductsPage() {
   };
 
   const handleDelete = async (productId: string) => {
-    if (!confirm('Are you sure you want to delete this product?')) {
+    if (!confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')) {
       return;
     }
 
@@ -384,7 +384,7 @@ export default function ProductsPage() {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4"></div>
-            <p className="text-black">Loading products...</p>
+            <p className="text-black">Đang tải sản phẩm...</p>
           </div>
         </div>
       </div>
@@ -395,8 +395,8 @@ export default function ProductsPage() {
     <div className="p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="text-3xl font-bold text-black mb-2">Product Management</h2>
-          <p className="text-sm text-black">Manage your product catalog ({products.length} products)</p>
+          <h2 className="text-3xl font-bold text-black mb-2">Quản lý sản phẩm</h2>
+          <p className="text-sm text-black">Quản lý danh mục sản phẩm ({products.length} sản phẩm)</p>
         </div>
         <button
           onClick={handleAdd}
@@ -405,7 +405,7 @@ export default function ProductsPage() {
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
           </svg>
-          Add Product
+          Thêm sản phẩm
         </button>
       </div>
 
@@ -421,7 +421,7 @@ export default function ProductsPage() {
             <div className="flex-1 relative">
               <input
                 type="text"
-                placeholder="Search products..."
+                placeholder="Tìm kiếm sản phẩm..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-black placeholder:text-gray-400"
@@ -436,7 +436,7 @@ export default function ProductsPage() {
               onChange={(e) => setFilterCategory(e.target.value)}
               className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-black"
             >
-              <option value="all">All Categories</option>
+              <option value="all">Tất cả danh mục</option>
               {categories.map(category => (
                 <option key={category.id} value={category.id}>{category.name}</option>
               ))}
@@ -448,12 +448,12 @@ export default function ProductsPage() {
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-black">Product</th>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-black">Brand</th>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-black">Category</th>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-black">Price</th>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-black">Status</th>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-black">Actions</th>
+                <th className="text-left py-4 px-6 text-sm font-semibold text-black">Sản phẩm</th>
+                <th className="text-left py-4 px-6 text-sm font-semibold text-black">Thương hiệu</th>
+                <th className="text-left py-4 px-6 text-sm font-semibold text-black">Danh mục</th>
+                <th className="text-left py-4 px-6 text-sm font-semibold text-black">Giá</th>
+                <th className="text-left py-4 px-6 text-sm font-semibold text-black">Trạng thái</th>
+                <th className="text-left py-4 px-6 text-sm font-semibold text-black">Thao tác</th>
               </tr>
             </thead>
             <tbody>
@@ -502,12 +502,12 @@ export default function ProductsPage() {
                   </td>
                   <td className="py-4 px-6">
                     <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
-                      {product.brand?.name || 'Unknown Brand'}
+                      {product.brand?.name || 'Không rõ'}
                     </span>
                   </td>
                   <td className="py-4 px-6">
                     <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
-                      {product.category?.name || 'Unknown'}
+                      {product.category?.name || 'Không rõ'}
                     </span>
                   </td>
                   <td className="py-4 px-6">
@@ -523,7 +523,7 @@ export default function ProductsPage() {
                   <td className="py-4 px-6">
                     <div className="flex gap-2">
                       {product.isFeatured && (
-                        <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs font-semibold">Featured</span>
+                        <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs font-semibold">Nổi bật</span>
                       )}
                     </div>
                   </td>
@@ -533,12 +533,12 @@ export default function ProductsPage() {
                         href={`/admin/products/${product.id}/variants`}
                         className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg text-black hover:bg-gray-100 transition-colors"
                       >
-                        Manage Variants
+                        Quản lý biến thể
                       </Link>
                       <button
                         onClick={() => handleEdit(product)}
                         className="p-2 text-black hover:bg-gray-100 rounded-lg transition-colors border border-gray-300"
-                        title="Edit"
+                        title="Chỉnh sửa"
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -548,7 +548,7 @@ export default function ProductsPage() {
                         onClick={() => handleDelete(product.id)}
                         disabled={submitting}
                         className="p-2 text-black hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors border border-gray-300 disabled:opacity-50"
-                        title="Delete"
+                        title="Xóa"
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -564,7 +564,7 @@ export default function ProductsPage() {
 
         {filteredProducts.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-black">No products found</p>
+            <p className="text-black">Không tìm thấy sản phẩm</p>
           </div>
         )}
       </div>
@@ -574,7 +574,7 @@ export default function ProductsPage() {
           <div className="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 my-8 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold text-black">
-                {modalMode === 'add' ? 'Add New Product' : 'Edit Product'}
+                {modalMode === 'add' ? 'Thêm sản phẩm mới' : 'Chỉnh sửa sản phẩm'}
               </h3>
               <button
                 onClick={() => setShowModal(false)}
@@ -589,7 +589,7 @@ export default function ProductsPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-semibold text-black mb-2">Product Name *</label>
+                  <label className="block text-sm font-semibold text-black mb-2">Tên sản phẩm *</label>
                   <input
                     type="text"
                     name="name"
@@ -602,20 +602,20 @@ export default function ProductsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-black mb-2">Description</label>
+                  <label className="block text-sm font-semibold text-black mb-2">Mô tả</label>
                   <textarea
                     name="description"
                     value={formData.description}
                     onChange={handleInputChange}
                     rows={4}
-                    placeholder="Enter product description..."
+                    placeholder="Nhập mô tả sản phẩm..."
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent resize-none text-black placeholder:text-gray-400"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-black mb-2">Brand</label>
+                    <label className="block text-sm font-semibold text-black mb-2">Thương hiệu</label>
                     <select
                       name="brandId"
                       value={formData.brandId}
@@ -632,7 +632,7 @@ export default function ProductsPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-black mb-2">Category</label>
+                    <label className="block text-sm font-semibold text-black mb-2">Danh mục</label>
                     <select
                       name="categoryId"
                       value={formData.categoryId}
@@ -651,7 +651,7 @@ export default function ProductsPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-black mb-2">Base Price ($) *</label>
+                    <label className="block text-sm font-semibold text-black mb-2">Giá gốc (₫) *</label>
                     <input
                       type="number"
                       name="basePrice"
@@ -666,7 +666,7 @@ export default function ProductsPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-black mb-2">Discount (%)</label>
+                    <label className="block text-sm font-semibold text-black mb-2">Giảm giá (%)</label>
                     <input
                       type="number"
                       name="discount"
@@ -690,7 +690,7 @@ export default function ProductsPage() {
                       onChange={handleInputChange}
                       className="mr-2"
                     />
-                    <span className="text-sm font-semibold text-black">Featured Product</span>
+                    <span className="text-sm font-semibold text-black">Sản phẩm nổi bật</span>
                   </label>
 
                   <label className="flex items-center">
@@ -701,7 +701,7 @@ export default function ProductsPage() {
                       onChange={handleInputChange}
                       className="mr-2"
                     />
-                    <span className="text-sm font-semibold text-black">Active</span>
+                    <span className="text-sm font-semibold text-black">Hoạt động</span>
                   </label>
                 </div>
 
@@ -725,14 +725,14 @@ export default function ProductsPage() {
                   disabled={submitting}
                   className="flex-1 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors font-semibold disabled:opacity-50"
                 >
-                  {submitting ? 'Saving...' : (modalMode === 'add' ? 'Add Product' : 'Save Changes')}
+                  {submitting ? 'Đang lưu...' : (modalMode === 'add' ? 'Thêm sản phẩm' : 'Lưu thay đổi')}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
                   className="flex-1 py-3 bg-white border border-gray-300 text-black rounded-lg hover:bg-gray-50 transition-colors font-semibold"
                 >
-                  Cancel
+                  Hủy
                 </button>
               </div>
             </form>

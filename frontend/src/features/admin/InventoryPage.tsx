@@ -46,7 +46,7 @@ type ModalState =
       initialVariantId?: string;
     };
 
-const getErrorMessage = (err: unknown, fallback = 'Something went wrong'): string => {
+const getErrorMessage = (err: unknown, fallback = 'Đã xảy ra lỗi'): string => {
   if (err && typeof err === 'object' && 'message' in err && typeof err.message === 'string') {
     return err.message;
   }
@@ -78,7 +78,7 @@ export default function InventoryPage() {
       .then((response) => setBrands(response.brands))
       .catch((error) => {
         console.error(error);
-        toast.error(getErrorMessage(error, 'Failed to load brands'));
+        toast.error(getErrorMessage(error, 'Không thể tải danh sách thương hiệu'));
       });
   }, []);
 
@@ -107,7 +107,7 @@ export default function InventoryPage() {
       setStats(statsResponse);
     } catch (error) {
       console.error(error);
-      toast.error(getErrorMessage(error, 'Failed to load inventory'));
+      toast.error(getErrorMessage(error, 'Không thể tải dữ liệu kho hàng'));
     } finally {
       setLoading(false);
     }
@@ -176,7 +176,7 @@ export default function InventoryPage() {
       resolveVariantId(modalState.inventory);
 
     if (!targetVariantId) {
-      toast.error('Please select a product variant before continuing');
+      toast.error('Vui lòng chọn biến thể sản phẩm trước khi tiếp tục');
       return;
     }
 
@@ -191,7 +191,7 @@ export default function InventoryPage() {
             reason: values.reason,
           };
           await inventoryService.createInventory(payload);
-          toast.success('Inventory record created');
+          toast.success('Đã tạo bản ghi kho hàng');
           break;
         }
         case 'stock-in':
@@ -204,10 +204,10 @@ export default function InventoryPage() {
           };
           if (modalState.mode === 'stock-in') {
             await inventoryService.stockIn(payload);
-            toast.success('Stock in recorded');
+            toast.success('Đã ghi nhận nhập kho');
           } else {
             await inventoryService.stockOut(payload);
-            toast.success('Stock out recorded');
+            toast.success('Đã ghi nhận xuất kho');
           }
           break;
         }
@@ -218,7 +218,7 @@ export default function InventoryPage() {
             reason: values.reason || '',
           };
           await inventoryService.adjustStock(payload);
-          toast.success('Inventory adjusted');
+          toast.success('Đã điều chỉnh kho hàng');
           break;
         }
         case 'quick-update': {
@@ -231,7 +231,7 @@ export default function InventoryPage() {
             targetVariantId,
             payload
           );
-          toast.success('Quantity updated');
+          toast.success('Đã cập nhật số lượng');
           break;
         }
         case 'thresholds': {
@@ -243,12 +243,12 @@ export default function InventoryPage() {
             targetVariantId,
             payload
           );
-          toast.success('Thresholds updated');
+          toast.success('Đã cập nhật ngưỡng');
           break;
         }
         case 'archive': {
           await inventoryService.archiveInventory(targetVariantId);
-          toast.success('Inventory archived');
+          toast.success('Đã lưu trữ kho hàng');
           break;
         }
         default:
@@ -259,7 +259,7 @@ export default function InventoryPage() {
       await loadInventory();
     } catch (error) {
       console.error(error);
-      toast.error(getErrorMessage(error, 'Failed to perform inventory action'));
+      toast.error(getErrorMessage(error, 'Không thể thực hiện thao tác kho hàng'));
       throw error;
     }
   };
@@ -270,19 +270,19 @@ export default function InventoryPage() {
     }
     return [
       {
-        label: 'Tracked Products',
+        label: 'Sản phẩm theo dõi',
         value: stats.totalInventory,
       },
       {
-        label: 'Total Quantity',
+        label: 'Tổng số lượng',
         value: stats.totalQuantity,
       },
       {
-        label: 'Available Units',
+        label: 'Đơn vị có sẵn',
         value: stats.totalAvailable,
       },
       {
-        label: 'Low Stock Alerts',
+        label: 'Cảnh báo tồn kho thấp',
         value: stats.lowStockCount,
         highlight: stats.lowStockCount > 0,
       },
@@ -297,9 +297,9 @@ export default function InventoryPage() {
       <div className="sticky top-0 z-10 bg-white border-b border-gray-200 p-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Inventory Management</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Quản lý kho hàng</h1>
             <p className="text-sm text-gray-600">
-              Monitor stock levels, record manual movements, and set alert thresholds.
+              Theo dõi mức tồn kho, ghi nhận biến động và cài đặt ngưỡng cảnh báo.
             </p>
           </div>
           <div className="flex gap-3">
@@ -309,7 +309,7 @@ export default function InventoryPage() {
               }}
               className="rounded-lg border border-gray-300 px-4 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
             >
-              Reset Filters
+              Đặt lại bộ lọc
             </button>
           </div>
         </div>
@@ -336,13 +336,13 @@ export default function InventoryPage() {
           <div className="grid gap-4 md:grid-cols-4">
             <div className="md:col-span-2">
               <label className="text-sm font-semibold text-gray-700">
-                Search by product name or slug
+                Tìm theo tên sản phẩm hoặc slug
                 <div className="relative mt-1">
                   <input
                     type="text"
                     value={filters.search}
                     onChange={handleSearchChange}
-                    placeholder="e.g., iPhone 15 Pro Max or iphone-15-pro-max"
+                    placeholder="VD: iPhone 15 Pro Max hoặc iphone-15-pro-max"
                     className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
                   />
                   <svg
@@ -363,13 +363,13 @@ export default function InventoryPage() {
             </div>
             <div>
               <label className="text-sm font-semibold text-gray-700">
-                Brand
+                Thương hiệu
                 <select
                   value={filters.brandId}
                   onChange={handleBrandChange}
                   className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
                 >
-                  <option value="all">All brands</option>
+                  <option value="all">Tất cả thương hiệu</option>
                   {brands.map((brand) => (
                     <option key={brand.id} value={brand.id}>
                       {brand.name}
@@ -386,7 +386,7 @@ export default function InventoryPage() {
                   onChange={() => handleToggle('lowStockOnly')}
                   className="h-4 w-4 rounded border-gray-300 text-black focus:ring-black"
                 />
-                Low stock only
+                Chỉ tồn kho thấp
               </label>
               <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
                 <input
@@ -395,7 +395,7 @@ export default function InventoryPage() {
                   onChange={() => handleToggle('includeArchived')}
                   className="h-4 w-4 rounded border-gray-300 text-black focus:ring-black"
                 />
-                Include archived
+                Bao gồm đã lưu trữ
               </label>
             </div>
           </div>
@@ -412,22 +412,22 @@ export default function InventoryPage() {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                      Product & Variant
+                      Sản phẩm & Biến thể
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                      Brand
+                      Thương hiệu
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                      Stock
+                      Tồn kho
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                      Thresholds
+                      Ngưỡng
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                      Status
+                      Trạng thái
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                      Actions
+                      Thao tác
                     </th>
                   </tr>
                 </thead>
@@ -435,25 +435,25 @@ export default function InventoryPage() {
                   {loading ? (
                     <tr>
                       <td colSpan={6} className="px-6 py-12 text-center text-sm text-gray-600">
-                        Loading inventory...
+                        Đang tải kho hàng...
                       </td>
                     </tr>
                   ) : inventoryItems.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="px-6 py-12 text-center text-sm text-gray-600">
-                        No inventory records match the current filters.
+                        Không có bản ghi kho hàng nào phù hợp với bộ lọc hiện tại.
                       </td>
                     </tr>
                   ) : (
                     inventoryItems.map((item) => {
-                      const productName = item.product?.name ?? 'Unknown product';
+                      const productName = item.product?.name ?? 'Sản phẩm không xác định';
                       const variant = item.variant;
                       const variantOptions = [
                         variant?.color,
                         variant?.storage,
                         variant?.ram
                       ].filter(Boolean).join(' / ');
-                      const brandName = item.product?.brand?.name ?? 'Unassigned brand';
+                      const brandName = item.product?.brand?.name ?? 'Chưa gán thương hiệu';
                       
                       const statusBadges = [
                         item.isLowStock && (
@@ -461,7 +461,7 @@ export default function InventoryPage() {
                             key="low"
                             className="rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-semibold text-yellow-800"
                           >
-                            Low stock
+                            Tồn kho thấp
                           </span>
                         ),
                         item.isOutOfStock && (
@@ -469,7 +469,7 @@ export default function InventoryPage() {
                             key="out"
                             className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700"
                           >
-                            Out of stock
+                            Hết hàng
                           </span>
                         ),
                         item.isArchived && (
@@ -477,7 +477,7 @@ export default function InventoryPage() {
                             key="archived"
                             className="rounded-full bg-gray-200 px-2 py-0.5 text-xs font-semibold text-gray-700"
                           >
-                            Archived
+                            Đã lưu trữ
                           </span>
                         ),
                       ].filter(Boolean);
@@ -489,20 +489,20 @@ export default function InventoryPage() {
                         >
                           <td className="px-6 py-4">
                             <p className="text-sm font-semibold text-gray-900">{productName}</p>
-                            <p className="text-sm text-gray-600">{variantOptions || 'Default'}</p>
+                            <p className="text-sm text-gray-600">{variantOptions || 'Mặc định'}</p>
                             <p className="text-xs text-gray-500">SKU: {variant?.sku}</p>
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-700">{brandName}</td>
                           <td className="px-6 py-4">
                             <p className="text-sm font-semibold text-gray-900">
-                              {item.available} available
+                              {item.available} có sẵn
                             </p>
                             <p className="text-xs text-gray-500">
-                              Total {item.quantity} • Reserved {item.reserved}
+                              Tổng {item.quantity} • Đã đặt {item.reserved}
                             </p>
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-700">
-                            Min {item.minStock} / Max {item.maxStock}
+                            Tối thiểu {item.minStock} / Tối đa {item.maxStock}
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex flex-wrap gap-2">
@@ -510,7 +510,7 @@ export default function InventoryPage() {
                                 statusBadges
                               ) : (
                                 <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700">
-                                  Healthy
+                                  Bình thường
                                 </span>
                               )}
                             </div>
@@ -522,34 +522,34 @@ export default function InventoryPage() {
                                 disabled={item.isArchived}
                                 className="rounded-lg bg-black px-3 py-1 text-xs font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
                               >
-                                Stock In
+                                Nhập kho
                               </button>
                               <button
                                 onClick={() => openModal('stock-out', item)}
                                 disabled={item.isArchived}
                                 className="rounded-lg border border-gray-300 px-3 py-1 text-xs font-semibold text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
                               >
-                                Stock Out
+                                Xuất kho
                               </button>
                               <button
                                 onClick={() => openModal('quick-update', item)}
                                 disabled={item.isArchived}
                                 className="rounded-lg border border-blue-200 px-3 py-1 text-xs font-semibold text-blue-700 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
                               >
-                                Quick
+                                Nhanh
                               </button>
                               <button
                                 onClick={() => openModal('thresholds', item)}
                                 disabled={item.isArchived}
                                 className="rounded-lg border border-gray-300 px-3 py-1 text-xs font-semibold text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
                               >
-                                Thresholds
+                                Ngưỡng
                               </button>
                               <button
                                 onClick={() => handleMovementDrawer(item)}
                                 className="rounded-lg border border-gray-300 px-3 py-1 text-xs font-semibold text-gray-700 transition hover:bg-gray-100"
                               >
-                                History
+                                Lịch sử
                               </button>
                             </div>
                           </td>
@@ -568,17 +568,17 @@ export default function InventoryPage() {
                   disabled={filters.page === 1}
                   className="rounded-lg border border-gray-300 px-4 py-2 font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  Previous
+                  Trước
                 </button>
                 <span>
-                  Page {pagination.page} of {pagination.totalPages}
+                  Trang {pagination.page} / {pagination.totalPages}
                 </span>
                 <button
                   onClick={() => handlePageChange('next')}
                   disabled={pagination.page === pagination.totalPages}
                   className="rounded-lg border border-gray-300 px-4 py-2 font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  Next
+                  Tiếp
                 </button>
               </div>
             )}

@@ -96,11 +96,11 @@ export default function HomePage() {
               <div className="space-y-4">
                 <div className="inline-block">
                   <p className="text-sm font-bold tracking-[0.3em] uppercase text-blue-600 mb-2">
-                    Premium Smartphones 2025
+                    Điện thoại cao cấp 2025
                   </p>
                 </div>
 
-                <h1 className="text-6xl md:text-7xl lg:text-8xl font-black leading-[0.9] tracking-tighter">
+                <h1 className="text-6xl md:text-7xl lg:text-8xl font-black leading-tight tracking-tight">
                   THE <br />
                   <span className="relative block h-[1.2em] overflow-hidden">
                     <span className={`absolute left-0 top-0 transition-all duration-700 ease-out whitespace-pre-line ${
@@ -116,8 +116,8 @@ export default function HomePage() {
 
               <div className="space-y-6 max-w-lg">
                 <p className="text-xl md:text-2xl text-gray-600 leading-relaxed font-light">
-                  Experience the pinnacle of mobile technology.
-                  <span className="block text-black font-bold mt-2">Crafted for excellence.</span>
+                  Trải nghiệm đỉnh cao của công nghệ di động.
+                  <span className="block text-black font-bold mt-2">Hoàn hảo trong từng chi tiết.</span>
                 </p>
 
                 <div className="flex flex-wrap gap-4">
@@ -126,7 +126,7 @@ export default function HomePage() {
                     className="group relative overflow-hidden bg-black text-white px-12 py-5 rounded-full text-lg font-bold hover:shadow-2xl transition-all duration-500 flex items-center gap-3 border border-black"
                   >
                     <span className="relative z-10 flex items-center gap-3">
-                      Shop Collection
+                      Khám phá ngay
                       <svg className="w-5 h-5 group-hover:translate-x-2 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                       </svg>
@@ -140,15 +140,15 @@ export default function HomePage() {
               <div className="grid grid-cols-3 gap-8 pt-8 border-t border-gray-200">
                 <div>
                   <div className="text-3xl font-black">50K+</div>
-                  <div className="text-sm text-gray-600 uppercase tracking-wide">Customers</div>
+                  <div className="text-sm text-gray-600 uppercase tracking-wide">Khách hàng</div>
                 </div>
                 <div>
                   <div className="text-3xl font-black">4.9★</div>
-                  <div className="text-sm text-gray-600 uppercase tracking-wide">Rating</div>
+                  <div className="text-sm text-gray-600 uppercase tracking-wide">Đánh giá</div>
                 </div>
                 <div>
                   <div className="text-3xl font-black">24/7</div>
-                  <div className="text-sm text-gray-600 uppercase tracking-wide">Support</div>
+                  <div className="text-sm text-gray-600 uppercase tracking-wide">Hỗ trợ</div>
                 </div>
               </div>
             </div>
@@ -200,15 +200,15 @@ export default function HomePage() {
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 mb-20">
           <div className="flex items-center gap-4 mb-8">
             <div className="w-20 h-0.5 bg-white"></div>
-            <p className="text-sm font-bold tracking-[0.3em] uppercase">Explore Brands</p>
+            <p className="text-sm font-bold tracking-[0.3em] uppercase">Khám phá thương hiệu</p>
           </div>
 
-          <h2 className="text-6xl md:text-7xl lg:text-8xl font-black leading-[0.9] tracking-tighter mb-8">
-            SHOP BY <br /> <span className="text-blue-400">BRAND</span>
+          <h2 className="text-6xl md:text-7xl lg:text-8xl font-black leading-tight tracking-tight mb-8">
+            MUA THEO <br /> <span className="text-blue-400">THƯƠNG HIỆU</span>
           </h2>
 
           <p className="text-xl text-gray-400 max-w-2xl">
-            Premium smartphones from the world&apos;s leading manufacturers
+            Điện thoại cao cấp từ các nhà sản xuất hàng đầu thế giới
           </p>
         </div>
 
@@ -223,42 +223,42 @@ export default function HomePage() {
                   {[
                     {
                       name: 'iPhone',
-                      tagline: 'Think Different',
+                      tagline: 'Khác biệt',
                       bg: 'bg-gradient-to-br from-gray-900 to-gray-800',
                       img: '/images/iphone17.png',
                       link: '/category/iphone'
                     },
                     {
                       name: 'Samsung',
-                      tagline: 'Next is Now',
+                      tagline: 'Tương lai là bây giờ',
                       bg: 'bg-gradient-to-br from-blue-900 to-blue-800',
                       img: '/images/samsungs24.jpg',
                       link: '/category/samsung'
                     },
                     {
                       name: 'ASUS ROG',
-                      tagline: 'For Those Who Dare',
+                      tagline: 'Dành cho người dám',
                       bg: 'bg-gradient-to-br from-red-900 to-red-800',
                       img: '/images/rogphone8.png',
                       link: '/category/gaming'
                     },
                     {
                       name: 'Huawei',
-                      tagline: 'Make it Possible',
+                      tagline: 'Biến điều không thể thành có thể',
                       bg: 'bg-gradient-to-br from-purple-900 to-purple-800',
                       img: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800',
                       link: '/category/huawei'
                     },
                     {
                       name: 'Xiaomi',
-                      tagline: 'Innovation For Everyone',
+                      tagline: 'Đổi mới cho mọi người',
                       bg: 'bg-gradient-to-br from-orange-900 to-orange-800',
                       img: '/images/Xiaomi14.png',
                       link: '/category/xiaomi'
                     },
                     {
                       name: 'OnePlus',
-                      tagline: 'Never Settle',
+                      tagline: 'Không bao giờ thỏa hiệp',
                       bg: 'bg-gradient-to-br from-red-900 to-pink-900',
                       img: '/images/oneplus12.png',
                       link: '/category/oneplus'
@@ -286,7 +286,7 @@ export default function HomePage() {
                         <h3 className="text-2xl font-black text-white mb-2 tracking-tight">{brand.name}</h3>
                         <p className="text-gray-400 text-sm uppercase tracking-wider font-bold mb-6">{brand.tagline}</p>
                         <div className="flex items-center gap-3 text-white group-hover:text-blue-400 transition-all duration-300">
-                          <span className="text-sm font-bold uppercase tracking-wider">Explore</span>
+                          <span className="text-sm font-bold uppercase tracking-wider">Khám phá</span>
                           <svg className="w-4 h-4 group-hover:translate-x-2 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                           </svg>
@@ -321,14 +321,14 @@ export default function HomePage() {
               <div className="flex items-center gap-8">
                 <div className="w-20 h-0.5 bg-black"></div>
                 <div>
-                  <p className="text-sm font-bold tracking-[0.3em] uppercase text-red-600 mb-2">Limited Time</p>
-                  <h2 className="text-5xl md:text-6xl font-black leading-[0.9] tracking-tighter">
-                    HOT DEALS
+                  <p className="text-sm font-bold tracking-[0.3em] uppercase text-red-600 mb-2">Thời gian có hạn</p>
+                  <h2 className="text-5xl md:text-6xl font-black leading-tight tracking-tight">
+                    ƯU ĐÃI HOT
                   </h2>
                 </div>
               </div>
               <Link href="/shop" className="group flex items-center gap-3 text-black hover:text-blue-600 font-bold text-lg transition-all">
-                View All
+                Xem tất cả
                 <svg className="w-5 h-5 group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                 </svg>
@@ -385,7 +385,7 @@ export default function HomePage() {
 
                     <div className="absolute bottom-0 left-0 right-0 p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-500 bg-gradient-to-t from-white/90 to-transparent">
                       <Link href={`/shop/${product.id}`} className="block w-full bg-black text-white py-3 rounded-full text-xs font-black hover:bg-blue-600 transition-all shadow-lg text-center uppercase tracking-wider">
-                        Quick View
+                        Xem nhanh
                       </Link>
                     </div>
                   </div>
@@ -405,9 +405,9 @@ export default function HomePage() {
                     </div>
 
                     <div className="flex items-center gap-3 mb-6">
-                      <span className="text-2xl font-black text-black">${product.price}</span>
+                      <span className="text-2xl font-black text-black">{new Intl.NumberFormat('en-US').format(product.price).replace(/,/g, '.')}₫</span>
                       {product.oldPrice && (
-                        <span className="text-base text-gray-400 line-through">${product.oldPrice}</span>
+                        <span className="text-base text-gray-400 line-through">{new Intl.NumberFormat('en-US').format(product.oldPrice).replace(/,/g, '.')}₫</span>
                       )}
                     </div>
 
@@ -452,7 +452,7 @@ export default function HomePage() {
                       className={`w-full bg-black text-white py-4 rounded-full text-sm font-black hover:bg-blue-600 hover:scale-[1.02] transition-all duration-300 shadow-lg mt-auto uppercase tracking-wider border-2 border-black ${addingToCart === product.id ? 'opacity-50 cursor-not-allowed' : ''
                         }`}
                     >
-                      {addingToCart === product.id ? 'Adding...' : 'Add to Cart'}
+                      {addingToCart === product.id ? 'Đang thêm...' : 'Thêm vào giỏ'}
                     </button>
                   </div>
                 </div>
@@ -468,36 +468,36 @@ export default function HomePage() {
           <div className="text-center mb-20">
             <div className="flex items-center justify-center gap-4 mb-8">
               <div className="w-20 h-0.5 bg-white"></div>
-              <p className="text-sm font-bold tracking-[0.3em] uppercase">Categories</p>
+              <p className="text-sm font-bold tracking-[0.3em] uppercase">Danh mục</p>
               <div className="w-20 h-0.5 bg-white"></div>
             </div>
 
-            <h2 className="text-6xl md:text-7xl font-black leading-[0.9] tracking-tighter mb-8">
-              SHOP BY <span className="text-blue-400">CATEGORY</span>
+            <h2 className="text-6xl md:text-7xl font-black leading-tight tracking-tight mb-8">
+              MUA THEO <span className="text-blue-400">DANH MỤC</span>
             </h2>
 
             <p className="text-xl text-gray-400 max-w-3xl mx-auto">
-              Explore our curated collection of premium smartphones across different categories
+              Khám phá bộ sưu tập điện thoại cao cấp được tuyển chọn theo các danh mục khác nhau
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
             {[
               {
-                title: "FLAGSHIP",
-                subtitle: "The Best of the Best",
+                title: "CAO CẤP",
+                subtitle: "Tốt nhất trong tất cả",
                 image: "https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?w=800&h=800&fit=crop",
                 link: "/shop"
               },
               {
                 title: "GAMING",
-                subtitle: "Ultimate Power",
+                subtitle: "Sức mạnh tối thượng",
                 image: "https://images.unsplash.com/photo-1574944985070-8f3ebc6b79d2?w=800&h=800&fit=crop",
                 link: "/shop"
               },
               {
-                title: "VALUE",
-                subtitle: "Smart Choice",
+                title: "GIÁ TỐT",
+                subtitle: "Lựa chọn thông minh",
                 image: "https://images.unsplash.com/photo-1512499617640-c74ae3a79d37?w=800&h=800&fit=crop",
                 link: "/shop"
               }
@@ -518,7 +518,7 @@ export default function HomePage() {
                     <h3 className="text-4xl font-black mb-2 tracking-tighter">{category.title}</h3>
                     <p className="text-gray-400 mb-6 text-sm uppercase tracking-wider font-bold">{category.subtitle}</p>
                     <div className="flex items-center gap-3 text-white group-hover:text-blue-400 transition-all duration-300">
-                      <span className="text-sm font-black uppercase tracking-wider">Shop Now</span>
+                      <span className="text-sm font-black uppercase tracking-wider">Mua ngay</span>
                       <svg className="w-4 h-4 group-hover:translate-x-2 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                       </svg>
@@ -541,19 +541,19 @@ export default function HomePage() {
                 <p className="text-sm font-bold tracking-[0.3em] uppercase text-blue-600">Apple</p>
               </div>
 
-              <h2 className="text-6xl md:text-7xl font-black leading-[0.9] tracking-tighter">
-                THE IPHONE <br /> <span className="text-gray-400">EVERYONE&apos;S</span> <br /> TALKING ABOUT
+              <h2 className="text-6xl md:text-7xl font-black leading-tight tracking-tight">
+                IPHONE <br /> <span className="text-gray-400">MÀ AI CŨNG</span> <br /> BÀN TÁN
               </h2>
 
               <p className="text-xl text-gray-600 leading-relaxed font-light max-w-lg">
-                Experience the power of the latest iPhone 15 series. A17 Pro chip, ProMotion display, and the best camera system ever.
+                Trải nghiệm sức mạnh của dòng iPhone 15 mới nhất. Chip A17 Pro, màn hình ProMotion và hệ thống camera tốt nhất từ trước đến nay.
               </p>
 
               <div className="space-y-4">
                 {[
-                  { title: "A17 Pro Chip", desc: "Console-level gaming and pro workflows" },
-                  { title: "Pro Camera System", desc: "48MP main camera with 5x optical zoom" },
-                  { title: "All-day Battery", desc: "Up to 29 hours video playback" }
+                  { title: "Chip A17 Pro", desc: "Chơi game cấp độ console và xử lý chuyên nghiệp" },
+                  { title: "Hệ thống Camera Pro", desc: "Camera chính 48MP với zoom quang học 5x" },
+                  { title: "Pin cả ngày", desc: "Phát video lên đến 29 giờ" }
                 ].map((feature, index) => (
                   <div key={index} className="group border-l-2 border-transparent hover:border-black transition-all duration-300 pl-6 py-3">
                     <h4 className="font-black text-xl mb-1 group-hover:text-blue-600 transition-colors">{feature.title}</h4>
@@ -563,7 +563,7 @@ export default function HomePage() {
               </div>
 
               <Link href="/category/iphone" className="inline-block bg-black text-white px-12 py-5 rounded-full font-black hover:bg-blue-600 hover:shadow-2xl hover:scale-105 transition-all duration-500 uppercase tracking-wider text-sm border-2 border-black">
-                Shop iPhone
+                Mua iPhone
               </Link>
             </div>
 
@@ -589,10 +589,10 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           <div className="grid md:grid-cols-4 gap-8 text-center">
             {[
-              { number: "50K+", label: "Happy Customers" },
-              { number: "500+", label: "Phone Models" },
-              { number: "4.9★", label: "Average Rating" },
-              { number: "24/7", label: "Support" }
+              { number: "50K+", label: "Khách hàng hài lòng" },
+              { number: "500+", label: "Mẫu điện thoại" },
+              { number: "4.9★", label: "Đánh giá trung bình" },
+              { number: "24/7", label: "Hỗ trợ" }
             ].map((stat, index) => (
               <div key={index} className="group">
                 <div className="text-5xl md:text-6xl font-black mb-2 group-hover:text-blue-400 transition-colors duration-300">{stat.number}</div>

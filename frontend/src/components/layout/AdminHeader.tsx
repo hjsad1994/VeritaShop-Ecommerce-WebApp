@@ -47,21 +47,21 @@ export default function AdminHeader({ user, onLogout }: AdminHeaderProps) {
     <header className="bg-white border-b border-gray-300 shadow-sm flex-shrink-0" suppressHydrationWarning>
       <div className="px-8 py-4 flex items-center justify-between" suppressHydrationWarning>
         <div className="flex items-center gap-4" suppressHydrationWarning>
-          <h1 className="text-2xl font-bold text-black">Admin Dashboard</h1>
+          <h1 className="text-2xl font-bold text-black">Trang quản trị</h1>
           
           {/* Quick Actions */}
           <div className="flex items-center gap-2 ml-8">
-            <Link href="/admin/products" className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors" title="Products">
+            <Link href="/admin/products" className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors" title="Sản phẩm">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
               </svg>
             </Link>
-            <Link href="/admin/orders" className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors" title="Orders">
+            <Link href="/admin/orders" className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors" title="Đơn hàng">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
             </Link>
-            <Link href="/admin/accounts" className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors" title="Users">
+            <Link href="/admin/accounts" className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors" title="Người dùng">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
               </svg>
@@ -87,28 +87,28 @@ export default function AdminHeader({ user, onLogout }: AdminHeaderProps) {
             {isNotificationDropdownOpen && (
               <div className="absolute top-full right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-xl z-50">
                 <div className="p-4">
-                  <h3 className="font-semibold text-gray-900 mb-3">Admin Notifications</h3>
+                  <h3 className="font-semibold text-gray-900 mb-3">Thông báo</h3>
                   <div className="space-y-2 max-h-96 overflow-y-auto">
                     <div className="p-3 rounded-lg bg-gray-50">
-                      <p className="text-sm font-medium text-gray-900">New order #5678 needs confirmation</p>
-                      <p className="text-xs text-gray-600 mt-1">5 minutes ago</p>
+                      <p className="text-sm font-medium text-gray-900">Đơn hàng #5678 cần xác nhận</p>
+                      <p className="text-xs text-gray-600 mt-1">5 phút trước</p>
                     </div>
                     <div className="p-3 rounded-lg bg-gray-50">
-                      <p className="text-sm font-medium text-gray-900">iPhone 15 product running low on stock</p>
-                      <p className="text-xs text-gray-600 mt-1">1 hour ago</p>
+                      <p className="text-sm font-medium text-gray-900">Sản phẩm iPhone 15 sắp hết hàng</p>
+                      <p className="text-xs text-gray-600 mt-1">1 giờ trước</p>
                     </div>
                     <div className="p-3 rounded-lg bg-gray-50">
-                      <p className="text-sm font-medium text-gray-900">Monthly revenue report for November is ready</p>
-                      <p className="text-xs text-gray-600 mt-1">Yesterday</p>
+                      <p className="text-sm font-medium text-gray-900">Báo cáo doanh thu tháng 11 đã sẵn sàng</p>
+                      <p className="text-xs text-gray-600 mt-1">Hôm qua</p>
                     </div>
                     <div className="p-3 rounded-lg bg-blue-50">
-                      <p className="text-sm font-medium text-blue-900">Scheduled system maintenance: 22:00 tonight</p>
-                      <p className="text-xs text-blue-700 mt-1">2 days ago</p>
+                      <p className="text-sm font-medium text-blue-900">Bảo trì hệ thống theo lịch: 22:00 tối nay</p>
+                      <p className="text-xs text-blue-700 mt-1">2 ngày trước</p>
                     </div>
                   </div>
                   <div className="mt-3 pt-3 border-t border-gray-200">
                     <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-                      View all notifications
+                      Xem tất cả thông báo
                     </button>
                   </div>
                 </div>
@@ -144,7 +144,7 @@ export default function AdminHeader({ user, onLogout }: AdminHeaderProps) {
                     {user?.email || 'admin@veritashop.com'}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
-                    {user?.role === 'ADMIN' ? 'Administrator' : 'Manager'}
+                    {user?.role === 'ADMIN' ? 'Quản trị viên' : 'Quản lý'}
                   </p>
                 </div>
                 <div className="py-2">
@@ -153,7 +153,7 @@ export default function AdminHeader({ user, onLogout }: AdminHeaderProps) {
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
-                      Admin Profile
+                      Hồ sơ cá nhân
                     </div>
                   </Link>
                   <Link href="/admin/settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
@@ -162,7 +162,7 @@ export default function AdminHeader({ user, onLogout }: AdminHeaderProps) {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
-                      Admin Settings
+                      Cài đặt
                     </div>
                   </Link>
                   <Link href="/" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
@@ -170,7 +170,7 @@ export default function AdminHeader({ user, onLogout }: AdminHeaderProps) {
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                       </svg>
-                      Back to Homepage
+                      Quay lại trang chủ
                     </div>
                   </Link>
                   <hr className="my-2 border-gray-200" />
@@ -182,7 +182,7 @@ export default function AdminHeader({ user, onLogout }: AdminHeaderProps) {
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                       </svg>
-                      Logout
+                      Đăng xuất
                     </div>
                   </button>
                 </div>

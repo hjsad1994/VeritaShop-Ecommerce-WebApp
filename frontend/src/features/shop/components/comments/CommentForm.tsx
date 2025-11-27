@@ -13,8 +13,8 @@ interface CommentFormProps {
 export default function CommentForm({
   onSubmit,
   isSubmitting,
-  placeholder = 'Write a comment...',
-  buttonText = 'Post Comment',
+  placeholder = 'Viết bình luận...',
+  buttonText = 'Đăng bình luận',
   onCancel,
   autoFocus = false,
 }: CommentFormProps) {
@@ -56,7 +56,7 @@ export default function CommentForm({
               disabled={isSubmitting}
               className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-black transition-colors"
             >
-              Cancel
+              Hủy
             </button>
           )}
           <button
@@ -64,7 +64,7 @@ export default function CommentForm({
             disabled={!content.trim() || isSubmitting}
             className="px-6 py-2 bg-black text-white text-sm font-medium rounded-md hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
-            {isSubmitting ? 'Posting...' : buttonText}
+            {isSubmitting ? 'Đang đăng...' : buttonText}
           </button>
         </div>
       </div>

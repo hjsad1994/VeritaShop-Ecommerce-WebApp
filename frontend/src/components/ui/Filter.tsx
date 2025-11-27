@@ -29,20 +29,20 @@ export default function ShopFilter({
     <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
       {/* Filter Header */}
       <div className="flex items-center justify-between mb-5">
-        <h2 className="text-lg font-bold text-black">Filters</h2>
+        <h2 className="text-lg font-bold text-black">Bộ lọc</h2>
         {(selectedBrands.length > 0 || selectedPriceRange) && (
           <button 
             onClick={onClearFilters}
             className="text-gray-600 hover:text-black transition-all text-xs font-medium"
           >
-            Clear all
+            Xóa tất cả
           </button>
         )}
       </div>
 
       {/* Brand Filter */}
       <div className="mb-5 pb-5 border-b border-gray-200">
-        <h3 className="font-semibold text-black mb-3 text-sm">Brand</h3>
+        <h3 className="font-semibold text-black mb-3 text-sm">Thương hiệu</h3>
         <div className="space-y-2 max-h-48 overflow-y-auto">
           {brands.map(brand => (
             <label key={brand} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1.5 rounded transition">
@@ -60,7 +60,7 @@ export default function ShopFilter({
 
       {/* Price Range Filter */}
       <div className="mb-5 pb-5 border-b border-gray-200">
-        <h3 className="font-semibold text-black mb-3 text-sm">Price Range</h3>
+        <h3 className="font-semibold text-black mb-3 text-sm">Khoảng giá</h3>
         <div className="space-y-2">
           {priceRanges.map(range => (
             <label key={range.value} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1.5 rounded transition">
@@ -79,16 +79,16 @@ export default function ShopFilter({
 
       {/* Sort By */}
       <div>
-        <h3 className="font-semibold text-black mb-3 text-sm">Sort By</h3>
+        <h3 className="font-semibold text-black mb-3 text-sm">Sắp xếp</h3>
         <select 
           value={sortBy}
           onChange={(e) => onSortChange(e.target.value)}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 text-xs focus:ring-2 focus:ring-black focus:border-black"
         >
-          <option value="featured">Featured</option>
-          <option value="price-low">Price: Low to High</option>
-          <option value="price-high">Price: High to Low</option>
-          <option value="name">Name: A-Z</option>
+          <option value="featured">Nổi bật</option>
+          <option value="price-low">Giá: Thấp đến Cao</option>
+          <option value="price-high">Giá: Cao đến Thấp</option>
+          <option value="name">Tên: A-Z</option>
         </select>
       </div>
     </div>

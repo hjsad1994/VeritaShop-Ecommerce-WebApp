@@ -30,7 +30,7 @@ export default function CommentItem({
   const canEdit = isOwner;
 
   const formatDate = (dateString: string) => {
-    return new Intl.DateTimeFormat('en-US', {
+    return new Intl.DateTimeFormat('vi-VN', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -118,19 +118,19 @@ export default function CommentItem({
             }}
             className="hover:text-black transition-colors flex items-center gap-1"
           >
-            Reply
+            Trả lời
           </button>
           
           {canDelete && onDelete && (
              <button 
                onClick={() => {
-                 if (confirm('Are you sure you want to delete this comment?')) {
+                 if (confirm('Bạn có chắc muốn xóa bình luận này?')) {
                    onDelete(comment.id);
                  }
                }}
                className="hover:text-red-600 transition-colors"
              >
-               Delete
+               Xóa
              </button>
           )}
         </div>
@@ -140,8 +140,8 @@ export default function CommentItem({
             <CommentForm
               onSubmit={handleReply}
               isSubmitting={isSubmitting}
-              placeholder={`Reply to ${comment.user.name}...`}
-              buttonText="Post Reply"
+              placeholder={`Trả lời ${comment.user.name}...`}
+              buttonText="Đăng trả lời"
               onCancel={() => setIsReplying(false)}
               autoFocus
             />

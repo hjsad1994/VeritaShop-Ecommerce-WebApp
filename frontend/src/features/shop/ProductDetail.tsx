@@ -88,10 +88,10 @@ export default function ProductDetail({ productSlug }: ProductDetailProps) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-black mb-2">Product not found</h2>
-          <p className="text-gray-600 mb-6">The product you&apos;re looking for doesn&apos;t exist.</p>
+          <h2 className="text-2xl font-bold text-black mb-2">Không tìm thấy sản phẩm</h2>
+          <p className="text-gray-600 mb-6">Sản phẩm bạn đang tìm không tồn tại.</p>
           <Link href="/shop" className="bg-black text-white px-6 py-3 rounded-md hover:bg-gray-800 transition inline-block">
-            Back to Shop
+            Quay lại cửa hàng
           </Link>
         </div>
       </div>
@@ -115,7 +115,7 @@ export default function ProductDetail({ productSlug }: ProductDetailProps) {
     }
     
     if (!selectedVariant) {
-        alert('Please select a variant');
+        alert('Vui lòng chọn phiên bản');
         return;
     }
 
@@ -140,7 +140,7 @@ export default function ProductDetail({ productSlug }: ProductDetailProps) {
     }
     
     if (!selectedVariant) {
-      alert('Please select a variant');
+      alert('Vui lòng chọn phiên bản');
       return;
     }
 
@@ -157,7 +157,7 @@ export default function ProductDetail({ productSlug }: ProductDetailProps) {
   return (
     <div className="min-h-screen bg-white">
       <Toast 
-        message="Product added to cart successfully!" 
+        message="Đã thêm sản phẩm vào giỏ hàng!" 
         type="success"
         isVisible={showToast}
         onClose={() => setShowToast(false)}
@@ -165,15 +165,15 @@ export default function ProductDetail({ productSlug }: ProductDetailProps) {
       <Header theme="light" />
 
       <div className="bg-black text-white py-3 text-center text-sm font-medium mt-16">
-        FREE SHIPPING ON ORDERS OVER $100
+        MIỄN PHÍ VẬN CHUYỂN CHO ĐƠN HÀNG TRÊN 2.000.000đ
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-8">
           <div className="flex items-center gap-2 text-sm text-gray-600">
-            <Link href="/" className="hover:text-black transition">Home</Link>
+            <Link href="/" className="hover:text-black transition">Trang chủ</Link>
             <span>/</span>
-            <Link href="/shop" className="hover:text-black transition">Shop</Link>
+            <Link href="/shop" className="hover:text-black transition">Cửa hàng</Link>
             <span>/</span>
             <span className="text-black font-medium">{product.name}</span>
           </div>
@@ -223,7 +223,7 @@ export default function ProductDetail({ productSlug }: ProductDetailProps) {
             <div className="flex items-center gap-4 mb-6">
                <div className="flex items-center gap-2">
                  <span className="text-yellow-400">★</span>
-                 <span className="text-sm text-gray-600">{product.averageRating || '0.0'} ({product.reviewCount || 0} reviews)</span>
+                 <span className="text-sm text-gray-600">{product.averageRating || '0.0'} ({product.reviewCount || 0} đánh giá)</span>
                </div>
             </div>
 
@@ -247,7 +247,7 @@ export default function ProductDetail({ productSlug }: ProductDetailProps) {
             {/* Variant Selection */}
             {product.variants && product.variants.length > 0 && (
             <div className="mb-6">
-              <h3 className="text-sm font-bold text-black mb-3">Select Variant</h3>
+              <h3 className="text-sm font-bold text-black mb-3">Chọn phiên bản</h3>
               <div className="flex flex-wrap gap-3">
                 {product.variants.map((variant: ProductVariantItem) => (
                   <button
@@ -275,7 +275,7 @@ export default function ProductDetail({ productSlug }: ProductDetailProps) {
 
             {/* Quantity & Inventory */}
             <div className="mb-8">
-              <h3 className="text-sm font-bold text-black mb-3">Quantity</h3>
+              <h3 className="text-sm font-bold text-black mb-3">Số lượng</h3>
               <div className="flex items-center gap-4">
                 <div className="flex items-center border-2 border-gray-300 rounded-lg">
                   <button
@@ -295,7 +295,7 @@ export default function ProductDetail({ productSlug }: ProductDetailProps) {
                   </button>
                 </div>
                 <span className={`text-sm font-medium ${isOutOfStock ? 'text-red-600' : 'text-green-600'}`}>
-                    {inventory ? (isOutOfStock ? 'Out of Stock' : `${inventory.available} available`) : 'In Stock'}
+                    {inventory ? (isOutOfStock ? 'Hết hàng' : `Còn ${inventory.available} sản phẩm`) : 'Còn hàng'}
                 </span>
               </div>
             </div>
@@ -309,7 +309,7 @@ export default function ProductDetail({ productSlug }: ProductDetailProps) {
                   isAddingToCart || isOutOfStock ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 hover:scale-[1.02]'
                 }`}
               >
-                {isAddingToCart ? 'Adding...' : 'Add to Cart'}
+                {isAddingToCart ? 'Đang thêm...' : 'Thêm vào giỏ'}
               </button>
               <button
                 onClick={handleBuyNow}
@@ -318,14 +318,14 @@ export default function ProductDetail({ productSlug }: ProductDetailProps) {
                     isOutOfStock ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-800 hover:scale-[1.02]'
                 }`}
               >
-                Buy Now
+                Mua ngay
               </button>
             </div>
             
             {/* Specs Display */}
             {product.specs && (
                 <div className="mt-8 border-t pt-8">
-                    <h3 className="text-xl font-bold mb-4">Specifications</h3>
+                    <h3 className="text-xl font-bold mb-4">Thông số kỹ thuật</h3>
                     <div className="grid grid-cols-2 gap-4 text-sm">
                         {Object.entries(product.specs).map(([key, value]) => {
                             if (key === 'id' || key === 'productId' || key === 'createdAt' || key === 'updatedAt' || !value) return null;

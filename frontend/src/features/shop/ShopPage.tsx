@@ -12,6 +12,7 @@ import { Product } from '@/lib/api/types';
 
 export default function ShopPage() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [brands, setBrands] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [selectedBrands, setSelectedBrands] = React.useState<string[]>([]);
@@ -19,8 +20,6 @@ export default function ShopPage() {
   const [sortBy, setSortBy] = React.useState('featured');
   const [currentPage, setCurrentPage] = React.useState(1);
   const productsPerPage = 20;
-
-  const brands = ['Apple', 'Samsung', 'ASUS', 'Xiaomi', 'OnePlus', 'Black Shark', 'RedMagic'];
   const priceRanges = [
     { label: 'Dưới 10 triệu', value: '0-10000000' },
     { label: '10 - 20 triệu', value: '10000000-20000000' },
@@ -37,6 +36,14 @@ export default function ShopPage() {
         limit: 100, // Fetch more to filter locally for now, or implement server-side filtering
       });
       setProducts(response.products);
+      
+      // Extract unique brands from products
+      const uniqueBrands = [...new Set(
+        response.products
+          .map(p => p.brand?.name)
+          .filter((name): name is string => !!name)
+      )].sort();
+      setBrands(uniqueBrands);
     } catch (error) {
       console.error('Failed to fetch products:', error);
     } finally {

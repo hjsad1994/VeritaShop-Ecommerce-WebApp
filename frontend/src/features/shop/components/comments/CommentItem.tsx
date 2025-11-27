@@ -91,7 +91,8 @@ export default function CommentItem({
             {comment.content}
         </div>
 
-        {comment.aiAnalysis?.results && Array.isArray(comment.aiAnalysis.results) && comment.aiAnalysis.results.length > 0 && (
+        {/* Only show sentiment analysis for root comments, not replies */}
+        {level === 0 && comment.aiAnalysis?.results && Array.isArray(comment.aiAnalysis.results) && comment.aiAnalysis.results.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-2">
             {comment.aiAnalysis.results.map((analysis, idx) => (
               <span 

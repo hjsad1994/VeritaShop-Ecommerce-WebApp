@@ -16,6 +16,8 @@ interface CategoryPageProps {
 
 export default function CategoryPage({ category }: CategoryPageProps) {
   const [products, setProducts] = useState<Product[]>([]);
+  const [categoryName, setCategoryName] = useState<string>('');
+  const [brands, setBrands] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [selectedBrands, setSelectedBrands] = React.useState<string[]>([]);
@@ -23,13 +25,11 @@ export default function CategoryPage({ category }: CategoryPageProps) {
   const [sortBy, setSortBy] = React.useState('featured');
   const [currentPage, setCurrentPage] = React.useState(1);
   const productsPerPage = 20;
-
-  const brands = ['Apple', 'Samsung', 'ASUS', 'Xiaomi', 'OnePlus', 'Black Shark', 'RedMagic'];
   const priceRanges = [
-    { label: 'Under $500', value: '0-500' },
-    { label: '$500 - $800', value: '500-800' },
-    { label: '$800 - $1000', value: '800-1000' },
-    { label: 'Over $1000', value: '1000-10000' }
+    { label: 'Dưới 10 triệu', value: '0-10000000' },
+    { label: '10 - 20 triệu', value: '10000000-20000000' },
+    { label: '20 - 30 triệu', value: '20000000-30000000' },
+    { label: 'Trên 30 triệu', value: '30000000-100000000' }
   ];
 
   const fetchProducts = useCallback(async () => {
@@ -40,6 +40,19 @@ export default function CategoryPage({ category }: CategoryPageProps) {
         limit: 100, // Fetch more to allow client-side filtering for now
       });
       setProducts(response.products);
+      
+      // Get category name from first product
+      if (response.products.length > 0 && response.products[0].category?.name) {
+        setCategoryName(response.products[0].category.name);
+      }
+      
+      // Extract unique brands from products
+      const uniqueBrands = [...new Set(
+        response.products
+          .map(p => p.brand?.name)
+          .filter((name): name is string => !!name)
+      )].sort();
+      setBrands(uniqueBrands);
     } catch (error) {
       console.error('Failed to fetch category products:', error);
     } finally {
@@ -119,6 +132,10 @@ export default function CategoryPage({ category }: CategoryPageProps) {
 
   // Get category display name
   const getCategoryDisplayName = () => {
+    // Use actual category name if available, otherwise fallback to slug conversion
+    if (categoryName) {
+      return categoryName;
+    }
     // Capitalize first letter and replace hyphens with spaces
     return category
       .split('-')
@@ -142,7 +159,7 @@ export default function CategoryPage({ category }: CategoryPageProps) {
           <Search 
             value={searchQuery}
             onChange={setSearchQuery}
-            placeholder={`Search ${getCategoryDisplayName()} products...`}
+            placeholder={`Tìm kiếm sản phẩm ${getCategoryDisplayName()}...`}
           />
         </div>
 

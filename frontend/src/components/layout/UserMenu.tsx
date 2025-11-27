@@ -383,7 +383,7 @@ export default function UserMenu({
       <div className="flex items-center gap-4">
         <Link 
           href="/login" 
-          className={`px-4 py-2 rounded-md font-medium transition-all ${isLight ? 'text-black border border-gray-300 hover:bg-gray-100' : 'text-white border border-white/30 hover:bg-white hover:bg-opacity-10'}`}
+          className="px-4 py-2 rounded-md font-semibold transition-all bg-white text-black hover:bg-gray-100"
         >
           Đăng nhập
         </Link>

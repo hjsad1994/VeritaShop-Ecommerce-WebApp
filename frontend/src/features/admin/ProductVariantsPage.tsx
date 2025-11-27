@@ -483,6 +483,16 @@ export default function ProductVariantsPage({ productId }: ProductVariantsPagePr
                   />
                 </div>
                 <div>
+                  <label className="text-sm font-medium text-gray-700 mb-1 block">Giá gốc sản phẩm</label>
+                  <input
+                    type="text"
+                    value={numberFormatter.format(Number(product.basePrice))}
+                    disabled
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Chỉnh sửa từ trang Quản lý sản phẩm</p>
+                </div>
+                <div>
                   <label className="text-sm font-medium text-gray-700 mb-1 block">Giá bán (VND) *</label>
                   <input
                     type="number"
@@ -491,9 +501,12 @@ export default function ProductVariantsPage({ productId }: ProductVariantsPagePr
                     onChange={(e) => handleFormChange('price', e.target.value)}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black text-black placeholder:text-gray-400"
                   />
+                  {formMode === 'create' && variants.length === 0 && (
+                    <p className="text-xs text-orange-600 mt-1">Biến thể đầu tiên: giá phải ≤ giá gốc</p>
+                  )}
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">Giá gốc</label>
+                  <label className="text-sm font-medium text-gray-700 mb-1 block">Giá so sánh</label>
                   <input
                     type="number"
                     min="0"

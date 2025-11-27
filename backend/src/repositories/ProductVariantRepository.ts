@@ -51,6 +51,12 @@ export class ProductVariantRepository extends BaseRepository<ProductVariant> {
     super(prisma);
   }
 
+  async countByProduct(productId: string): Promise<number> {
+    return this.prisma.productVariant.count({
+      where: { productId },
+    });
+  }
+
   async listByProduct(productId: string) {
     return this.prisma.productVariant.findMany({
       where: { productId },

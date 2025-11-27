@@ -11,5 +11,10 @@ export const createUserRoutes = (): Router => {
     // protected routes
     router.get('/me', authenticate, userController.getCurrentUser);
     router.put('/profile', authenticate, validate(UserValidation.update()), userController.updateProfile);
+    
+    // avatar upload routes
+    router.post('/avatar/presigned-url', authenticate, userController.getAvatarPresignedUrl);
+    router.delete('/avatar', authenticate, userController.deleteAvatar);
+    
     return router;
 }

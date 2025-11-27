@@ -18,7 +18,7 @@ export interface UpdateUserData {
   password?: string;
   phone?: string;
   address?: string;
-  avatar?: string;
+  avatar?: string | null;
   refreshToken?: string | null;
   role?: Role;
   isActive?: boolean;

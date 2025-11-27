@@ -336,7 +336,10 @@ export class ProductService {
     async createProductVariant(productId: string, payload: CreateVariantPayload) {
         const product = await this.ensureProductExists(productId, { includeInactive: true });
         await this.ensureSkuUnique(payload.sku);
-        this.validateVariantPrice(payload.price, payload.comparePrice);
+        
+        const existingVariantCount = await this.productVariantRepository.countByProduct(productId);
+        const basePrice = Number(product.basePrice);
+        this.validateVariantPrice(payload.price, basePrice, existingVariantCount);
         this.assertImageLimit(payload.images?.length ?? 0);
 
         const createData: CreateVariantData = {
@@ -368,8 +371,8 @@ export class ProductService {
             await this.ensureSkuUnique(payload.sku, variantId);
         }
 
-        if (payload.price !== undefined) {
-            this.validateVariantPrice(payload.price, payload.comparePrice ?? variant.comparePrice?.toNumber());
+        if (payload.price !== undefined && payload.price <= 0) {
+            throw ApiError.badRequest(ERROR_MESSAGES.VARIANT_PRICE_INVALID);
         }
 
         const imageIdsToDelete = payload.imageIdsToDelete ?? [];
@@ -467,13 +470,14 @@ export class ProductService {
         }
     }
 
-    private validateVariantPrice(price: number, comparePrice?: number | null) {
+    private validateVariantPrice(price: number, basePrice: number, existingVariantCount: number) {
         if (price <= 0) {
             throw ApiError.badRequest(ERROR_MESSAGES.VARIANT_PRICE_INVALID);
         }
 
-        if (comparePrice !== undefined && comparePrice !== null && comparePrice < price) {
-            throw ApiError.badRequest(ERROR_MESSAGES.VARIANT_COMPARE_PRICE_INVALID);
+        // First variant price must be <= product base price
+        if (existingVariantCount === 0 && price > basePrice) {
+            throw ApiError.badRequest(ERROR_MESSAGES.VARIANT_FIRST_PRICE_EXCEEDS_BASE);
         }
     }
 

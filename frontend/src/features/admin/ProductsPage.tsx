@@ -28,6 +28,20 @@ type ProductFormValues = {
   isActive: boolean;
 };
 
+// Helper functions for VND price formatting
+const formatVndPrice = (value: string | number): string => {
+  const numericValue = typeof value === 'string' 
+    ? value.replace(/\./g, '').replace(/[^0-9]/g, '')
+    : String(value);
+  if (!numericValue) return '';
+  return Number(numericValue).toLocaleString('vi-VN');
+};
+
+const parseVndPrice = (formattedValue: string): number => {
+  const numericString = formattedValue.replace(/\./g, '').replace(/[^0-9]/g, '');
+  return Number(numericString) || 0;
+};
+
 export default function ProductsPage() {
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
@@ -166,7 +180,7 @@ export default function ProductsPage() {
       description: product.description || '',
       brandId: product.brand?.id || product.brandId || '', // Hiển thị thương hiệu hiện tại
       categoryId: product.category?.id || product.categoryId || '', // Hiển thị danh mục hiện tại
-      basePrice: product.basePrice.toString(),
+      basePrice: formatVndPrice(product.basePrice),
       discount: product.discount.toString(),
       isFeatured: product.isFeatured,
       isActive: product.isActive
@@ -256,7 +270,7 @@ export default function ProductsPage() {
       setSubmitting(true);
       setError(null);
 
-      const basePriceVnd = parseFloat(formData.basePrice);
+      const basePriceVnd = parseVndPrice(formData.basePrice);
       const discountValue = parseFloat(formData.discount) || 0;
 
       if (modalMode === 'add') {
@@ -512,11 +526,11 @@ export default function ProductsPage() {
                   </td>
                   <td className="py-4 px-6">
                     <p className="font-bold text-black">
-                      ${product.finalPrice ? parseInt(product.finalPrice).toLocaleString() : 'N/A'}
+                      {product.finalPrice ? Number(product.finalPrice).toLocaleString('vi-VN') + '₫' : 'N/A'}
                     </p>
                     {product.discount > 0 && product.basePrice && (
                       <p className="text-sm text-gray-500 line-through">
-                        ${parseInt(product.basePrice).toLocaleString()}
+                        {Number(product.basePrice).toLocaleString('vi-VN')}₫
                       </p>
                     )}
                   </td>
@@ -653,14 +667,15 @@ export default function ProductsPage() {
                   <div>
                     <label className="block text-sm font-semibold text-black mb-2">Giá gốc (₫) *</label>
                     <input
-                      type="number"
+                      type="text"
                       name="basePrice"
                       value={formData.basePrice}
-                      onChange={handleInputChange}
-                      step="0.01"
-                      min="0"
+                      onChange={(e) => {
+                        const formatted = formatVndPrice(e.target.value);
+                        setFormData(prev => ({ ...prev, basePrice: formatted }));
+                      }}
                       required
-                      placeholder="0.00"
+                      placeholder="VD: 37.990.000"
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-black placeholder:text-gray-400"
                     />
                   </div>

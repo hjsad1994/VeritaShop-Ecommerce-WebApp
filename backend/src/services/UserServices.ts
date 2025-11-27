@@ -9,7 +9,7 @@ export interface UpdateProfileInput {
     name?: string;
     phone?: string;
     address?: string;
-    avatar?: string;
+    avatar?: string | null;
 }
 
 export interface CreateUserInput {

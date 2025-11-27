@@ -183,5 +183,84 @@ export class S3Service {
       return null;
     }
   }
+
+  /**
+   * Generate presigned URL for avatar upload
+   * @param userId - User ID for folder structure
+   * @param fileName - Original file name
+   * @param contentType - MIME type (must be image/jpeg, image/png, or image/webp)
+   * @param expiresIn - URL expiration time in seconds (default: 15 minutes)
+   * @returns Presigned URL, S3 key, and CloudFront URL
+   */
+  async generateAvatarPresignedUrl(
+    userId: string,
+    fileName: string,
+    contentType: string,
+    expiresIn: number = 15 * 60
+  ): Promise<{ presignedUrl: string; s3Key: string; cloudFrontUrl: string }> {
+    try {
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+      if (!allowedTypes.includes(contentType)) {
+        throw new Error('Invalid content type. Allowed: image/jpeg, image/png, image/webp');
+      }
+
+      const timestamp = Date.now();
+      const sanitizedFileName = `${timestamp}-${fileName.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      const s3Key = `Profile/Avatar/${userId}/${sanitizedFileName}`;
+
+      const command = new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: s3Key,
+        ContentType: contentType,
+      });
+
+      const presignedUrl = await getSignedUrl(this.s3Client, command, { expiresIn });
+      const cloudFrontUrl = this.getCloudFrontUrl(s3Key);
+
+      logger.info(`Generated avatar presigned URL for user ${userId}: ${s3Key}`);
+
+      return { presignedUrl, s3Key, cloudFrontUrl };
+    } catch (error) {
+      logger.error('Error generating avatar presigned URL:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete user's avatar folder (all files)
+   * @param userId - User ID
+   */
+  async deleteAvatarFolder(userId: string): Promise<void> {
+    try {
+      const folderPrefix = `Profile/Avatar/${userId}/`;
+
+      const listCommand = new ListObjectsV2Command({
+        Bucket: this.bucket,
+        Prefix: folderPrefix,
+      });
+
+      const listResponse = await this.s3Client.send(listCommand);
+
+      if (!listResponse.Contents || listResponse.Contents.length === 0) {
+        logger.info(`No avatar files found for user: ${userId}`);
+        return;
+      }
+
+      const deletePromises = listResponse.Contents.map((object) => {
+        if (!object.Key) return Promise.resolve();
+        const deleteCommand = new DeleteObjectCommand({
+          Bucket: this.bucket,
+          Key: object.Key,
+        });
+        return this.s3Client.send(deleteCommand);
+      });
+
+      await Promise.all(deletePromises);
+      logger.info(`Deleted ${listResponse.Contents.length} avatar files for user: ${userId}`);
+    } catch (error) {
+      logger.error(`Error deleting avatar folder for user ${userId}:`, error);
+      throw new Error(`Failed to delete avatar folder for user: ${userId}`);
+    }
+  }
 }
 

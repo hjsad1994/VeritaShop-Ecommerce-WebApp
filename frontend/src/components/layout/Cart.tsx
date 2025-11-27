@@ -30,7 +30,7 @@ export default function Cart() {
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200">
-            <h2 className="text-2xl font-bold text-black">Shopping Cart</h2>
+            <h2 className="text-2xl font-bold text-black">Giỏ hàng</h2>
             <button
               onClick={closeCart}
               className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -68,14 +68,14 @@ export default function Cart() {
                     d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
                   />
                 </svg>
-                <h3 className="text-xl font-bold text-black mb-2">Your cart is empty</h3>
-                <p className="text-gray-600 mb-6">Add some products to get started!</p>
+                <h3 className="text-xl font-bold text-black mb-2">Giỏ hàng trống</h3>
+                <p className="text-gray-600 mb-6">Thêm sản phẩm để bắt đầu mua sắm!</p>
                 <Link
                   href="/shop"
                   onClick={closeCart}
                   className="bg-black text-white px-8 py-3 rounded-lg font-bold hover:bg-gray-800 transition-colors"
                 >
-                  Continue Shopping
+                  Tiếp tục mua sắm
                 </Link>
               </div>
             ) : (
@@ -110,9 +110,9 @@ export default function Cart() {
                       <h3 className="text-sm font-bold text-black mb-1 truncate">
                         {item.variant.product.name}
                       </h3>
-                      <p className="text-xs text-gray-600 mb-2">Color: {item.variant.color}</p>
+                      <p className="text-xs text-gray-600 mb-2">Màu: {item.variant.color}</p>
                       {item.variant.storage && (
-                        <p className="text-xs text-gray-600 mb-2">Storage: {item.variant.storage}</p>
+                        <p className="text-xs text-gray-600 mb-2">Bộ nhớ: {item.variant.storage}</p>
                       )}
                       <p className="text-lg font-bold text-black mb-3">${item.variant.price}</p>
 
@@ -192,7 +192,7 @@ export default function Cart() {
             <div className="border-t border-gray-200 p-6 bg-gray-50">
               {/* Subtotal */}
               <div className="flex items-center justify-between mb-4">
-                <span className="text-lg font-medium text-gray-700">Subtotal</span>
+                <span className="text-lg font-medium text-gray-700">Tạm tính</span>
                 <span className="text-2xl font-bold text-black">${getTotalPrice().toFixed(2)}</span>
               </div>
 
@@ -208,9 +208,9 @@ export default function Cart() {
                     />
                   </svg>
                   <span className="font-medium">
-                    {getTotalPrice() >= 100
-                      ? 'Free shipping included!'
-                      : `Add $${(100 - getTotalPrice()).toFixed(2)} more for free shipping`}
+                    {getTotalPrice() >= 2000000
+                      ? 'Miễn phí vận chuyển!'
+                      : `Thêm ${(2000000 - getTotalPrice()).toLocaleString()}đ để được miễn phí vận chuyển`}
                   </span>
                 </div>
               </div>
@@ -230,7 +230,7 @@ export default function Cart() {
                 }}
                 className="w-full bg-black text-white py-4 rounded-lg font-bold hover:bg-gray-800 transition-colors mb-3 flex items-center justify-center gap-2"
               >
-                <span>Proceed to Checkout</span>
+                <span>Tiến hành thanh toán</span>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
@@ -246,7 +246,7 @@ export default function Cart() {
                 onClick={closeCart}
                 className="w-full bg-white border-2 border-black text-black py-3 rounded-lg font-bold hover:bg-gray-50 transition-colors"
               >
-                Continue Shopping
+                Tiếp tục mua sắm
               </button>
             </div>
           )}

@@ -289,7 +289,7 @@ export default function VouchersPage() {
     <div className="p-6 lg:p-8 space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-semibold text-black">Voucher Management</h1>
+          <h1 className="text-3xl font-semibold text-black">Quản lý mã giảm giá</h1>
           <p className="text-gray-600">Theo dõi và cấu hình mã giảm giá cho các chiến dịch</p>
         </div>
         <button

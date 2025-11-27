@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import Header from '@/components/layout/Header';
@@ -9,6 +9,9 @@ import AuthGuard from '@/components/auth/AuthGuard';
 import { useAuth } from '@/contexts/AuthContext';
 import { userService } from '@/lib/api/userService';
 import toast from 'react-hot-toast';
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 export default function ProfilePage() {
   const { user, setUser } = useAuth();
@@ -21,6 +24,8 @@ export default function ProfilePage() {
   });
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (user) {
@@ -39,6 +44,71 @@ export default function ProfilePage() {
       ...formData,
       [e.target.name]: e.target.value
     });
+  };
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      toast.error('Chỉ chấp nhận file ảnh JPEG, PNG hoặc WebP');
+      return;
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error('Kích thước file không được vượt quá 5MB');
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    try {
+      const presignedResponse = await userService.getAvatarPresignedUrl(file.name, file.type);
+      if (!presignedResponse.success || !presignedResponse.data) {
+        throw new Error('Không thể tạo URL upload');
+      }
+
+      const { presignedUrl, cloudFrontUrl } = presignedResponse.data;
+      await userService.uploadAvatarToS3(presignedUrl, file);
+
+      const updateResponse = await userService.updateProfile({ avatar: cloudFrontUrl });
+      if (updateResponse.success && updateResponse.data) {
+        setUser(updateResponse.data.user);
+        setFormData(prev => ({ ...prev, avatar: cloudFrontUrl }));
+        toast.success('Cập nhật avatar thành công!');
+      }
+    } catch (error: unknown) {
+      const typedError = error as { response?: { data?: { message?: string } }; message?: string };
+      toast.error(typedError.response?.data?.message || typedError.message || 'Không thể upload avatar');
+    } finally {
+      setIsUploadingAvatar(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleDeleteAvatar = async () => {
+    if (!formData.avatar) return;
+
+    setIsUploadingAvatar(true);
+    try {
+      await userService.deleteAvatar();
+      const updateResponse = await userService.updateProfile({ avatar: null });
+      if (updateResponse.success && updateResponse.data) {
+        setUser(updateResponse.data.user);
+        setFormData(prev => ({ ...prev, avatar: '' }));
+        toast.success('Đã xóa avatar');
+      }
+    } catch (error: unknown) {
+      const typedError = error as { response?: { data?: { message?: string } }; message?: string };
+      toast.error(typedError.response?.data?.message || typedError.message || 'Không thể xóa avatar');
+    } finally {
+      setIsUploadingAvatar(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -110,21 +180,63 @@ export default function ProfilePage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
               <div className="md:col-span-1">
                 <div className="text-center">
-                  <div className="w-32 h-32 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
-                    {formData.avatar ? (
-                      <Image
-                        src={formData.avatar}
-                        alt="Profile"
-                        width={128}
-                        height={128}
-                        className="w-full h-full rounded-full object-cover"
-                      />
-                    ) : (
-                      <svg className="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                  />
+                  <div className="relative inline-block mb-4">
+                    <button
+                      type="button"
+                      onClick={handleAvatarClick}
+                      disabled={isUploadingAvatar}
+                      className="w-32 h-32 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden group cursor-pointer relative"
+                    >
+                      {formData.avatar ? (
+                        <Image
+                          src={formData.avatar}
+                          alt="Profile"
+                          width={128}
+                          height={128}
+                          className="w-full h-full rounded-full object-cover"
+                        />
+                      ) : (
+                        <svg className="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                      )}
+                      {isUploadingAvatar ? (
+                        <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
+                          <svg className="animate-spin h-8 w-8 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                        </div>
+                      ) : (
+                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 rounded-full flex items-center justify-center transition-all">
+                          <svg className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                        </div>
+                      )}
+                    </button>
+                    {formData.avatar && !isUploadingAvatar && (
+                      <button
+                        type="button"
+                        onClick={handleDeleteAvatar}
+                        className="absolute -top-1 -right-1 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-colors shadow-md"
+                        title="Xóa avatar"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
                     )}
                   </div>
+                  <p className="text-xs text-gray-500 mb-2">Click vào ảnh để thay đổi</p>
                   <h2 className="text-xl font-semibold text-black">{user?.name || 'User'}</h2>
                   <p className="text-sm text-gray-600">{user?.role === 'USER' ? 'Customer' : user?.role}</p>
                 </div>
@@ -194,25 +306,6 @@ export default function ProfilePage() {
                       disabled={!isEditing}
                       rows={2}
                       placeholder="Nhập địa chỉ giao hàng mặc định"
-                      className={`w-full px-4 py-2 border-2 rounded-lg focus:outline-none transition-all text-black ${
-                        isEditing 
-                          ? 'border-black bg-white focus:ring-2 focus:ring-gray-200' 
-                          : 'border-gray-200 bg-gray-50 cursor-not-allowed text-gray-600'
-                      }`}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Avatar URL
-                    </label>
-                    <input
-                      type="url"
-                      name="avatar"
-                      value={formData.avatar}
-                      onChange={handleChange}
-                      disabled={!isEditing}
-                      placeholder="https://example.com/avatar.jpg"
                       className={`w-full px-4 py-2 border-2 rounded-lg focus:outline-none transition-all text-black ${
                         isEditing 
                           ? 'border-black bg-white focus:ring-2 focus:ring-gray-200' 

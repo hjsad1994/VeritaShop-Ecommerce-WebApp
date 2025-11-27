@@ -21,7 +21,8 @@ Add the following CORS configuration to your S3 bucket `verita-phone-store-asset
         ],
         "AllowedOrigins": [
             "http://localhost:3000",
-            "https://your-production-domain.com"
+            "http://localhost:5000",
+            "https://frontend.honeysocial.click"
         ],
         "ExposeHeaders": [
             "ETag",

@@ -12,6 +12,7 @@ import { Product } from '@/lib/api/types';
 
 export default function ShopPage() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [brands, setBrands] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [selectedBrands, setSelectedBrands] = React.useState<string[]>([]);
@@ -19,13 +20,11 @@ export default function ShopPage() {
   const [sortBy, setSortBy] = React.useState('featured');
   const [currentPage, setCurrentPage] = React.useState(1);
   const productsPerPage = 20;
-
-  const brands = ['Apple', 'Samsung', 'ASUS', 'Xiaomi', 'OnePlus', 'Black Shark', 'RedMagic'];
   const priceRanges = [
-    { label: 'Under $500', value: '0-500' },
-    { label: '$500 - $800', value: '500-800' },
-    { label: '$800 - $1000', value: '800-1000' },
-    { label: 'Over $1000', value: '1000-10000' }
+    { label: 'Dưới 10 triệu', value: '0-10000000' },
+    { label: '10 - 20 triệu', value: '10000000-20000000' },
+    { label: '20 - 30 triệu', value: '20000000-30000000' },
+    { label: 'Trên 30 triệu', value: '30000000-100000000' }
   ];
 
   const fetchProducts = useCallback(async () => {
@@ -37,6 +36,14 @@ export default function ShopPage() {
         limit: 100, // Fetch more to filter locally for now, or implement server-side filtering
       });
       setProducts(response.products);
+      
+      // Extract unique brands from products
+      const uniqueBrands = [...new Set(
+        response.products
+          .map(p => p.brand?.name)
+          .filter((name): name is string => !!name)
+      )].sort();
+      setBrands(uniqueBrands);
     } catch (error) {
       console.error('Failed to fetch products:', error);
     } finally {
@@ -114,18 +121,18 @@ export default function ShopPage() {
       <Header theme="light" />
 
       <div className="bg-black text-white py-3 text-center text-sm font-medium mt-16">
-        FREE SHIPPING ON ORDERS OVER $100
+        MIỄN PHÍ VẬN CHUYỂN CHO ĐƠN HÀNG TRÊN 2.000.000đ
       </div>
 
       <div className="max-w-[1920px] mx-auto px-6 sm:px-8 lg:px-12 py-12">
         <div className="mb-12">
-          <h1 className="text-4xl font-bold text-black mb-8 text-center">All Products</h1>
+          <h1 className="text-4xl font-bold text-black mb-8 text-center">Tất cả sản phẩm</h1>
           
           {/* Search Bar */}
           <Search 
             value={searchQuery}
             onChange={setSearchQuery}
-            placeholder="Search products..."
+            placeholder="Tìm kiếm sản phẩm..."
           />
         </div>
 
@@ -190,17 +197,17 @@ export default function ShopPage() {
 
             {!loading && filteredProducts.length === 0 && (
               <div className="text-center py-16">
-                <h3 className="text-2xl font-bold text-black mb-2">No products found</h3>
+                <h3 className="text-2xl font-bold text-black mb-2">Không tìm thấy sản phẩm</h3>
                 <p className="text-gray-600 mb-6">
                   {searchQuery 
-                    ? `No results for "${searchQuery}". Try adjusting your search or filters.`
-                    : 'Try adjusting your filters'}
+                    ? `Không có kết quả cho "${searchQuery}". Hãy thử điều chỉnh tìm kiếm hoặc bộ lọc.`
+                    : 'Hãy thử điều chỉnh bộ lọc của bạn'}
                 </p>
                 <button
                   onClick={clearAllFilters}
                   className="px-6 py-3 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-all"
                 >
-                  Clear All Filters
+                  Xóa bộ lọc
                 </button>
               </div>
             )}
@@ -212,7 +219,7 @@ export default function ShopPage() {
                   disabled={currentPage === 1}
                   className={currentPage === 1 ? 'px-4 py-2 rounded-lg font-medium bg-gray-200 text-gray-400 cursor-not-allowed' : 'px-4 py-2 rounded-lg font-medium bg-white border border-gray-300 text-black hover:bg-gray-100'}
                 >
-                  Prev
+                  Trước
                 </button>
 
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
@@ -230,7 +237,7 @@ export default function ShopPage() {
                   disabled={currentPage === totalPages}
                   className={currentPage === totalPages ? 'px-4 py-2 rounded-lg font-medium bg-gray-200 text-gray-400 cursor-not-allowed' : 'px-4 py-2 rounded-lg font-medium bg-white border border-gray-300 text-black hover:bg-gray-100'}
                 >
-                  Next
+                  Sau
                 </button>
               </div>
             )}

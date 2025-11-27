@@ -41,3 +41,17 @@ The system SHALL allow explicit filtering of comments by parentId when needed fo
 - **THEN** the system SHALL return all comments including both root and reply comments
 - **AND** the hierarchical structure SHALL still be preserved in the response
 
+### Requirement: AI Comment Analysis
+The system SHALL analyze user comments using an AI service to extract sentiments and aspects, and display the results.
+
+#### Scenario: Analyze new comment
+- **WHEN** a user submits a new comment
+- **THEN** the system SHALL send the comment content to the AI prediction API
+- **AND** the system SHALL store the returned analysis (sentiment, confidence, aspects) with the comment
+- **AND** the system SHALL return the analysis data in the comment response
+
+#### Scenario: Display analysis results
+- **WHEN** a user views the comment list
+- **THEN** each comment SHALL display its aspect-based sentiment analysis if available
+- **AND** the display SHALL show the aspect name and its sentiment (positive/negative/neutral)
+

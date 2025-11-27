@@ -331,12 +331,12 @@ export default function AdminOrdersPage() {
                       <span className="font-semibold text-black">₫{order.total.toLocaleString('vi-VN')}</span>
                     </td>
                     <td className="py-4 px-6">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(order.status)}`}>
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold border whitespace-nowrap ${getStatusColor(order.status)}`}>
                         {formatStatus(order.status)}
                       </span>
                     </td>
                     <td className="py-4 px-6">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getPaymentStatusColor(order.paymentStatus)}`}>
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold border whitespace-nowrap ${getPaymentStatusColor(order.paymentStatus)}`}>
                         {formatPaymentStatus(order.paymentStatus)}
                       </span>
                     </td>
@@ -585,7 +585,7 @@ export default function AdminOrdersPage() {
                       <select
                         value={selectedOrder.status}
                         onChange={(e) => updateOrderStatus(selectedOrder.id, e.target.value as OrderStatus)}
-                        className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                        className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black text-black"
                       >
                         <option value={OrderStatus.PENDING}>Chờ xử lý</option>
                         <option value={OrderStatus.CONFIRMED}>Đã xác nhận</option>

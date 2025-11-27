@@ -60,7 +60,7 @@ export default function CommentSection({ productId }: CommentSectionProps) {
         content
       });
       
-      setToastMessage('Comment posted successfully!');
+      setToastMessage('Đã đăng bình luận thành công!');
       setShowToast(true);
       
       // Refresh comments to show new one (or append manually if we want to be optimistic/faster)
@@ -68,7 +68,7 @@ export default function CommentSection({ productId }: CommentSectionProps) {
       await fetchComments(1);
     } catch (error) {
       console.error('Failed to post comment:', error);
-      alert('Failed to post comment. Please try again.');
+      alert('Đăng bình luận thất bại. Vui lòng thử lại.');
     } finally {
       setSubmitting(false);
     }
@@ -82,26 +82,26 @@ export default function CommentSection({ productId }: CommentSectionProps) {
         parentId
       });
       
-      setToastMessage('Reply posted successfully!');
+      setToastMessage('Đã đăng trả lời thành công!');
       setShowToast(true);
       
       // For replies, we definitely want to refresh to show them nested correctly
       await fetchComments(1);
     } catch (error) {
       console.error('Failed to post reply:', error);
-      alert('Failed to post reply. Please try again.');
+      alert('Đăng trả lời thất bại. Vui lòng thử lại.');
     }
   };
 
   const handleDelete = async (commentId: string) => {
     try {
       await commentService.deleteComment(commentId);
-      setToastMessage('Comment deleted successfully.');
+      setToastMessage('Đã xóa bình luận thành công.');
       setShowToast(true);
       await fetchComments(1);
     } catch (error) {
       console.error('Failed to delete comment:', error);
-      alert('Failed to delete comment. Please try again.');
+      alert('Xóa bình luận thất bại. Vui lòng thử lại.');
     }
   };
 
@@ -116,19 +116,19 @@ export default function CommentSection({ productId }: CommentSectionProps) {
       
       <div className="max-w-4xl mx-auto">
         <h2 className="text-2xl font-bold mb-8 text-black">
-          Comments ({pagination?.total || 0})
+          Bình luận ({pagination?.total || 0})
         </h2>
 
         <div className="mb-10">
           <CommentForm 
             onSubmit={handleCreateComment}
             isSubmitting={submitting}
-            placeholder={isAuthenticated ? "Ask a question or share your thoughts..." : "Please log in to leave a comment"}
-            buttonText="Post Comment"
+            placeholder={isAuthenticated ? "Đặt câu hỏi hoặc chia sẻ ý kiến của bạn..." : "Vui lòng đăng nhập để bình luận"}
+            buttonText="Đăng bình luận"
           />
           {!isAuthenticated && (
             <div className="mt-2 text-sm text-gray-500">
-              <a href="/login" className="underline hover:text-black">Log in</a> to post a comment.
+              <a href="/login" className="underline hover:text-black">Đăng nhập</a> để bình luận.
             </div>
           )}
         </div>
@@ -152,7 +152,7 @@ export default function CommentSection({ productId }: CommentSectionProps) {
 
         {!loading && comments.length === 0 && (
           <div className="text-center py-8 text-gray-500">
-            No comments yet. Be the first to share your thoughts!
+            Chưa có bình luận nào. Hãy là người đầu tiên chia sẻ ý kiến!
           </div>
         )}
 
@@ -162,7 +162,7 @@ export default function CommentSection({ productId }: CommentSectionProps) {
               onClick={() => fetchComments(pagination.page + 1)}
               className="px-6 py-2 border border-gray-300 rounded-full text-sm font-medium text-gray-700 hover:border-black hover:text-black transition-all"
             >
-              Load More Comments
+              Xem thêm bình luận
             </button>
           </div>
         )}

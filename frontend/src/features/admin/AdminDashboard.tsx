@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { orderService } from '@/lib/api/orderService';
+import productService from '@/lib/api/productService';
 
 interface OrderItem {
   product: {
@@ -61,12 +63,22 @@ interface Order {
   status: OrderStatus;
 }
 
+interface TopProduct {
+  id: string;
+  name: string;
+  sales: number;
+  revenue: string;
+  image: string | null;
+}
+
 export default function AdminDashboard() {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
+  const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats[]>([
     {
-      title: 'Total Revenue',
-      value: '$0',
+      title: 'Tổng doanh thu',
+      value: '0₫',
       change: '+0%',
       isPositive: true,
       iconColor: 'bg-green-500',
@@ -77,7 +89,7 @@ export default function AdminDashboard() {
       )
     },
     {
-      title: 'Total Orders',
+      title: 'Tổng đơn hàng',
       value: '0',
       change: '+0%',
       isPositive: true,
@@ -89,7 +101,7 @@ export default function AdminDashboard() {
       )
     },
     {
-      title: 'Pending Orders',
+      title: 'Đơn chờ xử lý',
       value: '0',
       change: '0',
       isPositive: false,
@@ -101,7 +113,7 @@ export default function AdminDashboard() {
       )
     },
     {
-      title: 'Confirmed Orders',
+      title: 'Đơn đã xác nhận',
       value: '0',
       change: '+0%',
       isPositive: true,
@@ -116,100 +128,165 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchOrders();
+    fetchTopProducts();
   }, []);
 
-  const fetchOrders = () => {
+  const fetchTopProducts = async () => {
     try {
-      const savedOrders = JSON.parse(localStorage.getItem('veritas-orders') || '[]') as Order[];
-      setOrders(savedOrders);
-      
-      // Calculate stats
-      const totalOrders = savedOrders.length;
-      const pendingOrders = savedOrders.filter((order: Order) => order.status === 'pending').length;
-      const confirmedOrders = savedOrders.filter((order: Order) => order.status === 'confirmed').length;
-      const totalRevenue = savedOrders
-        .filter((order: Order) => order.status === 'confirmed')
-        .reduce((sum: number, order: Order) => sum + order.total, 0);
-      
-      setStats([
-        {
-          title: 'Total Revenue',
-          value: `$${totalRevenue.toFixed(2)}`,
-          change: confirmedOrders > 0 ? '+12.5%' : '+0%',
-          isPositive: true,
-          iconColor: 'bg-black',
-          icon: (
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          )
-        },
-        {
-          title: 'Total Orders',
-          value: totalOrders.toString(),
-          change: totalOrders > 0 ? '+8.2%' : '+0%',
-          isPositive: true,
-          iconColor: 'bg-black',
-          icon: (
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-            </svg>
-          )
-        },
-        {
-          title: 'Pending Orders',
-          value: pendingOrders.toString(),
-          change: pendingOrders > 0 ? `${pendingOrders} needs attention` : 'None',
-          isPositive: false,
-          iconColor: 'bg-black',
-          icon: (
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          )
-        },
-        {
-          title: 'Confirmed Orders',
-          value: confirmedOrders.toString(),
-          change: confirmedOrders > 0 ? `+${confirmedOrders}` : '0',
-          isPositive: true,
-          iconColor: 'bg-black',
-          icon: (
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          )
-        }
-      ]);
+      const response = await productService.getProducts({ 
+        sortBy: 'popular', 
+        limit: 4 
+      });
+      if (response.products) {
+        const mapped = response.products.map(product => ({
+          id: product.id,
+          name: product.name,
+          sales: product.soldCount || 0,
+          revenue: `${((product.soldCount || 0) * Number(product.basePrice)).toLocaleString('vi-VN')}₫`,
+          image: product.primaryImage || null
+        }));
+        setTopProducts(mapped);
+      }
     } catch (error) {
+      console.error('Failed to fetch top products:', error);
+    }
+  };
+
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      const response = await orderService.getAllOrders({ 
+        limit: 10, 
+        sortBy: 'createdAt',
+        sortOrder: 'desc'
+      });
+      console.log('Orders response:', response);
+      if (response.success && response.data) {
+        const apiOrders = response.data.items || [];
+        
+        // Calculate stats from API orders
+        const totalOrders = response.data.pagination?.total || apiOrders.length;
+        const pendingOrders = apiOrders.filter(order => order.status === 'PENDING').length;
+        const confirmedOrders = apiOrders.filter(order => order.status === 'CONFIRMED' || order.status === 'DELIVERED').length;
+        const totalRevenue = apiOrders
+          .filter(order => order.status === 'DELIVERED' || order.paymentStatus === 'PAID')
+          .reduce((sum, order) => sum + order.total, 0);
+        
+        // Map API orders to local format for display
+        const mappedOrders = apiOrders.map(order => ({
+          id: order.id,
+          date: order.createdAt,
+          items: order.items?.map(item => ({
+            product: {
+              id: item.variantId,
+              name: item.productName || 'Sản phẩm',
+              price: item.price,
+              image: ''
+            },
+            quantity: item.quantity,
+            selectedColor: item.variant?.color || ''
+          })) || [],
+          customerInfo: {
+            firstName: order.customerName?.split(' ')[0] || '',
+            lastName: order.customerName?.split(' ').slice(1).join(' ') || '',
+            email: order.customerEmail || '',
+            phone: order.customerPhone || '',
+            address: order.shippingAddress || '',
+            city: '',
+            postalCode: '',
+            paymentMethod: order.paymentMethod || ''
+          },
+          subtotal: order.subtotal || 0,
+          shipping: order.shippingFee || 0,
+          tax: 0,
+          total: order.total,
+          status: order.status?.toLowerCase() as OrderStatus
+        }));
+        
+        setOrders(mappedOrders as Order[]);
+        
+        setStats([
+          {
+            title: 'Tổng doanh thu',
+            value: `${totalRevenue.toLocaleString('vi-VN')}₫`,
+            change: confirmedOrders > 0 ? '+12.5%' : '+0%',
+            isPositive: true,
+            iconColor: 'bg-black',
+            icon: (
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            )
+          },
+          {
+            title: 'Tổng đơn hàng',
+            value: totalOrders.toString(),
+            change: totalOrders > 0 ? '+8.2%' : '+0%',
+            isPositive: true,
+            iconColor: 'bg-black',
+            icon: (
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+            )
+          },
+          {
+            title: 'Đơn chờ xử lý',
+            value: pendingOrders.toString(),
+            change: pendingOrders > 0 ? `${pendingOrders} cần xử lý` : 'Không có',
+            isPositive: false,
+            iconColor: 'bg-black',
+            icon: (
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            )
+          },
+          {
+            title: 'Đơn đã xác nhận',
+            value: confirmedOrders.toString(),
+            change: confirmedOrders > 0 ? `+${confirmedOrders}` : '0',
+            isPositive: true,
+            iconColor: 'bg-black',
+            icon: (
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            )
+          }
+        ]);
+      }
+    } catch (error: any) {
       console.error('Failed to fetch orders:', error);
+      console.error('Error details:', error?.response?.data || error?.message || error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const recentOrders = orders.slice(0, 5).map(order => ({
-    id: `#${order.id}`,
-    customer: `${order.customerInfo.firstName} ${order.customerInfo.lastName}`,
-    product: order.items.length > 0 ? order.items[0].product.name : 'Multiple items',
-    amount: `$${order.total.toFixed(2)}`,
-    status: order.status === 'confirmed' ? 'Completed' : order.status === 'rejected' ? 'Rejected' : 'Pending',
-    date: new Date(order.date).toLocaleDateString('en-US')
+    id: order.id ? `#${String(order.id).slice(-8).toUpperCase()}` : '#N/A',
+    customer: `${order.customerInfo.firstName} ${order.customerInfo.lastName}`.trim() || 'Khách hàng',
+    product: order.items.length > 0 ? order.items[0].product.name : 'Nhiều sản phẩm',
+    amount: `${order.total.toLocaleString('vi-VN')}₫`,
+    status: order.status === 'delivered' ? 'Đã giao' : order.status === 'confirmed' ? 'Đã xác nhận' : order.status === 'cancelled' ? 'Đã hủy' : order.status === 'shipping' ? 'Đang giao' : 'Chờ xử lý',
+    date: new Date(order.date).toLocaleDateString('vi-VN')
   }));
 
-  const topProducts = [
-    { name: 'iPhone 15 Pro Max', sales: 342, revenue: '$409,800', image: '/api/placeholder/60/60' },
-    { name: 'Samsung Galaxy S24 Ultra', sales: 287, revenue: '$344,400', image: '/api/placeholder/60/60' },
-    { name: 'ASUS ROG Phone 8 Pro', sales: 198, revenue: '$237,600', image: '/api/placeholder/60/60' },
-    { name: 'OnePlus 12', sales: 156, revenue: '$124,644', image: '/api/placeholder/60/60' }
-  ];
+  
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Completed':
+      case 'Đã giao':
         return 'bg-green-100 text-green-800';
-      case 'Processing':
+      case 'Đã xác nhận':
         return 'bg-blue-100 text-blue-800';
-      case 'Pending':
+      case 'Đang giao':
+        return 'bg-purple-100 text-purple-800';
+      case 'Chờ xử lý':
         return 'bg-yellow-100 text-yellow-800';
+      case 'Đã hủy':
+        return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -218,8 +295,8 @@ export default function AdminDashboard() {
   return (
     <div className="p-4 lg:p-6 w-full">
       <div className="mb-8">
-        <h2 className="text-3xl font-bold text-black mb-2">Dashboard Overview</h2>
-        <p className="text-gray-600">Welcome back! Here&apos;s what&apos;s happening with your store today.</p>
+        <h2 className="text-3xl font-bold text-black mb-2">Tổng quan</h2>
+        <p className="text-gray-600">Chào mừng bạn quay lại! Đây là tình hình cửa hàng hôm nay.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -242,62 +319,87 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm p-6">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold text-black">Recent Orders</h3>
+            <h3 className="text-xl font-bold text-black">Đơn hàng gần đây</h3>
             <button className="text-sm font-medium text-gray-600 hover:text-black transition-colors">
-              View All
+              Xem tất cả
             </button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-200 bg-gray-50">
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-900">Order ID</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-900">Customer</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-900">Product</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-900">Amount</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-900">Status</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-900">Date</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-900">Mã đơn</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-900">Khách hàng</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-900">Sản phẩm</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-900">Tổng tiền</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-900">Trạng thái</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-900">Ngày</th>
                 </tr>
               </thead>
               <tbody>
-                {recentOrders.map((order) => (
-                  <tr key={order.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                    <td className="py-3 px-4 text-sm font-medium text-gray-900">{order.id}</td>
-                    <td className="py-3 px-4 text-sm text-gray-700">{order.customer}</td>
-                    <td className="py-3 px-4 text-sm text-gray-700">{order.product}</td>
-                    <td className="py-3 px-4 text-sm font-semibold text-gray-900">{order.amount}</td>
-                    <td className="py-3 px-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
-                        {order.status}
-                      </span>
+                {loading ? (
+                  <tr>
+                    <td colSpan={6} className="py-8 text-center text-gray-500">
+                      <div className="flex justify-center items-center gap-2">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black"></div>
+                        Đang tải đơn hàng...
+                      </div>
                     </td>
-                    <td className="py-3 px-4 text-sm text-gray-600">{order.date}</td>
                   </tr>
-                ))}
+                ) : recentOrders.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-8 text-center text-gray-500">
+                      Chưa có đơn hàng nào
+                    </td>
+                  </tr>
+                ) : (
+                  recentOrders.map((order) => (
+                    <tr key={order.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                      <td className="py-3 px-4 text-sm font-medium text-gray-900">{order.id}</td>
+                      <td className="py-3 px-4 text-sm text-gray-700">{order.customer}</td>
+                      <td className="py-3 px-4 text-sm text-gray-700">{order.product}</td>
+                      <td className="py-3 px-4 text-sm font-semibold text-gray-900">{order.amount}</td>
+                      <td className="py-3 px-4">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
+                          {order.status}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-sm text-gray-600">{order.date}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
         </div>
 
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-          <h3 className="text-xl font-bold text-black mb-6">Top Products</h3>
+          <h3 className="text-xl font-bold text-black mb-6">Sản phẩm bán chạy</h3>
           <div className="space-y-4">
-            {topProducts.map((product, index) => (
-              <div key={index} className="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                  </svg>
+            {topProducts.length === 0 ? (
+              <p className="text-center text-gray-500 py-4">Chưa có dữ liệu bán hàng</p>
+            ) : (
+              topProducts.map((product) => (
+                <div key={product.id} className="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                  <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    {product.image ? (
+                      <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      </svg>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-black truncate">{product.name}</p>
+                    <p className="text-xs text-gray-600">{product.sales} đã bán</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-black">{product.revenue}</p>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-black truncate">{product.name}</p>
-                  <p className="text-xs text-gray-600">{product.sales} sales</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-bold text-black">{product.revenue}</p>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </div>
@@ -305,7 +407,7 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-black">Quick Actions</h3>
+            <h3 className="text-lg font-bold text-black">Thao tác nhanh</h3>
           </div>
           <div className="space-y-3">
             <Link 
@@ -315,7 +417,7 @@ export default function AdminDashboard() {
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
-              View Orders ({orders.filter(o => o.status === "pending").length} pending)
+              Xem đơn hàng ({orders.filter(o => o.status === 'pending').length} chờ xử lý)
             </Link>
             <Link 
               href="/admin/products"
@@ -324,7 +426,7 @@ export default function AdminDashboard() {
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
-              Add New Product
+              Thêm sản phẩm mới
             </Link>
             <Link 
               href="/admin/categories"
@@ -333,25 +435,25 @@ export default function AdminDashboard() {
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
-              Add Category
+              Thêm danh mục
             </Link>
           </div>
         </div>
 
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-          <h3 className="text-lg font-bold text-black mb-4">Low Stock Alert</h3>
+          <h3 className="text-lg font-bold text-black mb-4">Cảnh báo tồn kho</h3>
           <div className="space-y-3">
             <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-200">
               <div>
                 <p className="text-sm font-semibold text-black">iPhone 15 Pro</p>
-                <p className="text-xs text-gray-600">Only 3 left</p>
+                <p className="text-xs text-gray-600">Chỉ còn 3 sản phẩm</p>
               </div>
               <span className="text-red-600 font-bold">!</span>
             </div>
             <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg border border-yellow-200">
               <div>
                 <p className="text-sm font-semibold text-black">Galaxy S24</p>
-                <p className="text-xs text-gray-600">Only 7 left</p>
+                <p className="text-xs text-gray-600">Chỉ còn 7 sản phẩm</p>
               </div>
               <span className="text-yellow-600 font-bold">!</span>
             </div>
@@ -359,25 +461,25 @@ export default function AdminDashboard() {
         </div>
 
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-          <h3 className="text-lg font-bold text-black mb-4">System Status</h3>
+          <h3 className="text-lg font-bold text-black mb-4">Trạng thái hệ thống</h3>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-700">Server Status</span>
+              <span className="text-sm text-gray-700">Máy chủ</span>
               <span className="flex items-center gap-2 text-sm font-semibold text-green-600">
                 <span className="w-2 h-2 bg-green-600 rounded-full animate-pulse"></span>
-                Online
+                Hoạt động
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-700">Database</span>
+              <span className="text-sm text-gray-700">Cơ sở dữ liệu</span>
               <span className="flex items-center gap-2 text-sm font-semibold text-green-600">
                 <span className="w-2 h-2 bg-green-600 rounded-full animate-pulse"></span>
-                Connected
+                Đã kết nối
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-700">Last Backup</span>
-              <span className="text-sm text-gray-600">2 hours ago</span>
+              <span className="text-sm text-gray-700">Sao lưu gần nhất</span>
+              <span className="text-sm text-gray-600">2 giờ trước</span>
             </div>
           </div>
         </div>

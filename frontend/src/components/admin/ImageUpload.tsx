@@ -105,10 +105,10 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(function ImageU
 
   const validateFile = (file: File): string | null => {
     if (!ALLOWED_TYPES.includes(file.type)) {
-      return 'File type not allowed. Please use JPG, PNG, or WebP.';
+      return 'Loại file không được hỗ trợ. Vui lòng sử dụng JPG, PNG hoặc WebP.';
     }
     if (file.size > MAX_FILE_SIZE) {
-      return `File size exceeds 5MB limit. Current size: ${(file.size / (1024 * 1024)).toFixed(2)}MB`;
+      return `Kích thước file vượt quá 5MB. Kích thước hiện tại: ${(file.size / (1024 * 1024)).toFixed(2)}MB`;
     }
     return null;
   };
@@ -281,7 +281,7 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(function ImageU
         {isUploading ? (
           <>
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mb-4"></div>
-            <p className="text-sm text-gray-600">Uploading...</p>
+            <p className="text-sm text-gray-600">Đang tải lên...</p>
             {progress !== undefined && (
               <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
                 <div
@@ -327,9 +327,9 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(function ImageU
                 />
               </svg>
               <span className="text-sm text-gray-600">
-                {isPrimary ? 'Primary Image' : `Image ${index + 1}`}
+                {isPrimary ? 'Ảnh chính' : `Ảnh ${index + 1}`}
               </span>
-              <span className="text-xs text-gray-400 mt-1">Click to upload</span>
+              <span className="text-xs text-gray-400 mt-1">Nhấn để tải lên</span>
             </label>
             {error && (
               <p className="mt-2 text-xs text-red-600 text-center">{error}</p>
@@ -344,10 +344,10 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(function ImageU
     <div className="space-y-4">
       <div>
         <label className="block text-sm font-semibold text-black mb-2">
-          Product Images ({totalImages}/{maxImages})
+          Hình ảnh sản phẩm ({totalImages}/{maxImages})
         </label>
         <p className="text-xs text-gray-500 mb-4">
-          Upload up to {maxImages} images. First image will be set as primary.
+          Tải lên tối đa {maxImages} ảnh. Ảnh đầu tiên sẽ được đặt làm ảnh chính.
         </p>
         <div className="grid grid-cols-2 gap-4">
           {slots.map((slot, slotPosition) => {
@@ -366,7 +366,7 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(function ImageU
                   <div className="mt-2 flex gap-2">
                     {slot.data.isPrimary && (
                       <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs font-semibold">
-                        Primary
+                        Chính
                       </span>
                     )}
                     <button
@@ -374,7 +374,7 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(function ImageU
                       onClick={() => handleRemoveExistingImage(slot.data.id)}
                       className="px-3 py-1 bg-red-100 text-red-800 rounded text-xs font-semibold hover:bg-red-200"
                     >
-                      Remove
+                      Xóa
                     </button>
                   </div>
                 </div>
@@ -398,7 +398,7 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(function ImageU
                     onClick={() => handleRemoveUploadedImage(slot.index)}
                     className="mt-2 px-3 py-1 bg-red-100 text-red-800 rounded text-xs font-semibold hover:bg-red-200"
                   >
-                    Remove
+                    Xóa
                   </button>
                 </div>
               );
@@ -419,14 +419,14 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(function ImageU
                   </div>
                   <div className="mt-2 flex gap-2">
                     <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold">
-                      Ready to upload
+                      Sẵn sàng tải lên
                     </span>
                     <button
                       type="button"
                       onClick={() => handleRemovePendingImage(slot.index)}
                       className="px-3 py-1 bg-red-100 text-red-800 rounded text-xs font-semibold hover:bg-red-200"
                     >
-                      Remove
+                      Xóa
                     </button>
                   </div>
                 </div>
@@ -438,7 +438,7 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(function ImageU
         </div>
         {availableSlots <= 0 && totalImages > 0 && (
           <p className="mt-2 text-sm text-yellow-600">
-            Maximum {maxImages} images reached. Remove an image to add a new one.
+            Đã đạt tối đa {maxImages} ảnh. Xóa một ảnh để thêm ảnh mới.
           </p>
         )}
       </div>

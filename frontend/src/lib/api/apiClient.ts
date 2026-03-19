@@ -2,15 +2,31 @@ import axios, { AxiosError, AxiosInstance } from 'axios';
 import type { ApiError } from './types';
 import { authService } from './authService';
 
-const baseURL = process.env.NEXT_PUBLIC_API_URL;
-
-if (!baseURL) {
-  throw new Error('NEXT_PUBLIC_API_URL is not defined. Please set it in your frontend .env file.');
+declare global {
+  interface Window {
+    __ENV__?: {
+      NEXT_PUBLIC_API_URL?: string;
+    };
+  }
 }
+
+const getBaseURL = (): string => {
+  if (typeof window !== 'undefined' && window.__ENV__?.NEXT_PUBLIC_API_URL) {
+    return window.__ENV__.NEXT_PUBLIC_API_URL;
+  }
+
+  const envBaseURL = process.env.NEXT_PUBLIC_API_URL;
+
+  if (!envBaseURL) {
+    throw new Error('NEXT_PUBLIC_API_URL is not defined. Please set it in your frontend .env file.');
+  }
+
+  return envBaseURL;
+};
 
 // Create axios instance with default configuration
 const apiClient: AxiosInstance = axios.create({
-  baseURL,
+  baseURL: getBaseURL(),
   headers: {
     'Content-Type': 'application/json',
   },
@@ -21,6 +37,8 @@ const apiClient: AxiosInstance = axios.create({
 // Request interceptor (can be used for adding auth tokens, logging, etc.)
 apiClient.interceptors.request.use(
   (config) => {
+    config.baseURL = getBaseURL();
+
     // Add Bearer token from localStorage if available (for compatibility)
     // Backend also supports cookies via withCredentials
     if (typeof window !== 'undefined') {

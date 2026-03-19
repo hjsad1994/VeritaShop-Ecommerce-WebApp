@@ -3,8 +3,10 @@ const path = require('path');
 
 const DEFAULT_IMAGE_HOSTS = [
   'd1ffmiafbbgufv.cloudfront.net',
+  'dqwxtopaa87nn.cloudfront.net',
   '*.s3.amazonaws.com',
   '*.s3.ap-southeast-1.amazonaws.com',
+  '*.s3.us-east-1.amazonaws.com',
 ];
 
 /**
@@ -34,6 +36,7 @@ const toRemotePatterns = () => {
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone',
   // Configuration for Windows compatibility
   eslint: {
     ignoreDuringBuilds: true,

@@ -1,7 +1,7 @@
 import './utils/moduleAlias';
 import { PrismaClient } from '@prisma/client';
 import express, { Application } from 'express';
-import cors from 'cors';
+import cors, { CorsOptions } from 'cors';
 import cookieParser from 'cookie-parser';
 import config from './config';
 import { RepositoryFactory } from './repositories';
@@ -35,8 +35,15 @@ export const prisma = new PrismaClient({
 RepositoryFactory.initialize(prisma);
 
 // CORS configuration
-const corsOptions = {
-  origin: config.server.corsOrigin,
+const corsOptions: CorsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || config.server.corsOrigins.includes(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new Error(`CORS origin not allowed: ${origin}`));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -95,7 +102,7 @@ const startServer = async () => {
     app.listen(config.server.port, () => {
       logger.info(`Server is running on port ${config.server.port}`);
       logger.info(`Environment: ${config.server.env}`);
-      logger.info(`CORS Origin: ${config.server.corsOrigin}`);
+      logger.info(`CORS Origins: ${config.server.corsOrigins.join(', ')}`);
     });
   } catch (error) {
     logger.error('Failed to start server:', error);

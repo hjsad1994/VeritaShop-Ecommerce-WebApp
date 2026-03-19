@@ -1,13 +1,27 @@
 import dotenv from 'dotenv';
+import fs from 'fs';
 import path from 'path';
 
-dotenv.config({ path: path.join(__dirname, '../../.env') });
+const envCandidates = [
+  path.join(process.cwd(), '.env'),
+  path.join(__dirname, '../../.env'),
+  path.join(__dirname, '../../../.env'),
+];
+
+const envPath = envCandidates.find((candidate) => fs.existsSync(candidate));
+
+if (envPath) {
+  dotenv.config({ path: envPath });
+} else {
+  dotenv.config();
+}
 
 interface Config {
   server: {
     port: number;
     env: string;
-    corsOrigin: string;
+    corsOrigins: string[];
+    frontendUrl: string;
   };
   database: {
     url: string;
@@ -28,13 +42,34 @@ interface Config {
     s3Bucket: string;
     cloudFrontDomain: string;
   };
+  ai: {
+    serviceUrl: string;
+  };
 }
+
+const defaultCorsOrigins = ['http://localhost:3000'];
+
+const parseCorsOrigins = (value?: string): string[] => {
+  if (!value) {
+    return defaultCorsOrigins;
+  }
+
+  const origins = value
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  return origins.length > 0 ? origins : defaultCorsOrigins;
+};
+
+const corsOrigins = parseCorsOrigins(process.env.CORS_ORIGIN);
 
 const config: Config = {
   server: {
     port: parseInt(process.env.PORT || '3000', 10),
     env: process.env.NODE_ENV || 'development',
-    corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    corsOrigins,
+    frontendUrl: process.env.FRONTEND_URL || corsOrigins[0],
   },
   database: {
     url: process.env.DATABASE_URL || '',
@@ -52,8 +87,14 @@ const config: Config = {
   },
   aws: {
     region: process.env.AWS_REGION || 'us-east-1',
-    s3Bucket: process.env.AWS_S3_BUCKET || 'verita-phone-store-assets',
+    s3Bucket:
+      process.env.AWS_S3_BUCKET ||
+      process.env.AWS_S3_BUCKET_NAME ||
+      'verita-phone-store-assets',
     cloudFrontDomain: process.env.AWS_CLOUDFRONT_DOMAIN || 'd1ffmiafbbgufv.cloudfront.net',
+  },
+  ai: {
+    serviceUrl: process.env.AI_SERVICE_URL || 'https://demo.honeysocial.click/predict',
   },
 };
 

@@ -3,17 +3,22 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import toast from 'react-hot-toast';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
-import { products, type Product } from '@/lib/data/products';
+import productService from '@/lib/api/productService';
+import type { Product } from '@/lib/api/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 
 export default function HomePage() {
   const { isAuthenticated } = useAuth();
-  const { addToCartLegacy, openCart } = useCart();
-  const [addingToCart, setAddingToCart] = React.useState<number | null>(null);
-  const [lastClickedTime, setLastClickedTime] = React.useState<{ [key: number]: number }>({});
+  const { addToCart, openCart } = useCart();
+  const [products, setProducts] = React.useState<Product[]>([]);
+  const [productsLoading, setProductsLoading] = React.useState(true);
+  const [productsError, setProductsError] = React.useState<string | null>(null);
+  const [addingToCart, setAddingToCart] = React.useState<string | null>(null);
+  const [lastClickedTime, setLastClickedTime] = React.useState<Record<string, number>>({});
 
   const rotatingWords = [
     "iPhone\n15 Pro Max",
@@ -57,6 +62,46 @@ export default function HomePage() {
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
+
+  React.useEffect(() => {
+    const fetchHomeProducts = async () => {
+      try {
+        setProductsLoading(true);
+        setProductsError(null);
+
+        const featured = await productService.getProducts({
+          limit: 8,
+          isFeatured: true,
+        });
+
+        if (featured.products.length > 0) {
+          setProducts(featured.products);
+          return;
+        }
+
+        const latest = await productService.getProducts({
+          limit: 8,
+        });
+
+        setProducts(latest.products);
+      } catch (error) {
+        console.error('Failed to fetch homepage products:', error);
+        setProductsError('Unable to load products right now.');
+        setProducts([]);
+      } finally {
+        setProductsLoading(false);
+      }
+    };
+
+    fetchHomeProducts();
+  }, []);
+
+  const formatCurrency = (value: string | number) =>
+    new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND',
+      maximumFractionDigits: 0,
+    }).format(Number(value) || 0);
 
   return (
     <div className="min-h-screen bg-white text-black overflow-x-hidden">
@@ -337,34 +382,56 @@ export default function HomePage() {
           </div>
 
           {/* Product Grid */}
+          {productsLoading ? (
+            <div className="flex justify-center py-20">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
+            </div>
+          ) : productsError ? (
+            <div className="rounded-3xl border border-red-200 bg-red-50 px-6 py-10 text-center text-red-700">
+              {productsError}
+            </div>
+          ) : products.length === 0 ? (
+            <div className="rounded-3xl border border-gray-200 bg-gray-50 px-6 py-10 text-center text-gray-600">
+              No live products available yet.
+            </div>
+          ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {products.slice(0, 8).map((product, index) => {
+            {products.slice(0, 8).map((product) => {
               const getBadge = (product: Product) => {
-                if (product.badge) return { text: product.badge, color: 'bg-gradient-to-r from-blue-500 to-cyan-500' };
-                if (product.oldPrice && product.oldPrice > product.price) {
-                  const discount = Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100);
+                const basePrice = Number(product.basePrice);
+                const finalPrice = Number(product.finalPrice || product.basePrice);
+
+                if (product.discount > 0 && basePrice > finalPrice) {
+                  const discount = Math.round(((basePrice - finalPrice) / basePrice) * 100);
                   if (discount >= 15) return { text: 'HOT DEAL', color: 'bg-gradient-to-r from-red-500 to-orange-500' };
                   return { text: 'SALE', color: 'bg-gradient-to-r from-orange-500 to-amber-500' };
                 }
-                if (product.brand === 'ASUS' || product.brand === 'RedMagic' || product.brand === 'Black Shark') {
+                if (['ASUS', 'RedMagic', 'Black Shark'].includes(product.brand.name)) {
                   return { text: 'GAMING', color: 'bg-gradient-to-r from-purple-500 to-indigo-500' };
                 }
-                if (product.price >= 1000) return { text: 'PREMIUM', color: 'bg-gradient-to-r from-blue-500 to-cyan-500' };
-                if (product.price <= 500) return { text: 'BEST VALUE', color: 'bg-gradient-to-r from-green-500 to-emerald-500' };
+                if (product.isFeatured) return { text: 'FEATURED', color: 'bg-gradient-to-r from-blue-500 to-cyan-500' };
+                if (finalPrice >= 20000000) return { text: 'PREMIUM', color: 'bg-gradient-to-r from-blue-500 to-cyan-500' };
+                if (finalPrice <= 10000000) return { text: 'BEST VALUE', color: 'bg-gradient-to-r from-green-500 to-emerald-500' };
                 return { text: 'NEW', color: 'bg-gradient-to-r from-blue-500 to-cyan-500' };
               };
 
               const badge = getBadge(product);
-              const discount = product.oldPrice ? Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100) : 0;
+              const basePrice = Number(product.basePrice);
+              const finalPrice = Number(product.finalPrice || product.basePrice);
+              const discount = product.discount > 0 && basePrice > finalPrice
+                ? Math.round(((basePrice - finalPrice) / basePrice) * 100)
+                : 0;
+              const productImages = product.images?.map((image) => image.url) || [];
+              const primaryImage = product.primaryImage || product.images?.[0]?.url || '/placeholder.png';
 
               return (
                 <div
-                  key={index}
+                  key={product.id}
                   className="group relative bg-white border border-gray-200 rounded-3xl overflow-hidden hover:border-gray-400 hover:shadow-2xl transition-all duration-700 cursor-pointer flex flex-col h-full"
                 >
                   <div className="relative aspect-square overflow-hidden bg-gray-50">
                     <Image
-                      src={product.image}
+                      src={primaryImage}
                       alt={product.name}
                       fill
                       className="object-cover group-hover:scale-110 transition-transform duration-1000"
@@ -384,7 +451,7 @@ export default function HomePage() {
                     )}
 
                     <div className="absolute bottom-0 left-0 right-0 p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-500 bg-gradient-to-t from-white/90 to-transparent">
-                      <Link href={`/shop/${product.id}`} className="block w-full bg-black text-white py-3 rounded-full text-xs font-black hover:bg-blue-600 transition-all shadow-lg text-center uppercase tracking-wider">
+                      <Link href={`/shop/${product.slug}`} className="block w-full bg-black text-white py-3 rounded-full text-xs font-black hover:bg-blue-600 transition-all shadow-lg text-center uppercase tracking-wider">
                         Quick View
                       </Link>
                     </div>
@@ -398,16 +465,21 @@ export default function HomePage() {
                     <div className="flex items-center gap-2 mb-4">
                       <div className="flex gap-1">
                         {[...Array(5)].map((_, i) => (
-                          <span key={i} className="text-yellow-400 text-sm">★</span>
+                          <span
+                            key={i}
+                            className={`text-sm ${i < Math.round(Number(product.averageRating || 0)) ? 'text-yellow-400' : 'text-gray-300'}`}
+                          >
+                            ★
+                          </span>
                         ))}
                       </div>
-                      <span className="text-gray-500 text-xs">(128)</span>
+                      <span className="text-gray-500 text-xs">({product.reviewCount})</span>
                     </div>
 
                     <div className="flex items-center gap-3 mb-6">
-                      <span className="text-2xl font-black text-black">${product.price}</span>
-                      {product.oldPrice && (
-                        <span className="text-base text-gray-400 line-through">${product.oldPrice}</span>
+                      <span className="text-2xl font-black text-black">{formatCurrency(finalPrice)}</span>
+                      {discount > 0 && (
+                        <span className="text-base text-gray-400 line-through">{formatCurrency(basePrice)}</span>
                       )}
                     </div>
 
@@ -430,23 +502,47 @@ export default function HomePage() {
                         }
 
                         setAddingToCart(product.id);
-                        const selectedColor = product.colors ? product.colors[0] : 'Default';
-                        const legacyProduct = {
-                          id: product.id.toString(),
-                          name: product.name,
-                          price: product.price,
-                          slug: '',
-                          images: product.images || [product.image]
-                        };
-                        addToCartLegacy(legacyProduct, 1, selectedColor);
+                        productService.getProductBySlug(product.slug)
+                          .then(async (productDetail) => {
+                            const variant = productDetail.variants?.find((item) => item.isActive);
 
-                        setTimeout(() => {
-                          setAddingToCart(null);
-                          setTimeout(() => {
-                            setLastClickedTime((prev: typeof lastClickedTime) => ({ ...prev, [product.id]: 0 }));
-                          }, 1000);
-                          openCart();
-                        }, 300);
+                            if (!variant) {
+                              toast.error('San pham nay chua co phien ban de them vao gio hang');
+                              return;
+                            }
+
+                            await addToCart(variant.id, 1, {
+                              id: variant.id,
+                              productId: variant.productId,
+                              color: variant.color,
+                              storage: variant.storage || null,
+                              price: Number(variant.price),
+                              isActive: variant.isActive,
+                              product: {
+                                id: productDetail.id,
+                                name: productDetail.name,
+                                slug: productDetail.slug,
+                                basePrice: Number(productDetail.basePrice),
+                                images: (productDetail.images || []).map((image) => ({
+                                  id: image.id,
+                                  url: image.url,
+                                  sortOrder: image.sortOrder,
+                                })),
+                              },
+                            });
+
+                            openCart();
+                          })
+                          .catch((error) => {
+                            console.error('Failed to add homepage product to cart:', error);
+                            toast.error('Khong the them vao gio hang luc nay');
+                          })
+                          .finally(() => {
+                            setAddingToCart(null);
+                            setTimeout(() => {
+                              setLastClickedTime((prev) => ({ ...prev, [product.id]: 0 }));
+                            }, 1000);
+                          });
                       }}
                       disabled={addingToCart === product.id}
                       className={`w-full bg-black text-white py-4 rounded-full text-sm font-black hover:bg-blue-600 hover:scale-[1.02] transition-all duration-300 shadow-lg mt-auto uppercase tracking-wider border-2 border-black ${addingToCart === product.id ? 'opacity-50 cursor-not-allowed' : ''
@@ -459,6 +555,7 @@ export default function HomePage() {
               );
             })}
           </div>
+          )}
         </div>
       </section>
 

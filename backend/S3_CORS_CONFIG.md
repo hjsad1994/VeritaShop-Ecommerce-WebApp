@@ -4,7 +4,7 @@ For direct browser-to-S3 uploads to work, the S3 bucket must have CORS (Cross-Or
 
 ## Required CORS Configuration
 
-Add the following CORS configuration to your S3 bucket `verita-phone-store-assets`:
+Add the following CORS configuration to your S3 bucket `verita-phone-store-assets1`:
 
 ```json
 [
@@ -21,7 +21,7 @@ Add the following CORS configuration to your S3 bucket `verita-phone-store-asset
         ],
         "AllowedOrigins": [
             "http://localhost:3000",
-            "https://your-production-domain.com"
+            "https://demo-shop.honeysocial.click"
         ],
         "ExposeHeaders": [
             "ETag",
@@ -37,7 +37,7 @@ Add the following CORS configuration to your S3 bucket `verita-phone-store-asset
 ## How to Configure CORS in AWS Console
 
 1. Go to AWS S3 Console
-2. Select your bucket: `verita-phone-store-assets`
+2. Select your bucket: `verita-phone-store-assets1`
 3. Click on the "Permissions" tab
 4. Scroll down to "Cross-origin resource sharing (CORS)"
 5. Click "Edit"
@@ -58,4 +58,3 @@ After configuring CORS, test the upload again. If you still see CORS errors in t
 1. The origin in CORS config matches your frontend URL exactly
 2. The bucket policy allows the operations
 3. The presigned URL is valid and not expired
-

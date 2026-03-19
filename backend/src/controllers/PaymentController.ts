@@ -4,6 +4,7 @@ import { RepositoryFactory } from '../repositories';
 import { HTTP_STATUS, ERROR_MESSAGES } from '../constants';
 import { logger } from '../utils/logger';
 import { PaymentStatus, OrderStatus } from '@prisma/client';
+import config from '../config';
 
 export class PaymentController {
   private get orderRepository() {
@@ -168,14 +169,14 @@ export class PaymentController {
       }
 
       // Redirect to frontend payment result page
-      const frontendUrl = process.env.CORS_ORIGIN || 'http://localhost:3000';
+      const frontendUrl = config.server.frontendUrl;
       const status = resultCode === '0' ? 'success' : 'failed';
       const redirectUrl = `${frontendUrl}/payment/result?status=${status}&orderNumber=${orderNumber}&message=${encodeURIComponent(message || '')}`;
 
       return res.redirect(redirectUrl);
     } catch (error) {
       logger.error('MoMo return error:', error);
-      const frontendUrl = process.env.CORS_ORIGIN || 'http://localhost:3000';
+      const frontendUrl = config.server.frontendUrl;
       return res.redirect(`${frontendUrl}/payment/result?status=error&message=Có lỗi xảy ra`);
     }
   };

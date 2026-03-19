@@ -1,0 +1,104 @@
+services:
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: veritashop-backend-prod
+    restart: unless-stopped
+    environment:
+      PORT: ${BACKEND_PORT:-5001}
+      NODE_ENV: ${NODE_ENV:-production}
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://demo-shop.honeysocial.click}
+      FRONTEND_URL: ${FRONTEND_URL:-https://demo-shop.honeysocial.click}
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      AI_SERVICE_URL: ${AI_SERVICE_URL:-https://api-ai.honeysocial.click/predict}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_S3_BUCKET_NAME: ${AWS_S3_BUCKET_NAME}
+      AWS_CLOUDFRONT_DOMAIN: ${AWS_CLOUDFRONT_DOMAIN}
+      RUN_MIGRATIONS: ${RUN_MIGRATIONS:-true}
+      MIGRATION_MAX_ATTEMPTS: ${MIGRATION_MAX_ATTEMPTS:-15}
+      MIGRATION_RETRY_DELAY: ${MIGRATION_RETRY_DELAY:-4}
+    expose:
+      - "${BACKEND_PORT:-5001}"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"fetch('http://127.0.0.1:' + (process.env.PORT || '5001') + '/health').then((res) => process.exit(res.ok ? 0 : 1)).catch(() => process.exit(1))\"",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+    networks:
+      - veritashop-prod
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://demo-api.honeysocial.click/api}
+        NEXT_PUBLIC_IMAGE_HOSTS: ${NEXT_PUBLIC_IMAGE_HOSTS}
+    container_name: veritashop-frontend-prod
+    restart: unless-stopped
+    environment:
+      PORT: ${FRONTEND_PORT:-3000}
+      HOSTNAME: 0.0.0.0
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://demo-api.honeysocial.click/api}
+      NEXT_PUBLIC_IMAGE_HOSTS: ${NEXT_PUBLIC_IMAGE_HOSTS}
+    expose:
+      - "${FRONTEND_PORT:-3000}"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"fetch('http://127.0.0.1:' + (process.env.PORT || '3000')).then((res) => process.exit(res.ok ? 0 : 1)).catch(() => process.exit(1))\"",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+    networks:
+      - veritashop-prod
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: veritashop-nginx-prod
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
+    networks:
+      - veritashop-prod
+
+  certbot:
+    image: certbot/certbot:latest
+    container_name: veritashop-certbot-prod
+    restart: unless-stopped
+    volumes:
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
+    entrypoint: /bin/sh -c "trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet || true; sleep 12h; done"
+    networks:
+      - veritashop-prod
+
+networks:
+  veritashop-prod:
+    driver: bridge

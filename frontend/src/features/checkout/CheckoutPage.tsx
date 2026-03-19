@@ -78,7 +78,11 @@ export default function CheckoutPage() {
     } else if (!/^[0-9]{10,11}$/.test(formData.customerPhone.replace(/\D/g, ''))) {
       newErrors.customerPhone = 'Số điện thoại không hợp lệ (10-11 số)';
     }
-    if (!formData.shippingAddress.trim()) newErrors.shippingAddress = 'Địa chỉ giao hàng là bắt buộc';
+    if (!formData.shippingAddress.trim()) {
+      newErrors.shippingAddress = 'Địa chỉ giao hàng là bắt buộc';
+    } else if (formData.shippingAddress.trim().length < 10) {
+      newErrors.shippingAddress = 'Địa chỉ giao hàng phải có ít nhất 10 ký tự';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -147,8 +151,24 @@ export default function CheckoutPage() {
       }
     } catch (error: unknown) {
       console.error('Order creation failed:', error);
-      const typedError = error as { response?: { data?: { message?: string } }; message?: string };
-      const errorMessage = typedError.response?.data?.message || typedError.message || 'Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại.';
+      const typedError = error as {
+        response?: { data?: { message?: string; errors?: Array<{ field?: string; message?: string }> } };
+        message?: string;
+        errors?: Array<{ field?: string; message?: string }>;
+      };
+      const fieldErrors = typedError.response?.data?.errors || typedError.errors || [];
+      const shippingAddressError = fieldErrors.find((item) => item.field === 'shippingAddress')?.message;
+      const errorMessage =
+        shippingAddressError ||
+        fieldErrors[0]?.message ||
+        typedError.response?.data?.message ||
+        typedError.message ||
+        'Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại.';
+
+      if (shippingAddressError) {
+        setErrors((prev) => ({ ...prev, shippingAddress: shippingAddressError }));
+      }
+
       toast.error(errorMessage);
     } finally {
       setIsProcessing(false);

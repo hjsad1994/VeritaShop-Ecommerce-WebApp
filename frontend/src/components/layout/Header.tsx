@@ -50,6 +50,7 @@ export default function Header({ isScrolled = false, theme = 'dark', variant = '
   // Determine styling based on variant and theme
   const isSolidBlack = variant === 'solid-black';
   const isLight = theme === 'light' && !isSolidBlack; // Force dark theme styles if solid-black variant
+  const effectiveTheme: 'dark' | 'light' = isLight ? 'light' : 'dark';
 
   const textClass = isLight ? 'text-black hover:text-gray-600' : 'text-white hover:text-gray-300';
   const logoClass = isLight ? 'text-black hover:text-gray-700' : 'text-white hover:text-gray-300';
@@ -169,7 +170,7 @@ export default function Header({ isScrolled = false, theme = 'dark', variant = '
 
             {/* User Menu */}
             <UserMenu 
-              theme={theme}
+              theme={effectiveTheme}
               textClass={textClass}
             />
 

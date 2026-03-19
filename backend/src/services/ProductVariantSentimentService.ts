@@ -5,8 +5,9 @@ import {
   SentimentData,
 } from '../repositories/ProductVariantSentimentRepository';
 import { ApiError } from '../utils/ApiError';
-import { HTTP_STATUS, ERROR_MESSAGES, ML_SERVICE_URL } from '../constants';
+import { HTTP_STATUS, ERROR_MESSAGES } from '../constants';
 import { logger } from '../utils/logger';
+import config from '../config';
 
 export class ProductVariantSentimentService {
   private sentimentRepository: ProductVariantSentimentRepository;
@@ -43,7 +44,7 @@ export class ProductVariantSentimentService {
 
   async analyzeText(text: string): Promise<any> {
     try {
-      const response = await axios.post(ML_SERVICE_URL, {
+      const response = await axios.post(config.ai.serviceUrl, {
         text,
       });
       return response.data;

@@ -10,6 +10,8 @@ This folder contains a production Docker setup for:
 
 - `docker-compose.prod.yml`: backend, frontend, nginx, certbot
 - `.env`: deploy-time environment values used by Docker Compose
+- `../backend/.env.production`: backend env for direct production runs
+- `../frontend/.env.production`: frontend env for direct production builds/runs
 - `nginx/conf.d/veritashop.conf`: reverse proxy and TLS virtual hosts
 - `scripts/init-letsencrypt.sh`: bootstrap Let's Encrypt certificates
 
@@ -46,6 +48,12 @@ The script will:
 ```bash
 docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env up -d --build
 ```
+
+## App env files
+
+- Docker Compose deploy uses `deploy/.env`
+- Direct backend deploy can use `backend/.env.production`
+- Direct frontend build can use `frontend/.env.production`
 
 ## Useful commands
 

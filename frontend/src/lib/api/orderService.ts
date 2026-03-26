@@ -139,8 +139,6 @@ export interface CreateOrderRequest {
   shippingAddress: string;
   paymentMethod?: string;
   notes?: string;
-  shippingFee?: number;
-  discount?: number;
 }
 
 export interface OrderStatistics {

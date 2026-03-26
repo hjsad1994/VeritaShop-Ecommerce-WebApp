@@ -108,9 +108,7 @@ export default function CheckoutPage() {
         customerPhone: formData.customerPhone,
         shippingAddress: formData.shippingAddress,
         paymentMethod: formData.paymentMethod,
-        notes: formData.notes,
-        shippingFee,
-        discount
+        notes: formData.notes
       };
 
       const response = await orderService.createOrder(orderData);

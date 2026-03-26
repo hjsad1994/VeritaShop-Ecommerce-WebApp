@@ -95,14 +95,11 @@ export class OrderService {
       total,
       paymentMethod: orderInput.paymentMethod,
       notes: orderInput.notes,
+      cartId: cart.id,
       items: orderItems,
     };
-
     // Create order (includes stock update)
     const order = await this.orderRepository.create(orderData);
-
-    // Clear cart after successful order
-    await this.cartRepository.clearCart(cart.id);
 
     logger.info(`Order created successfully: ${orderNumber} by user ${userId}`);
 

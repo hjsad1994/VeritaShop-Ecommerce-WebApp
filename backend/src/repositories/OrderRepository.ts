@@ -15,6 +15,7 @@ export interface CreateOrderData {
   total: number;
   paymentMethod?: string;
   notes?: string;
+  cartId: string;
   items: {
     variantId: string;
     productName: string;
@@ -283,6 +284,47 @@ export class OrderRepository extends BaseRepository<Order> {
         }
       }
 
+      // Deduct inventory for each item
+      for (const item of orderData.items) {
+        const inventory = await tx.inventory.findUnique({
+          where: { variantId: item.variantId },
+        });
+
+        if (!inventory) {
+          throw new Error(`Inventory not found for variant ${item.variantId}`);
+        }
+
+        if (inventory.available < item.quantity) {
+          throw new Error(`Insufficient stock for variant ${item.variantId}`);
+        }
+
+        await tx.inventory.update({
+          where: { id: inventory.id },
+          data: {
+            quantity: { decrement: item.quantity },
+            available: { decrement: item.quantity },
+          },
+        });
+
+        await tx.stockMovement.create({
+          data: {
+            inventoryId: inventory.id,
+            variantId: item.variantId,
+            type: 'ORDER',
+            quantity: item.quantity,
+            previousStock: inventory.available,
+            newStock: inventory.available - item.quantity,
+            reason: `Order ${orderData.orderNumber}`,
+            referenceId: order.id,
+          },
+        });
+      }
+
+      // Clear cart inside transaction
+      await tx.cartItem.deleteMany({
+        where: { cartId: orderData.cartId },
+      });
+
       return order;
     });
   }
@@ -387,6 +429,36 @@ export class OrderRepository extends BaseRepository<Order> {
               },
             });
           }
+        }
+      }
+
+      // Restore inventory for each item
+      for (const item of order.items) {
+        const inventory = await tx.inventory.findUnique({
+          where: { variantId: item.variantId },
+        });
+
+        if (inventory) {
+          await tx.inventory.update({
+            where: { id: inventory.id },
+            data: {
+              quantity: { increment: item.quantity },
+              available: { increment: item.quantity },
+            },
+          });
+
+          await tx.stockMovement.create({
+            data: {
+              inventoryId: inventory.id,
+              variantId: item.variantId,
+              type: 'ORDER_CANCELLED',
+              quantity: item.quantity,
+              previousStock: inventory.available,
+              newStock: inventory.available + item.quantity,
+              reason: `Order cancelled${cancelReason ? ': ' + cancelReason : ''}`,
+              referenceId: id,
+            },
+          });
         }
       }
 

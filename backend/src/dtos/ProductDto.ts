@@ -29,6 +29,7 @@ export interface ProductResponse {
   primaryImage: string | null;
   minPrice: string | null;
   maxPrice: string | null;
+  variantCount: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -37,12 +38,14 @@ export interface ProductDetailResponse extends ProductResponse {
   specs: ProductSpecs | null;
   variants: Array<{
     id: string;
+    productId: string;
     color: string;
     storage: string | null;
     ram: string | null;
     price: string;
     comparePrice: string | null;
     sku: string;
+    isActive: boolean;
     inventory: {
       quantity: number;
       available: number;
@@ -71,6 +74,7 @@ export class ProductDto {
     category: Category;
     variants?: ProductVariant[];
     images?: ProductImage[];
+    _count?: { variants: number };
   }): ProductResponse {
     const basePriceNumber = Number(product.basePrice);
     const finalPrice = this.calculateFinalPrice(basePriceNumber, product.discount);
@@ -105,6 +109,7 @@ export class ProductDto {
       primaryImage: primaryImage,
       minPrice: priceRange.minPrice !== null ? priceRange.minPrice.toString() : null,
       maxPrice: priceRange.maxPrice !== null ? priceRange.maxPrice.toString() : null,
+      variantCount: product._count?.variants ?? 0,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,
     };
@@ -145,12 +150,14 @@ export class ProductDto {
 
       sortedVariants.push({
         id: variant.id,
+        productId: variant.productId,
         color: variant.color,
         storage: variant.storage,
         ram: variant.ram,
         price: variant.price.toString(),
         comparePrice: variant.comparePrice ? variant.comparePrice.toString() : null,
         sku: variant.sku,
+        isActive: variant.isActive,
         inventory: variant.inventory ? {
             quantity: variant.inventory.quantity,
             available: variant.inventory.available
@@ -192,6 +199,7 @@ export class ProductDto {
     category: Category;
     variants?: ProductVariant[];
     images?: ProductImage[];
+    _count?: { variants: number };
   }>): ProductResponse[] {
     const result = [];
     for (const product of products) {

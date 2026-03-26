@@ -160,6 +160,13 @@ export class ProductRepository extends BaseRepository<Product> {
                 images: {
                     where: { isPrimary: true },
                     take: 1
+                },
+                _count: {
+                    select: {
+                        variants: {
+                            where: { isActive: true }
+                        }
+                    }
                 }
             }
         });

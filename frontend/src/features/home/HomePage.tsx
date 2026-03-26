@@ -483,6 +483,15 @@ export default function HomePage() {
                       )}
                     </div>
 
+                    {product.variantCount === 0 ? (
+                      <button
+                        disabled
+                        className="w-full bg-gray-300 text-gray-500 py-4 rounded-full text-sm font-black mt-auto uppercase tracking-wider border-2 border-gray-300 cursor-not-allowed"
+                        title="Sản phẩm hiện không có phiên bản nào"
+                      >
+                        Out of Stock
+                      </button>
+                    ) : (
                     <button
                       onClick={(e) => {
                         e.preventDefault();
@@ -507,7 +516,7 @@ export default function HomePage() {
                             const variant = productDetail.variants?.find((item) => item.isActive);
 
                             if (!variant) {
-                              toast.error('San pham nay chua co phien ban de them vao gio hang');
+                              toast.error('Sản phẩm này chưa có phiên bản để thêm vào giỏ hàng');
                               return;
                             }
 
@@ -535,7 +544,7 @@ export default function HomePage() {
                           })
                           .catch((error) => {
                             console.error('Failed to add homepage product to cart:', error);
-                            toast.error('Khong the them vao gio hang luc nay');
+                            toast.error('Không thể thêm vào giỏ hàng lúc này');
                           })
                           .finally(() => {
                             setAddingToCart(null);
@@ -550,6 +559,7 @@ export default function HomePage() {
                     >
                       {addingToCart === product.id ? 'Adding...' : 'Add to Cart'}
                     </button>
+                    )}
                   </div>
                 </div>
               );

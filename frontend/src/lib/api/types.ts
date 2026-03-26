@@ -164,6 +164,7 @@ export interface Product {
   images?: ProductImage[]; // Product images array
   minPrice?: number | null;
   maxPrice?: number | null;
+  variantCount?: number;
   categoryId: string;
   brandId: string;
   createdAt: string;

@@ -1,360 +1,435 @@
-import { OrderRepository } from '../repositories/OrderRepository';
-import { CartRepository } from '../repositories/CartRepository';
-import { RepositoryFactory } from '../repositories';
-import { ApiError } from '../utils/ApiError';
-import { HTTP_STATUS, ERROR_MESSAGES } from '../constants';
-import { logger } from '../utils/logger';
-import { OrderStatus, PaymentStatus } from '@prisma/client';
-import { CreateOrderData, OrderFilters, OrderListOptions } from '../repositories/OrderRepository';
+import { OrderStatus, PaymentStatus } from "@prisma/client";
+import { ERROR_MESSAGES, HTTP_STATUS } from "../constants";
+import { RepositoryFactory } from "../repositories";
+import type { CartRepository } from "../repositories/CartRepository";
+import type { InventoryRepository } from "../repositories/InventoryRepository";
+import type {
+	CreateOrderData,
+	OrderFilters,
+	OrderListOptions,
+	OrderRepository,
+} from "../repositories/OrderRepository";
+import { ApiError } from "../utils/ApiError";
+import { logger } from "../utils/logger";
 
 export interface CreateOrderInput {
-  userId: string;
-  customerName: string;
-  customerEmail: string;
-  customerPhone: string;
-  shippingAddress: string;
-  paymentMethod?: string;
-  notes?: string;
-  shippingFee?: number;
-  discount?: number;
+	userId: string;
+	customerName: string;
+	customerEmail: string;
+	customerPhone: string;
+	shippingAddress: string;
+	paymentMethod?: string;
+	notes?: string;
 }
 
 export class OrderService {
-  private orderRepository: OrderRepository;
-  private cartRepository: CartRepository;
+	private orderRepository: OrderRepository;
+	private cartRepository: CartRepository;
+	private inventoryRepository: InventoryRepository;
 
-  constructor() {
-    this.orderRepository = RepositoryFactory.getOrderRepository();
-    this.cartRepository = RepositoryFactory.getCartRepository();
-  }
+	constructor() {
+		this.orderRepository = RepositoryFactory.getOrderRepository();
+		this.cartRepository = RepositoryFactory.getCartRepository();
+		this.inventoryRepository = RepositoryFactory.getInventoryRepository();
+	}
 
-  /**
-   * 1. Create order from cart
-   */
-  async createOrder(orderInput: CreateOrderInput) {
-    const { userId } = orderInput;
+	/**
+	 * 1. Create order from cart
+	 */
+	async createOrder(orderInput: CreateOrderInput) {
+		const { userId } = orderInput;
 
-    // Get user's cart
-    const cart = await this.cartRepository.findByUserId(userId);
-    if (!cart || !cart.items || cart.items.length === 0) {
-      throw new ApiError(HTTP_STATUS.BAD_REQUEST, ERROR_MESSAGES.CART_EMPTY);
-    }
+		// Get user's cart
+		const cart = await this.cartRepository.findByUserId(userId);
+		if (!cart || !cart.items || cart.items.length === 0) {
+			throw new ApiError(HTTP_STATUS.BAD_REQUEST, ERROR_MESSAGES.CART_EMPTY);
+		}
 
-    // Validate stock for all items
-    for (const item of cart.items) {
-      if (!item.variant.isActive) {
-        throw new ApiError(
-          HTTP_STATUS.BAD_REQUEST,
-          `Sản phẩm "${item.variant.product.name}" không còn khả dụng`
-        );
-      }
+		// Validate stock for all items
+		for (const item of cart.items) {
+			if (!item.variant.isActive) {
+				throw new ApiError(
+					HTTP_STATUS.BAD_REQUEST,
+					`Sản phẩm "${item.variant.product.name}" không còn khả dụng`,
+				);
+			}
 
-      if (item.variant.stock < item.quantity) {
-        throw new ApiError(
-          HTTP_STATUS.BAD_REQUEST,
-          `Sản phẩm "${item.variant.product.name}" chỉ còn ${item.variant.stock} sản phẩm trong kho`
-        );
-      }
-    }
+			const inventory = await this.inventoryRepository.findByVariantId(
+				item.variantId,
+			);
+			const availableStock = inventory?.available ?? 0;
 
-    // Generate unique order number
-    const orderNumber = await this.orderRepository.generateOrderNumber();
+			if (availableStock < item.quantity) {
+				throw new ApiError(
+					HTTP_STATUS.BAD_REQUEST,
+					`Sản phẩm "${item.variant.product.name}" chỉ còn ${availableStock} sản phẩm trong kho`,
+				);
+			}
+		}
 
-    // Calculate totals
-    const subtotal = cart.items.reduce((sum, item) => {
-      return sum + Number(item.variant.price) * item.quantity;
-    }, 0);
+		// Generate unique order number
+		const orderNumber = await this.orderRepository.generateOrderNumber();
 
-    const shippingFee = orderInput.shippingFee || 0;
-    const discount = orderInput.discount || 0;
-    const tax = 0; // Can be calculated based on business logic
-    const total = subtotal + shippingFee - discount + tax;
+		// Calculate totals
+		const subtotal = cart.items.reduce((sum, item) => {
+			return sum + Number(item.variant.price) * item.quantity;
+		}, 0);
 
-    // Prepare order items
-    const orderItems = cart.items.map((item) => ({
-      variantId: item.variantId,
-      productName: item.variant.product.name,
-      variantInfo: `${item.variant.color}${item.variant.storage ? ' - ' + item.variant.storage : ''}`,
-      price: Number(item.variant.price),
-      quantity: item.quantity,
-      subtotal: Number(item.variant.price) * item.quantity,
-    }));
+		// Shipping fee and discount are calculated server-side to prevent client-side price manipulation.
+		const shippingFee = 0;
+		const discount = 0;
+		const tax = 0; // Can be calculated based on business logic
+		const total = subtotal + shippingFee - discount + tax;
 
-    // Prepare order data
-    const orderData: CreateOrderData = {
-      userId,
-      orderNumber,
-      customerName: orderInput.customerName,
-      customerEmail: orderInput.customerEmail,
-      customerPhone: orderInput.customerPhone,
-      shippingAddress: orderInput.shippingAddress,
-      subtotal,
-      discount,
-      shippingFee,
-      tax,
-      total,
-      paymentMethod: orderInput.paymentMethod,
-      notes: orderInput.notes,
-      cartId: cart.id,
-      items: orderItems,
-    };
-    // Create order (includes stock update)
-    const order = await this.orderRepository.create(orderData);
+		// Prepare order items
+		const orderItems = cart.items.map((item) => ({
+			variantId: item.variantId,
+			productName: item.variant.product.name,
+			variantInfo: `${item.variant.color}${item.variant.storage ? " - " + item.variant.storage : ""}`,
+			price: Number(item.variant.price),
+			quantity: item.quantity,
+			subtotal: Number(item.variant.price) * item.quantity,
+		}));
 
-    logger.info(`Order created successfully: ${orderNumber} by user ${userId}`);
+		// Prepare order data
+		const orderData: CreateOrderData = {
+			userId,
+			orderNumber,
+			customerName: orderInput.customerName,
+			customerEmail: orderInput.customerEmail,
+			customerPhone: orderInput.customerPhone,
+			shippingAddress: orderInput.shippingAddress,
+			subtotal,
+			discount,
+			shippingFee,
+			tax,
+			total,
+			paymentMethod: orderInput.paymentMethod,
+			notes: orderInput.notes,
+			cartId: cart.id,
+			items: orderItems,
+		};
+		// Create order (includes stock update)
+		const order = await this.orderRepository.create(orderData);
 
-    return order;
-  }
+		logger.info(`Order created successfully: ${orderNumber} by user ${userId}`);
 
-  /**
-   * 2. Get user's orders (or all orders for admin)
-   */
-  async getOrders(
-    userId: string,
-    userRole: string,
-    filters?: OrderFilters,
-    page = 1,
-    limit = 10,
-    sortBy = 'createdAt',
-    sortOrder: 'asc' | 'desc' = 'desc'
-  ) {
-    const options: OrderListOptions = {
-      filters: {
-        ...filters,
-      },
-      page,
-      limit,
-      sortBy,
-      sortOrder,
-    };
+		return order;
+	}
 
-    // If not admin, only show user's own orders
-    if (userRole !== 'ADMIN' && userRole !== 'MANAGER') {
-      options.filters!.userId = userId;
-    }
+	/**
+	 * 2. Get user's orders (or all orders for admin)
+	 */
+	async getOrders(
+		userId: string,
+		userRole: string,
+		filters?: OrderFilters,
+		page = 1,
+		limit = 10,
+		sortBy = "createdAt",
+		sortOrder: "asc" | "desc" = "desc",
+	) {
+		const options: OrderListOptions = {
+			filters: {
+				...filters,
+			},
+			page,
+			limit,
+			sortBy,
+			sortOrder,
+		};
 
-    const result = await this.orderRepository.findAll(options);
+		// If not admin, only show user's own orders
+		if (userRole !== "ADMIN" && userRole !== "MANAGER") {
+			options.filters!.userId = userId;
+		}
 
-    logger.info(
-      `Retrieved ${result.data.length} orders for ${userRole === 'ADMIN' || userRole === 'MANAGER' ? 'admin' : `user ${userId}`}`
-    );
+		const result = await this.orderRepository.findAll(options);
 
-    return result;
-  }
+		logger.info(
+			`Retrieved ${result.data.length} orders for ${userRole === "ADMIN" || userRole === "MANAGER" ? "admin" : `user ${userId}`}`,
+		);
 
-  /**
-   * 3. Get order by ID or order number with authorization check
-   */
-  async getOrderById(orderIdOrNumber: string, userId: string, userRole: string) {
-    let order = await this.orderRepository.findById(orderIdOrNumber);
+		return result;
+	}
 
-    // If not found by ID, try to find by order number
-    if (!order) {
-      order = await this.orderRepository.findByOrderNumber(orderIdOrNumber);
-    }
+	/**
+	 * 3. Get order by ID or order number with authorization check
+	 */
+	async getOrderById(
+		orderIdOrNumber: string,
+		userId: string,
+		userRole: string,
+	) {
+		let order = await this.orderRepository.findById(orderIdOrNumber);
 
-    if (!order) {
-      throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.ORDER_NOT_FOUND);
-    }
+		// If not found by ID, try to find by order number
+		if (!order) {
+			order = await this.orderRepository.findByOrderNumber(orderIdOrNumber);
+		}
 
-    // Authorization check: user can only view their own orders
-    const isAdmin = userRole === 'ADMIN' || userRole === 'MANAGER';
-    if (!isAdmin && order.userId !== userId) {
-      throw new ApiError(HTTP_STATUS.FORBIDDEN, ERROR_MESSAGES.ORDER_UNAUTHORIZED);
-    }
+		if (!order) {
+			throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.ORDER_NOT_FOUND);
+		}
 
-    logger.info(`Order ${order.id} (${order.orderNumber}) retrieved by ${isAdmin ? 'admin' : `user ${userId}`}`);
+		// Authorization check: user can only view their own orders
+		const isAdmin = userRole === "ADMIN" || userRole === "MANAGER";
+		if (!isAdmin && order.userId !== userId) {
+			throw new ApiError(
+				HTTP_STATUS.FORBIDDEN,
+				ERROR_MESSAGES.ORDER_UNAUTHORIZED,
+			);
+		}
 
-    return order;
-  }
+		logger.info(
+			`Order ${order.id} (${order.orderNumber}) retrieved by ${isAdmin ? "admin" : `user ${userId}`}`,
+		);
 
-  /**
-   * 4. Update order status (Admin/Manager only)
-   */
-  async updateOrderStatus(
-    orderId: string,
-    userId: string,
-    userRole: string,
-    status: OrderStatus,
-    paymentStatus?: PaymentStatus
-  ) {
-    // Check admin permission
-    if (userRole !== 'ADMIN' && userRole !== 'MANAGER') {
-      throw new ApiError(HTTP_STATUS.FORBIDDEN, ERROR_MESSAGES.FORBIDDEN);
-    }
+		return order;
+	}
 
-    const order = await this.orderRepository.findById(orderId);
+	/**
+	 * 4. Update order status (Admin/Manager only)
+	 */
+	async updateOrderStatus(
+		orderId: string,
+		userId: string,
+		userRole: string,
+		status: OrderStatus,
+		paymentStatus?: PaymentStatus,
+	) {
+		// Check admin permission
+		if (userRole !== "ADMIN" && userRole !== "MANAGER") {
+			throw new ApiError(HTTP_STATUS.FORBIDDEN, ERROR_MESSAGES.FORBIDDEN);
+		}
 
-    if (!order) {
-      throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.ORDER_NOT_FOUND);
-    }
+		const order = await this.orderRepository.findById(orderId);
 
-    // Validate status transition
-    this.validateStatusTransition(order.status, status);
+		if (!order) {
+			throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.ORDER_NOT_FOUND);
+		}
 
-    // Prepare additional data
-    const additionalData: any = {};
+		// Validate status transition
+		this.validateStatusTransition(order.status, status);
 
-    if (paymentStatus) {
-      additionalData.paymentStatus = paymentStatus;
-      if (paymentStatus === PaymentStatus.PAID) {
-        additionalData.isPaid = true;
-        additionalData.paidAt = new Date();
-      }
-    }
+		// Prepare additional data
+		const additionalData: any = {};
 
-    if (status === OrderStatus.DELIVERED) {
-      additionalData.deliveredAt = new Date();
-    }
+		if (paymentStatus) {
+			additionalData.paymentStatus = paymentStatus;
+			if (paymentStatus === PaymentStatus.PAID) {
+				additionalData.isPaid = true;
+				additionalData.paidAt = new Date();
+			}
+		}
 
-    const updatedOrder = await this.orderRepository.updateStatus(orderId, status, additionalData);
+		if (status === OrderStatus.DELIVERED) {
+			additionalData.deliveredAt = new Date();
+		}
 
-    logger.info(`Order ${orderId} status updated to ${status} by admin ${userId}`);
+		const updatedOrder = await this.orderRepository.updateStatus(
+			orderId,
+			status,
+			additionalData,
+		);
 
-    return updatedOrder;
-  }
+		logger.info(
+			`Order ${orderId} status updated to ${status} by admin ${userId}`,
+		);
 
-  /**
-   * 5. Cancel order (User can cancel PENDING orders, Admin can cancel any)
-   */
-  async cancelOrder(orderId: string, userId: string, userRole: string, cancelReason?: string) {
-    const order = await this.orderRepository.findById(orderId);
+		return updatedOrder;
+	}
 
-    if (!order) {
-      throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.ORDER_NOT_FOUND);
-    }
+	/**
+	 * 5. Cancel order (User can cancel PENDING orders, Admin can cancel any)
+	 */
+	async cancelOrder(
+		orderId: string,
+		userId: string,
+		userRole: string,
+		cancelReason?: string,
+	) {
+		const order = await this.orderRepository.findById(orderId);
 
-    const isAdmin = userRole === 'ADMIN' || userRole === 'MANAGER';
+		if (!order) {
+			throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.ORDER_NOT_FOUND);
+		}
 
-    // Authorization check
-    if (!isAdmin && order.userId !== userId) {
-      throw new ApiError(HTTP_STATUS.FORBIDDEN, ERROR_MESSAGES.ORDER_UNAUTHORIZED);
-    }
+		const isAdmin = userRole === "ADMIN" || userRole === "MANAGER";
 
-    // User can cancel PENDING and CONFIRMED orders
-    if (!isAdmin && (order.status !== OrderStatus.PENDING && order.status !== OrderStatus.CONFIRMED)) {
-      throw new ApiError(HTTP_STATUS.BAD_REQUEST, ERROR_MESSAGES.ORDER_CANNOT_CANCEL);
-    }
+		// Authorization check
+		if (!isAdmin && order.userId !== userId) {
+			throw new ApiError(
+				HTTP_STATUS.FORBIDDEN,
+				ERROR_MESSAGES.ORDER_UNAUTHORIZED,
+			);
+		}
 
-    // Admin can cancel PENDING and CONFIRMED orders
-    if (isAdmin && order.status !== OrderStatus.PENDING && order.status !== OrderStatus.CONFIRMED) {
-      throw new ApiError(HTTP_STATUS.BAD_REQUEST, ERROR_MESSAGES.ORDER_CANNOT_CANCEL);
-    }
+		// User can cancel PENDING and CONFIRMED orders
+		if (
+			!isAdmin &&
+			order.status !== OrderStatus.PENDING &&
+			order.status !== OrderStatus.CONFIRMED
+		) {
+			throw new ApiError(
+				HTTP_STATUS.BAD_REQUEST,
+				ERROR_MESSAGES.ORDER_CANNOT_CANCEL,
+			);
+		}
 
-    // Cannot cancel orders that are already in progress
-    if (order.status === OrderStatus.PROCESSING || order.status === OrderStatus.SHIPPING) {
-      throw new ApiError(HTTP_STATUS.BAD_REQUEST, ERROR_MESSAGES.ORDER_CANNOT_CANCEL);
-    }
+		// Admin can cancel PENDING and CONFIRMED orders
+		if (
+			isAdmin &&
+			order.status !== OrderStatus.PENDING &&
+			order.status !== OrderStatus.CONFIRMED
+		) {
+			throw new ApiError(
+				HTTP_STATUS.BAD_REQUEST,
+				ERROR_MESSAGES.ORDER_CANNOT_CANCEL,
+			);
+		}
 
-    // Cannot cancel delivered orders
-    if (order.status === OrderStatus.DELIVERED) {
-      throw new ApiError(HTTP_STATUS.BAD_REQUEST, ERROR_MESSAGES.ORDER_ALREADY_DELIVERED);
-    }
+		// Cannot cancel orders that are already in progress
+		if (
+			order.status === OrderStatus.PROCESSING ||
+			order.status === OrderStatus.SHIPPING
+		) {
+			throw new ApiError(
+				HTTP_STATUS.BAD_REQUEST,
+				ERROR_MESSAGES.ORDER_CANNOT_CANCEL,
+			);
+		}
 
-    // Cannot cancel already cancelled orders
-    if (order.status === OrderStatus.CANCELLED) {
-      throw new ApiError(HTTP_STATUS.BAD_REQUEST, 'Đơn hàng đã được hủy trước đó');
-    }
+		// Cannot cancel delivered orders
+		if (order.status === OrderStatus.DELIVERED) {
+			throw new ApiError(
+				HTTP_STATUS.BAD_REQUEST,
+				ERROR_MESSAGES.ORDER_ALREADY_DELIVERED,
+			);
+		}
 
-    const cancelledOrder = await this.orderRepository.cancel(orderId, cancelReason);
+		// Cannot cancel already cancelled orders
+		if (order.status === OrderStatus.CANCELLED) {
+			throw new ApiError(
+				HTTP_STATUS.BAD_REQUEST,
+				"Đơn hàng đã được hủy trước đó",
+			);
+		}
 
-    logger.info(`Order ${orderId} cancelled by ${isAdmin ? `admin ${userId}` : `user ${userId}`}`);
+		const cancelledOrder = await this.orderRepository.cancel(
+			orderId,
+			cancelReason,
+		);
 
-    return cancelledOrder;
-  }
+		logger.info(
+			`Order ${orderId} cancelled by ${isAdmin ? `admin ${userId}` : `user ${userId}`}`,
+		);
 
-  /**
-   * 6. Confirm delivery (User confirms received order)
-   */
-  async confirmDelivery(orderId: string, userId: string) {
-    const order = await this.orderRepository.findById(orderId);
+		return cancelledOrder;
+	}
 
-    if (!order) {
-      throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.ORDER_NOT_FOUND);
-    }
+	/**
+	 * 6. Confirm delivery (User confirms received order)
+	 */
+	async confirmDelivery(orderId: string, userId: string) {
+		const order = await this.orderRepository.findById(orderId);
 
-    // Only order owner can confirm delivery
-    if (order.userId !== userId) {
-      throw new ApiError(HTTP_STATUS.FORBIDDEN, ERROR_MESSAGES.ORDER_UNAUTHORIZED);
-    }
+		if (!order) {
+			throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.ORDER_NOT_FOUND);
+		}
 
-    // Order must be in SHIPPING status
-    if (order.status !== OrderStatus.SHIPPING) {
-      throw new ApiError(
-        HTTP_STATUS.BAD_REQUEST,
-        'Chỉ có thể xác nhận đơn hàng đang trong trạng thái giao hàng'
-      );
-    }
+		// Only order owner can confirm delivery
+		if (order.userId !== userId) {
+			throw new ApiError(
+				HTTP_STATUS.FORBIDDEN,
+				ERROR_MESSAGES.ORDER_UNAUTHORIZED,
+			);
+		}
 
-    const updatedOrder = await this.orderRepository.updateStatus(orderId, OrderStatus.DELIVERED, {
-      deliveredAt: new Date(),
-    });
+		// Order must be in SHIPPING status
+		if (order.status !== OrderStatus.SHIPPING) {
+			throw new ApiError(
+				HTTP_STATUS.BAD_REQUEST,
+				"Chỉ có thể xác nhận đơn hàng đang trong trạng thái giao hàng",
+			);
+		}
 
-    logger.info(`Order ${orderId} confirmed as delivered by user ${userId}`);
+		const updatedOrder = await this.orderRepository.updateStatus(
+			orderId,
+			OrderStatus.DELIVERED,
+			{
+				deliveredAt: new Date(),
+			},
+		);
 
-    return updatedOrder;
-  }
+		logger.info(`Order ${orderId} confirmed as delivered by user ${userId}`);
 
-  /**
-   * 7. Get all orders for admin with advanced filters
-   */
-  async getAllOrdersAdmin(
-    userId: string,
-    userRole: string,
-    filters?: OrderFilters,
-    page = 1,
-    limit = 10,
-    sortBy = 'createdAt',
-    sortOrder: 'asc' | 'desc' = 'desc'
-  ) {
-    // Check admin permission
-    if (userRole !== 'ADMIN' && userRole !== 'MANAGER') {
-      throw new ApiError(HTTP_STATUS.FORBIDDEN, ERROR_MESSAGES.FORBIDDEN);
-    }
+		return updatedOrder;
+	}
 
-    const options: OrderListOptions = {
-      filters,
-      page,
-      limit,
-      sortBy,
-      sortOrder,
-    };
+	/**
+	 * 7. Get all orders for admin with advanced filters
+	 */
+	async getAllOrdersAdmin(
+		userId: string,
+		userRole: string,
+		filters?: OrderFilters,
+		page = 1,
+		limit = 10,
+		sortBy = "createdAt",
+		sortOrder: "asc" | "desc" = "desc",
+	) {
+		// Check admin permission
+		if (userRole !== "ADMIN" && userRole !== "MANAGER") {
+			throw new ApiError(HTTP_STATUS.FORBIDDEN, ERROR_MESSAGES.FORBIDDEN);
+		}
 
-    const result = await this.orderRepository.findAll(options);
+		const options: OrderListOptions = {
+			filters,
+			page,
+			limit,
+			sortBy,
+			sortOrder,
+		};
 
-    logger.info(`Admin ${userId} retrieved ${result.data.length} orders`);
+		const result = await this.orderRepository.findAll(options);
 
-    return result;
-  }
+		logger.info(`Admin ${userId} retrieved ${result.data.length} orders`);
 
-  /**
-   * Get order statistics
-   */
-  async getOrderStatistics(userId?: string) {
-    return await this.orderRepository.getStatistics(userId);
-  }
+		return result;
+	}
 
-  /**
-   * Private helper: Validate status transition
-   */
-  private validateStatusTransition(currentStatus: OrderStatus, newStatus: OrderStatus): void {
-    const validTransitions: Record<OrderStatus, OrderStatus[]> = {
-      [OrderStatus.PENDING]: [OrderStatus.CONFIRMED, OrderStatus.CANCELLED],
-      [OrderStatus.CONFIRMED]: [OrderStatus.PROCESSING, OrderStatus.CANCELLED],
-      [OrderStatus.PROCESSING]: [OrderStatus.SHIPPING, OrderStatus.CANCELLED],
-      [OrderStatus.SHIPPING]: [OrderStatus.DELIVERED, OrderStatus.RETURNED],
-      [OrderStatus.DELIVERED]: [OrderStatus.RETURNED],
-      [OrderStatus.CANCELLED]: [],
-      [OrderStatus.RETURNED]: [],
-    };
+	/**
+	 * Get order statistics
+	 */
+	async getOrderStatistics(userId?: string) {
+		return await this.orderRepository.getStatistics(userId);
+	}
 
-    const allowedStatuses = validTransitions[currentStatus] || [];
+	/**
+	 * Private helper: Validate status transition
+	 */
+	private validateStatusTransition(
+		currentStatus: OrderStatus,
+		newStatus: OrderStatus,
+	): void {
+		const validTransitions: Record<OrderStatus, OrderStatus[]> = {
+			[OrderStatus.PENDING]: [OrderStatus.CONFIRMED, OrderStatus.CANCELLED],
+			[OrderStatus.CONFIRMED]: [OrderStatus.PROCESSING, OrderStatus.CANCELLED],
+			[OrderStatus.PROCESSING]: [OrderStatus.SHIPPING, OrderStatus.CANCELLED],
+			[OrderStatus.SHIPPING]: [OrderStatus.DELIVERED, OrderStatus.RETURNED],
+			[OrderStatus.DELIVERED]: [OrderStatus.RETURNED],
+			[OrderStatus.CANCELLED]: [],
+			[OrderStatus.RETURNED]: [],
+		};
 
-    if (!allowedStatuses.includes(newStatus)) {
-      throw new ApiError(
-        HTTP_STATUS.BAD_REQUEST,
-        `Không thể chuyển từ trạng thái ${currentStatus} sang ${newStatus}`
-      );
-    }
-  }
+		const allowedStatuses = validTransitions[currentStatus] || [];
+
+		if (!allowedStatuses.includes(newStatus)) {
+			throw new ApiError(
+				HTTP_STATUS.BAD_REQUEST,
+				`Không thể chuyển từ trạng thái ${currentStatus} sang ${newStatus}`,
+			);
+		}
+	}
 }

@@ -29,8 +29,6 @@ export class OrderController {
         shippingAddress: req.body.shippingAddress,
         paymentMethod: req.body.paymentMethod,
         notes: req.body.notes,
-        shippingFee: req.body.shippingFee,
-        discount: req.body.discount,
       };
 
       const order = await this.orderService.createOrder(orderInput);

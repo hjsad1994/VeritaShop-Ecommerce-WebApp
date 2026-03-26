@@ -1,551 +1,597 @@
-import { PrismaClient, Order, OrderStatus, PaymentStatus, Prisma } from '@prisma/client';
-import { BaseRepository } from './BaseRepository';
+import {
+	type Order,
+	OrderStatus,
+	type PaymentStatus,
+	type Prisma,
+	type PrismaClient,
+} from "@prisma/client";
+import { BaseRepository } from "./BaseRepository";
 
 export interface CreateOrderData {
-  userId: string;
-  orderNumber: string;
-  customerName: string;
-  customerEmail: string;
-  customerPhone: string;
-  shippingAddress: string;
-  subtotal: number;
-  discount?: number;
-  shippingFee?: number;
-  tax?: number;
-  total: number;
-  paymentMethod?: string;
-  notes?: string;
-  cartId: string;
-  items: {
-    variantId: string;
-    productName: string;
-    variantInfo: string;
-    price: number;
-    quantity: number;
-    subtotal: number;
-  }[];
+	userId: string;
+	orderNumber: string;
+	customerName: string;
+	customerEmail: string;
+	customerPhone: string;
+	shippingAddress: string;
+	subtotal: number;
+	discount?: number;
+	shippingFee?: number;
+	tax?: number;
+	total: number;
+	paymentMethod?: string;
+	notes?: string;
+	cartId: string;
+	items: {
+		variantId: string;
+		productName: string;
+		variantInfo: string;
+		price: number;
+		quantity: number;
+		subtotal: number;
+	}[];
 }
 
 export interface OrderFilters {
-  userId?: string;
-  status?: OrderStatus;
-  paymentStatus?: PaymentStatus;
-  searchTerm?: string;
-  startDate?: Date;
-  endDate?: Date;
+	userId?: string;
+	status?: OrderStatus;
+	paymentStatus?: PaymentStatus;
+	searchTerm?: string;
+	startDate?: Date;
+	endDate?: Date;
 }
 
 export interface OrderListOptions {
-  filters?: OrderFilters;
-  page?: number;
-  limit?: number;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+	filters?: OrderFilters;
+	page?: number;
+	limit?: number;
+	sortBy?: string;
+	sortOrder?: "asc" | "desc";
 }
 
 export class OrderRepository extends BaseRepository<Order> {
-  constructor(prisma: PrismaClient) {
-    super(prisma);
-  }
+	constructor(prisma: PrismaClient) {
+		super(prisma);
+	}
 
-  /**
-   * Find order by ID with full relations
-   */
-  async findById(id: string): Promise<Order | null> {
-    return await this.prisma.order.findUnique({
-      where: { id },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true,
-          },
-        },
-        items: {
-          include: {
-            variant: {
-              include: {
-                product: {
-                  select: {
-                    id: true,
-                    name: true,
-                    slug: true,
-                    images: {
-                      where: { isPrimary: true },
-                      take: 1,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    });
-  }
+	/**
+	 * Find order by ID with full relations
+	 */
+	async findById(id: string): Promise<Order | null> {
+		return await this.prisma.order.findUnique({
+			where: { id },
+			include: {
+				user: {
+					select: {
+						id: true,
+						name: true,
+						email: true,
+						phone: true,
+					},
+				},
+				items: {
+					include: {
+						variant: {
+							include: {
+								product: {
+									select: {
+										id: true,
+										name: true,
+										slug: true,
+										images: {
+											where: { isPrimary: true },
+											take: 1,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		});
+	}
 
-  /**
-   * Find order by order number
-   */
-  async findByOrderNumber(orderNumber: string): Promise<Order | null> {
-    return await this.prisma.order.findUnique({
-      where: { orderNumber },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-        items: {
-          include: {
-            variant: {
-              include: {
-                product: true,
-              },
-            },
-          },
-        },
-      },
-    });
-  }
+	/**
+	 * Find order by order number
+	 */
+	async findByOrderNumber(orderNumber: string): Promise<Order | null> {
+		return await this.prisma.order.findUnique({
+			where: { orderNumber },
+			include: {
+				user: {
+					select: {
+						id: true,
+						name: true,
+						email: true,
+					},
+				},
+				items: {
+					include: {
+						variant: {
+							include: {
+								product: true,
+							},
+						},
+					},
+				},
+			},
+		});
+	}
 
-  /**
-   * Find all orders with filters and pagination
-   */
-  async findAll(options: OrderListOptions): Promise<{ data: Order[]; total: number }> {
-    const {
-      filters = {},
-      page = 1,
-      limit = 10,
-      sortBy = 'createdAt',
-      sortOrder = 'desc',
-    } = options;
+	/**
+	 * Find all orders with filters and pagination
+	 */
+	async findAll(
+		options: OrderListOptions,
+	): Promise<{ data: Order[]; total: number }> {
+		const {
+			filters = {},
+			page = 1,
+			limit = 10,
+			sortBy = "createdAt",
+			sortOrder = "desc",
+		} = options;
 
-    // Build where clause
-    const where: Prisma.OrderWhereInput = {};
+		// Build where clause
+		const where: Prisma.OrderWhereInput = {};
 
-    if (filters.userId) {
-      where.userId = filters.userId;
-    }
+		if (filters.userId) {
+			where.userId = filters.userId;
+		}
 
-    if (filters.status) {
-      where.status = filters.status;
-    }
+		if (filters.status) {
+			where.status = filters.status;
+		}
 
-    if (filters.paymentStatus) {
-      where.paymentStatus = filters.paymentStatus;
-    }
+		if (filters.paymentStatus) {
+			where.paymentStatus = filters.paymentStatus;
+		}
 
-    if (filters.searchTerm) {
-      where.OR = [
-        { orderNumber: { contains: filters.searchTerm, mode: 'insensitive' } },
-        { customerName: { contains: filters.searchTerm, mode: 'insensitive' } },
-        { customerEmail: { contains: filters.searchTerm, mode: 'insensitive' } },
-        { customerPhone: { contains: filters.searchTerm, mode: 'insensitive' } },
-      ];
-    }
+		if (filters.searchTerm) {
+			where.OR = [
+				{ orderNumber: { contains: filters.searchTerm, mode: "insensitive" } },
+				{ customerName: { contains: filters.searchTerm, mode: "insensitive" } },
+				{
+					customerEmail: { contains: filters.searchTerm, mode: "insensitive" },
+				},
+				{
+					customerPhone: { contains: filters.searchTerm, mode: "insensitive" },
+				},
+			];
+		}
 
-    if (filters.startDate || filters.endDate) {
-      where.createdAt = {};
-      if (filters.startDate) {
-        where.createdAt.gte = filters.startDate;
-      }
-      if (filters.endDate) {
-        where.createdAt.lte = filters.endDate;
-      }
-    }
+		if (filters.startDate || filters.endDate) {
+			where.createdAt = {};
+			if (filters.startDate) {
+				where.createdAt.gte = filters.startDate;
+			}
+			if (filters.endDate) {
+				where.createdAt.lte = filters.endDate;
+			}
+		}
 
-    // Build orderBy
-    const orderBy: Prisma.OrderOrderByWithRelationInput = {
-      [sortBy]: sortOrder,
-    };
+		// Build orderBy
+		const orderBy: Prisma.OrderOrderByWithRelationInput = {
+			[sortBy]: sortOrder,
+		};
 
-    // Calculate pagination
-    const skip = (page - 1) * limit;
-    const take = limit;
+		// Calculate pagination
+		const skip = (page - 1) * limit;
+		const take = limit;
 
-    // Execute query
-    const [data, total] = await Promise.all([
-      this.prisma.order.findMany({
-        where,
-        orderBy,
-        skip,
-        take,
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
-          items: {
-            include: {
-              variant: {
-                include: {
-                  product: {
-                    select: {
-                      id: true,
-                      name: true,
-                      slug: true,
-                      images: {
-                        where: { isPrimary: true },
-                        take: 1,
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      }),
-      this.prisma.order.count({ where }),
-    ]);
+		// Execute query
+		const [data, total] = await Promise.all([
+			this.prisma.order.findMany({
+				where,
+				orderBy,
+				skip,
+				take,
+				include: {
+					user: {
+						select: {
+							id: true,
+							name: true,
+							email: true,
+						},
+					},
+					items: {
+						include: {
+							variant: {
+								include: {
+									product: {
+										select: {
+											id: true,
+											name: true,
+											slug: true,
+											images: {
+												where: { isPrimary: true },
+												take: 1,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			}),
+			this.prisma.order.count({ where }),
+		]);
 
-    return { data, total };
-  }
+		return { data, total };
+	}
 
-  /**
-   * Create order with items in a transaction
-   */
-  async create(orderData: CreateOrderData): Promise<Order> {
-    return await this.prisma.$transaction(async (tx) => {
-      // Create order
-      const order = await tx.order.create({
-        data: {
-          userId: orderData.userId,
-          orderNumber: orderData.orderNumber,
-          customerName: orderData.customerName,
-          customerEmail: orderData.customerEmail,
-          customerPhone: orderData.customerPhone,
-          shippingAddress: orderData.shippingAddress,
-          subtotal: orderData.subtotal,
-          discount: orderData.discount || 0,
-          shippingFee: orderData.shippingFee || 0,
-          tax: orderData.tax || 0,
-          total: orderData.total,
-          paymentMethod: orderData.paymentMethod,
-          notes: orderData.notes,
-          items: {
-            create: orderData.items,
-          },
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
-          items: {
-            include: {
-              variant: {
-                include: {
-                  product: {
-                    select: {
-                      id: true,
-                      name: true,
-                      slug: true,
-                      images: {
-                        where: { isPrimary: true },
-                        take: 1,
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      });
+	/**
+	 * Create order with items in a transaction
+	 */
+	async create(orderData: CreateOrderData): Promise<Order> {
+		return await this.prisma.$transaction(async (tx) => {
+			// Create order
+			const order = await tx.order.create({
+				data: {
+					userId: orderData.userId,
+					orderNumber: orderData.orderNumber,
+					customerName: orderData.customerName,
+					customerEmail: orderData.customerEmail,
+					customerPhone: orderData.customerPhone,
+					shippingAddress: orderData.shippingAddress,
+					subtotal: orderData.subtotal,
+					discount: orderData.discount || 0,
+					shippingFee: orderData.shippingFee || 0,
+					tax: orderData.tax || 0,
+					total: orderData.total,
+					paymentMethod: orderData.paymentMethod,
+					notes: orderData.notes,
+					items: {
+						create: orderData.items,
+					},
+				},
+				include: {
+					user: {
+						select: {
+							id: true,
+							name: true,
+							email: true,
+						},
+					},
+					items: {
+						include: {
+							variant: {
+								include: {
+									product: {
+										select: {
+											id: true,
+											name: true,
+											slug: true,
+											images: {
+												where: { isPrimary: true },
+												take: 1,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			});
 
-      // Update product soldCount
-      // Note: Stock management is now handled by InventoryService
-      for (const item of orderData.items) {
-        // Get product ID from variant
-        const variant = await tx.productVariant.findUnique({
-          where: { id: item.variantId },
-          select: { productId: true },
-        });
+			// Update product soldCount
+			// Note: Stock management is now handled by InventoryService
+			for (const item of orderData.items) {
+				// Get product ID from variant
+				const variant = await tx.productVariant.findUnique({
+					where: { id: item.variantId },
+					select: { productId: true },
+				});
 
-        if (variant) {
-          await tx.product.update({
-            where: { id: variant.productId },
-            data: {
-              soldCount: { increment: item.quantity },
-            },
-          });
-        }
-      }
+				if (variant) {
+					await tx.product.update({
+						where: { id: variant.productId },
+						data: {
+							soldCount: { increment: item.quantity },
+						},
+					});
+				}
+			}
 
-      // Deduct inventory for each item
-      for (const item of orderData.items) {
-        const inventory = await tx.inventory.findUnique({
-          where: { variantId: item.variantId },
-        });
+			// Deduct inventory for each item
+			for (const item of orderData.items) {
+				const inventory = await tx.inventory.findUnique({
+					where: { variantId: item.variantId },
+					select: {
+						id: true,
+						available: true,
+						version: true,
+					},
+				});
 
-        if (!inventory) {
-          throw new Error(`Inventory not found for variant ${item.variantId}`);
-        }
+				if (!inventory) {
+					throw new Error(`Inventory not found for variant ${item.variantId}`);
+				}
 
-        if (inventory.available < item.quantity) {
-          throw new Error(`Insufficient stock for variant ${item.variantId}`);
-        }
+				if (inventory.available < item.quantity) {
+					throw new Error(`Insufficient stock for variant ${item.variantId}`);
+				}
 
-        await tx.inventory.update({
-          where: { id: inventory.id },
-          data: {
-            quantity: { decrement: item.quantity },
-            available: { decrement: item.quantity },
-          },
-        });
+				const updateResult = await tx.inventory.updateMany({
+					where: {
+						variantId: item.variantId,
+						version: inventory.version,
+					},
+					data: {
+						quantity: { decrement: item.quantity },
+						available: { decrement: item.quantity },
+						version: { increment: 1 },
+					},
+				});
 
-        await tx.stockMovement.create({
-          data: {
-            inventoryId: inventory.id,
-            variantId: item.variantId,
-            type: 'ORDER',
-            quantity: item.quantity,
-            previousStock: inventory.available,
-            newStock: inventory.available - item.quantity,
-            reason: `Order ${orderData.orderNumber}`,
-            referenceId: order.id,
-          },
-        });
-      }
+				if (updateResult.count === 0) {
+					throw new Error("Xung đột tồn kho, vui lòng thử lại");
+				}
 
-      // Clear cart inside transaction
-      await tx.cartItem.deleteMany({
-        where: { cartId: orderData.cartId },
-      });
+				await tx.stockMovement.create({
+					data: {
+						inventoryId: inventory.id,
+						variantId: item.variantId,
+						type: "ORDER",
+						quantity: item.quantity,
+						previousStock: inventory.available,
+						newStock: inventory.available - item.quantity,
+						reason: `Order ${orderData.orderNumber}`,
+						referenceId: order.id,
+					},
+				});
+			}
 
-      return order;
-    });
-  }
+			// Clear cart inside transaction
+			await tx.cartItem.deleteMany({
+				where: { cartId: orderData.cartId },
+			});
 
-  /**
-   * Update order status
-   */
-  async updateStatus(
-    id: string,
-    status: OrderStatus,
-    additionalData?: {
-      paymentStatus?: PaymentStatus;
-      isPaid?: boolean;
-      paidAt?: Date;
-      deliveredAt?: Date;
-    }
-  ): Promise<Order> {
-    return await this.prisma.order.update({
-      where: { id },
-      data: {
-        status,
-        ...additionalData,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-        items: {
-          include: {
-            variant: {
-              include: {
-                product: true,
-              },
-            },
-          },
-        },
-      },
-    });
-  }
+			return order;
+		});
+	}
 
-  /**
-   * Cancel order and restore stock
-   */
-  async cancel(id: string, cancelReason?: string): Promise<Order> {
-    return await this.prisma.$transaction(async (tx) => {
-      // Get order with items
-      const order = await tx.order.findUnique({
-        where: { id },
-        include: { items: true },
-      });
+	/**
+	 * Update order status
+	 */
+	async updateStatus(
+		id: string,
+		status: OrderStatus,
+		additionalData?: {
+			paymentStatus?: PaymentStatus;
+			isPaid?: boolean;
+			paidAt?: Date;
+			deliveredAt?: Date;
+		},
+	): Promise<Order> {
+		return await this.prisma.order.update({
+			where: { id },
+			data: {
+				status,
+				...additionalData,
+			},
+			include: {
+				user: {
+					select: {
+						id: true,
+						name: true,
+						email: true,
+					},
+				},
+				items: {
+					include: {
+						variant: {
+							include: {
+								product: true,
+							},
+						},
+					},
+				},
+			},
+		});
+	}
 
-      if (!order) {
-        throw new Error('Order not found');
-      }
+	/**
+	 * Cancel order and restore stock
+	 */
+	async cancel(id: string, cancelReason?: string): Promise<Order> {
+		return await this.prisma.$transaction(async (tx) => {
+			// Get order with items
+			const order = await tx.order.findUnique({
+				where: { id },
+				include: { items: true },
+			});
 
-      // Update order status
-      const updatedOrder = await tx.order.update({
-        where: { id },
-        data: {
-          status: OrderStatus.CANCELLED,
-          cancelReason,
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
-          items: {
-            include: {
-              variant: {
-                include: {
-                  product: true,
-                },
-              },
-            },
-          },
-        },
-      });
+			if (!order) {
+				throw new Error("Order not found");
+			}
 
-      // Restore soldCount if order was not delivered
-      // Note: Stock restoration is now handled by InventoryService
-      if (order.status !== OrderStatus.DELIVERED) {
-        for (const item of order.items) {
-          // Get product ID from variant
-          const variant = await tx.productVariant.findUnique({
-            where: { id: item.variantId },
-            select: { productId: true },
-          });
+			// Update order status
+			const updatedOrder = await tx.order.update({
+				where: { id },
+				data: {
+					status: OrderStatus.CANCELLED,
+					cancelReason,
+				},
+				include: {
+					user: {
+						select: {
+							id: true,
+							name: true,
+							email: true,
+						},
+					},
+					items: {
+						include: {
+							variant: {
+								include: {
+									product: true,
+								},
+							},
+						},
+					},
+				},
+			});
 
-          if (variant) {
-            await tx.product.update({
-              where: { id: variant.productId },
-              data: {
-                soldCount: { decrement: item.quantity },
-              },
-            });
-          }
-        }
-      }
+			// Restore soldCount if order was not delivered
+			// Note: Stock restoration is now handled by InventoryService
+			if (order.status !== OrderStatus.DELIVERED) {
+				for (const item of order.items) {
+					// Get product ID from variant
+					const variant = await tx.productVariant.findUnique({
+						where: { id: item.variantId },
+						select: { productId: true },
+					});
 
-      // Restore inventory for each item
-      for (const item of order.items) {
-        const inventory = await tx.inventory.findUnique({
-          where: { variantId: item.variantId },
-        });
+					if (variant) {
+						await tx.product.update({
+							where: { id: variant.productId },
+							data: {
+								soldCount: { decrement: item.quantity },
+							},
+						});
+					}
+				}
+			}
 
-        if (inventory) {
-          await tx.inventory.update({
-            where: { id: inventory.id },
-            data: {
-              quantity: { increment: item.quantity },
-              available: { increment: item.quantity },
-            },
-          });
+			// Restore inventory for each item
+			for (const item of order.items) {
+				const inventory = await tx.inventory.findUnique({
+					where: { variantId: item.variantId },
+					select: {
+						id: true,
+						available: true,
+						version: true,
+					},
+				});
 
-          await tx.stockMovement.create({
-            data: {
-              inventoryId: inventory.id,
-              variantId: item.variantId,
-              type: 'ORDER_CANCELLED',
-              quantity: item.quantity,
-              previousStock: inventory.available,
-              newStock: inventory.available + item.quantity,
-              reason: `Order cancelled${cancelReason ? ': ' + cancelReason : ''}`,
-              referenceId: id,
-            },
-          });
-        }
-      }
+				if (inventory) {
+					const updateResult = await tx.inventory.updateMany({
+						where: {
+							variantId: item.variantId,
+							version: inventory.version,
+						},
+						data: {
+							quantity: { increment: item.quantity },
+							available: { increment: item.quantity },
+							version: { increment: 1 },
+						},
+					});
 
-      return updatedOrder;
-    });
-  }
+					if (updateResult.count === 0) {
+						throw new Error("Xung đột tồn kho, vui lòng thử lại");
+					}
 
-  /**
-   * Count orders by user
-   */
-  async countByUserId(userId: string): Promise<number> {
-    return await this.prisma.order.count({
-      where: { userId },
-    });
-  }
+					await tx.stockMovement.create({
+						data: {
+							inventoryId: inventory.id,
+							variantId: item.variantId,
+							type: "ORDER_CANCELLED",
+							quantity: item.quantity,
+							previousStock: inventory.available,
+							newStock: inventory.available + item.quantity,
+							reason: `Order cancelled${cancelReason ? ": " + cancelReason : ""}`,
+							referenceId: id,
+						},
+					});
+				}
+			}
 
-  /**
-   * Check if user has purchased a product (delivered order)
-   */
-  async hasUserPurchasedProduct(userId: string, productId: string): Promise<boolean> {
-    const order = await this.prisma.order.findFirst({
-      where: {
-        userId,
-        status: OrderStatus.DELIVERED,
-        items: {
-          some: {
-            variant: {
-              productId,
-            },
-          },
-        },
-      },
-    });
+			return updatedOrder;
+		});
+	}
 
-    return !!order;
-  }
+	/**
+	 * Count orders by user
+	 */
+	async countByUserId(userId: string): Promise<number> {
+		return await this.prisma.order.count({
+			where: { userId },
+		});
+	}
 
-  /**
-   * Generate unique order number
-   */
-  async generateOrderNumber(): Promise<string> {
-    const today = new Date();
-    const dateStr = today.toISOString().slice(0, 10).replace(/-/g, ''); // YYYYMMDD
+	/**
+	 * Check if user has purchased a product (delivered order)
+	 */
+	async hasUserPurchasedProduct(
+		userId: string,
+		productId: string,
+	): Promise<boolean> {
+		const order = await this.prisma.order.findFirst({
+			where: {
+				userId,
+				status: OrderStatus.DELIVERED,
+				items: {
+					some: {
+						variant: {
+							productId,
+						},
+					},
+				},
+			},
+		});
 
-    // Get count of orders today
-    const startOfDay = new Date(today.setHours(0, 0, 0, 0));
-    const endOfDay = new Date(today.setHours(23, 59, 59, 999));
+		return !!order;
+	}
 
-    const count = await this.prisma.order.count({
-      where: {
-        createdAt: {
-          gte: startOfDay,
-          lte: endOfDay,
-        },
-      },
-    });
+	/**
+	 * Generate unique order number
+	 */
+	async generateOrderNumber(): Promise<string> {
+		const today = new Date();
+		const dateStr = today.toISOString().slice(0, 10).replace(/-/g, ""); // YYYYMMDD
 
-    const orderNumber = `ORD-${dateStr}-${String(count + 1).padStart(3, '0')}`;
-    return orderNumber;
-  }
+		// Get count of orders today
+		const startOfDay = new Date(today.setHours(0, 0, 0, 0));
+		const endOfDay = new Date(today.setHours(23, 59, 59, 999));
 
-  /**
-   * Get order statistics
-   */
-  async getStatistics(userId?: string): Promise<{
-    totalOrders: number;
-    totalRevenue: number;
-    pendingOrders: number;
-    deliveredOrders: number;
-  }> {
-    const where: Prisma.OrderWhereInput = userId ? { userId } : {};
+		const count = await this.prisma.order.count({
+			where: {
+				createdAt: {
+					gte: startOfDay,
+					lte: endOfDay,
+				},
+			},
+		});
 
-    const [totalOrders, pendingOrders, deliveredOrders, revenueData] = await Promise.all([
-      this.prisma.order.count({ where }),
-      this.prisma.order.count({ where: { ...where, status: OrderStatus.PENDING } }),
-      this.prisma.order.count({ where: { ...where, status: OrderStatus.DELIVERED } }),
-      this.prisma.order.aggregate({
-        where: { ...where, status: OrderStatus.DELIVERED },
-        _sum: { total: true },
-      }),
-    ]);
+		const orderNumber = `ORD-${dateStr}-${String(count + 1).padStart(3, "0")}`;
+		return orderNumber;
+	}
 
-    return {
-      totalOrders,
-      totalRevenue: Number(revenueData._sum.total || 0),
-      pendingOrders,
-      deliveredOrders,
-    };
-  }
+	/**
+	 * Get order statistics
+	 */
+	async getStatistics(userId?: string): Promise<{
+		totalOrders: number;
+		totalRevenue: number;
+		pendingOrders: number;
+		deliveredOrders: number;
+	}> {
+		const where: Prisma.OrderWhereInput = userId ? { userId } : {};
+
+		const [totalOrders, pendingOrders, deliveredOrders, revenueData] =
+			await Promise.all([
+				this.prisma.order.count({ where }),
+				this.prisma.order.count({
+					where: { ...where, status: OrderStatus.PENDING },
+				}),
+				this.prisma.order.count({
+					where: { ...where, status: OrderStatus.DELIVERED },
+				}),
+				this.prisma.order.aggregate({
+					where: { ...where, status: OrderStatus.DELIVERED },
+					_sum: { total: true },
+				}),
+			]);
+
+		return {
+			totalOrders,
+			totalRevenue: Number(revenueData._sum.total || 0),
+			pendingOrders,
+			deliveredOrders,
+		};
+	}
 }

@@ -1,293 +1,332 @@
-import { Prisma, PrismaClient } from '@prisma/client';
-import { BaseRepository } from './BaseRepository';
+import type { Prisma, PrismaClient } from "@prisma/client";
+import { BaseRepository } from "./BaseRepository";
 
 export interface CartWithItems {
-  id: string;
-  userId: string;
-  createdAt: Date;
-  updatedAt: Date;
-  items: Array<any>;
+	id: string;
+	userId: string;
+	createdAt: Date;
+	updatedAt: Date;
+	items: Array<any>;
 }
 
 export interface CartCalculations {
-  subtotal: number;
-  totalItems: number;
+	subtotal: number;
+	totalItems: number;
 }
 
 export class CartRepository extends BaseRepository<any> {
-  constructor(prisma: PrismaClient) {
-    super(prisma);
-  }
+	constructor(prisma: PrismaClient) {
+		super(prisma);
+	}
 
-  /**
-   * Find cart by user ID with full relations
-   */
-  async findByUserId(userId: string): Promise<CartWithItems | null> {
-    return await this.prisma.cart.findUnique({
-      where: { userId },
-      include: {
-        items: {
-          include: {
-            variant: {
-              include: {
-                product: {
-                  select: {
-                    id: true,
-                    name: true,
-                    slug: true,
-                    basePrice: true,
-                    images: {
-                      select: {
-                        id: true,
-                        url: true,
-                        sortOrder: true,
-                      },
-                      orderBy: {
-                        sortOrder: 'asc',
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-          orderBy: {
-            createdAt: 'desc',
-          },
-        },
-      },
-    });
-  }
+	private getPrismaClient(tx?: Prisma.TransactionClient) {
+		return tx || this.prisma;
+	}
 
-  /**
-   * Create a new cart for user
-   */
-  async createCart(userId: string) {
-    return await this.prisma.cart.create({
-      data: {
-        userId,
-      },
-      include: {
-        items: true,
-      },
-    });
-  }
+	/**
+	 * Find cart by user ID with full relations
+	 */
+	async findByUserId(
+		userId: string,
+		tx?: Prisma.TransactionClient,
+	): Promise<CartWithItems | null> {
+		const prisma = this.getPrismaClient(tx);
 
-  /**
-   * Get or create cart for user
-   */
-  async getOrCreateCart(userId: string): Promise<CartWithItems> {
-    let cart = await this.findByUserId(userId);
+		return await prisma.cart.findUnique({
+			where: { userId },
+			include: {
+				items: {
+					include: {
+						variant: {
+							include: {
+								product: {
+									select: {
+										id: true,
+										name: true,
+										slug: true,
+										basePrice: true,
+										images: {
+											select: {
+												id: true,
+												url: true,
+												sortOrder: true,
+											},
+											orderBy: {
+												sortOrder: "asc",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					orderBy: {
+						createdAt: "desc",
+					},
+				},
+			},
+		});
+	}
 
-    if (!cart) {
-      const newCart = await this.createCart(userId);
-      cart = await this.findByUserId(userId);
-    }
+	/**
+	 * Create a new cart for user
+	 */
+	async createCart(userId: string, tx?: Prisma.TransactionClient) {
+		const prisma = this.getPrismaClient(tx);
 
-    return cart!;
-  }
+		return await prisma.cart.create({
+			data: {
+				userId,
+			},
+			include: {
+				items: true,
+			},
+		});
+	}
 
-  /**
-   * Find cart item by ID
-   */
-  async findCartItemById(itemId: string) {
-    return await this.prisma.cartItem.findUnique({
-      where: { id: itemId },
-      include: {
-        cart: true,
-        variant: {
-          include: {
-            product: {
-              select: {
-                id: true,
-                name: true,
-                slug: true,
-                basePrice: true,
-              },
-            },
-          },
-        },
-      },
-    });
-  }
+	/**
+	 * Get or create cart for user
+	 */
+	async getOrCreateCart(
+		userId: string,
+		tx?: Prisma.TransactionClient,
+	): Promise<CartWithItems> {
+		let cart = await this.findByUserId(userId, tx);
 
-  /**
-   * Find cart item by cart ID and variant ID
-   */
-  async findCartItemByVariant(cartId: string, variantId: string) {
-    return await this.prisma.cartItem.findUnique({
-      where: {
-        cartId_variantId: {
-          cartId,
-          variantId,
-        },
-      },
-      include: {
-        variant: true,
-      },
-    });
-  }
+		if (!cart) {
+			const newCart = await this.createCart(userId, tx);
+			cart = await this.findByUserId(userId, tx);
+		}
 
-  /**
-   * Add item to cart or update quantity if already exists
-   */
-  async addCartItem(cartId: string, variantId: string, quantity: number) {
-    // Check if item already exists in cart
-    const existingItem = await this.findCartItemByVariant(cartId, variantId);
+		return cart!;
+	}
 
-    if (existingItem) {
-      // Update quantity if item exists
-      return await this.prisma.cartItem.update({
-        where: { id: existingItem.id },
-        data: {
-          quantity: existingItem.quantity + quantity,
-        },
-        include: {
-          variant: {
-            include: {
-              product: {
-                select: {
-                  id: true,
-                  name: true,
-                  slug: true,
-                  basePrice: true,
-                  images: {
-                    select: {
-                      id: true,
-                      url: true,
-                      sortOrder: true,
-                    },
-                    orderBy: {
-                      sortOrder: 'asc',
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      });
-    }
+	/**
+	 * Find cart item by ID
+	 */
+	async findCartItemById(itemId: string, tx?: Prisma.TransactionClient) {
+		const prisma = this.getPrismaClient(tx);
 
-    // Create new cart item
-    return await this.prisma.cartItem.create({
-      data: {
-        cartId,
-        variantId,
-        quantity,
-      },
-      include: {
-        variant: {
-          include: {
-            product: {
-              select: {
-                id: true,
-                name: true,
-                slug: true,
-                basePrice: true,
-                images: {
-                  select: {
-                    id: true,
-                    url: true,
-                    sortOrder: true,
-                  },
-                  orderBy: {
-                    sortOrder: 'asc',
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    });
-  }
+		return await prisma.cartItem.findUnique({
+			where: { id: itemId },
+			include: {
+				cart: true,
+				variant: {
+					include: {
+						product: {
+							select: {
+								id: true,
+								name: true,
+								slug: true,
+								basePrice: true,
+							},
+						},
+					},
+				},
+			},
+		});
+	}
 
-  /**
-   * Update cart item quantity
-   */
-  async updateCartItemQuantity(itemId: string, quantity: number) {
-    return await this.prisma.cartItem.update({
-      where: { id: itemId },
-      data: { quantity },
-      include: {
-        variant: {
-          include: {
-            product: {
-              select: {
-                id: true,
-                name: true,
-                slug: true,
-                basePrice: true,
-                images: {
-                  select: {
-                    id: true,
-                    url: true,
-                    sortOrder: true,
-                  },
-                  orderBy: {
-                    sortOrder: 'asc',
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    });
-  }
+	/**
+	 * Find cart item by cart ID and variant ID
+	 */
+	async findCartItemByVariant(
+		cartId: string,
+		variantId: string,
+		tx?: Prisma.TransactionClient,
+	) {
+		const prisma = this.getPrismaClient(tx);
 
-  /**
-   * Remove cart item
-   */
-  async removeCartItem(itemId: string) {
-    return await this.prisma.cartItem.delete({
-      where: { id: itemId },
-    });
-  }
+		return await prisma.cartItem.findUnique({
+			where: {
+				cartId_variantId: {
+					cartId,
+					variantId,
+				},
+			},
+			include: {
+				variant: true,
+			},
+		});
+	}
 
-  /**
-   * Clear all items from cart
-   */
-  async clearCart(cartId: string) {
-    return await this.prisma.cartItem.deleteMany({
-      where: { cartId },
-    });
-  }
+	/**
+	 * Add item to cart or update quantity if already exists
+	 */
+	async addCartItem(
+		cartId: string,
+		variantId: string,
+		quantity: number,
+		tx?: Prisma.TransactionClient,
+	) {
+		const prisma = this.getPrismaClient(tx);
 
-  /**
-   * Calculate cart totals
-   */
-  calculateCartTotals(cart: CartWithItems): CartCalculations {
-    const subtotal = cart.items.reduce((sum, item) => {
-      return sum + item.variant.price * item.quantity;
-    }, 0);
+		// Check if item already exists in cart
+		const existingItem = await this.findCartItemByVariant(
+			cartId,
+			variantId,
+			tx,
+		);
 
-    const totalItems = cart.items.reduce((sum, item) => {
-      return sum + item.quantity;
-    }, 0);
+		if (existingItem) {
+			// Update quantity if item exists
+			return await prisma.cartItem.update({
+				where: { id: existingItem.id },
+				data: {
+					quantity: existingItem.quantity + quantity,
+				},
+				include: {
+					variant: {
+						include: {
+							product: {
+								select: {
+									id: true,
+									name: true,
+									slug: true,
+									basePrice: true,
+									images: {
+										select: {
+											id: true,
+											url: true,
+											sortOrder: true,
+										},
+										orderBy: {
+											sortOrder: "asc",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			});
+		}
 
-    return {
-      subtotal,
-      totalItems,
-    };
-  }
+		// Create new cart item
+		return await prisma.cartItem.create({
+			data: {
+				cartId,
+				variantId,
+				quantity,
+			},
+			include: {
+				variant: {
+					include: {
+						product: {
+							select: {
+								id: true,
+								name: true,
+								slug: true,
+								basePrice: true,
+								images: {
+									select: {
+										id: true,
+										url: true,
+										sortOrder: true,
+									},
+									orderBy: {
+										sortOrder: "asc",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		});
+	}
 
-  /**
-   * Get cart with calculations
-   */
-  async getCartWithCalculations(userId: string) {
-    const cart = await this.findByUserId(userId);
+	/**
+	 * Update cart item quantity
+	 */
+	async updateCartItemQuantity(
+		itemId: string,
+		quantity: number,
+		tx?: Prisma.TransactionClient,
+	) {
+		const prisma = this.getPrismaClient(tx);
 
-    if (!cart) {
-      return null;
-    }
+		return await prisma.cartItem.update({
+			where: { id: itemId },
+			data: { quantity },
+			include: {
+				variant: {
+					include: {
+						product: {
+							select: {
+								id: true,
+								name: true,
+								slug: true,
+								basePrice: true,
+								images: {
+									select: {
+										id: true,
+										url: true,
+										sortOrder: true,
+									},
+									orderBy: {
+										sortOrder: "asc",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		});
+	}
 
-    const calculations = this.calculateCartTotals(cart);
+	/**
+	 * Remove cart item
+	 */
+	async removeCartItem(itemId: string) {
+		return await this.prisma.cartItem.delete({
+			where: { id: itemId },
+		});
+	}
 
-    return {
-      ...cart,
-      ...calculations,
-    };
-  }
+	/**
+	 * Clear all items from cart
+	 */
+	async clearCart(cartId: string) {
+		return await this.prisma.cartItem.deleteMany({
+			where: { cartId },
+		});
+	}
+
+	/**
+	 * Calculate cart totals
+	 */
+	calculateCartTotals(cart: CartWithItems): CartCalculations {
+		const subtotal = cart.items.reduce((sum, item) => {
+			return sum + item.variant.price * item.quantity;
+		}, 0);
+
+		const totalItems = cart.items.reduce((sum, item) => {
+			return sum + item.quantity;
+		}, 0);
+
+		return {
+			subtotal,
+			totalItems,
+		};
+	}
+
+	/**
+	 * Get cart with calculations
+	 */
+	async getCartWithCalculations(userId: string) {
+		const cart = await this.findByUserId(userId);
+
+		if (!cart) {
+			return null;
+		}
+
+		const calculations = this.calculateCartTotals(cart);
+
+		return {
+			...cart,
+			...calculations,
+		};
+	}
 }

@@ -22,6 +22,12 @@ services:
       RUN_MIGRATIONS: ${RUN_MIGRATIONS:-true}
       MIGRATION_MAX_ATTEMPTS: ${MIGRATION_MAX_ATTEMPTS:-15}
       MIGRATION_RETRY_DELAY: ${MIGRATION_RETRY_DELAY:-4}
+      MOMO_PARTNER_CODE: ${MOMO_PARTNER_CODE:-MOMO}
+      MOMO_ACCESS_KEY: ${MOMO_ACCESS_KEY}
+      MOMO_SECRET_KEY: ${MOMO_SECRET_KEY}
+      MOMO_ENDPOINT: ${MOMO_ENDPOINT:-https://test-payment.momo.vn}
+      MOMO_REDIRECT_URL: ${MOMO_REDIRECT_URL:-https://demo-api.honeysocial.click/api/payment/momo/return}
+      MOMO_IPN_URL: ${MOMO_IPN_URL:-https://demo-api.honeysocial.click/api/payment/momo/ipn}
     expose:
       - "${BACKEND_PORT:-5001}"
     healthcheck:

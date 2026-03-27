@@ -56,8 +56,8 @@ export class MomoService {
       accessKey: process.env.MOMO_ACCESS_KEY || '',
       secretKey: process.env.MOMO_SECRET_KEY || '',
       endpoint: process.env.MOMO_ENDPOINT || 'https://test-payment.momo.vn',
-      redirectUrl: process.env.MOMO_REDIRECT_URL || 'http://localhost:3000/payment/result',
-      ipnUrl: process.env.MOMO_IPN_URL || 'http://localhost:5000/api/payment/momo/ipn',
+      redirectUrl: process.env.MOMO_REDIRECT_URL || 'http://localhost:5001/api/payment/momo/return',
+      ipnUrl: process.env.MOMO_IPN_URL || 'http://localhost:5001/api/payment/momo/ipn',
     };
   }
 
